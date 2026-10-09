@@ -1,5 +1,11 @@
 # 幻书启示录服务端
 
+## 项目来源
+
+本项目是 [ShigemoriHakura/GMA-Revive-Server](https://github.com/ShigemoriHakura/GMA-Revive-Server) 的派生版本，从其 fork `SakuraZuk/GMA-Revive-Server` 的 `main` 分支继续开发。在原项目的 Python 服务端实现及协议资料基础上，本分支继续进行 Go / PostgreSQL 重构、功能完善和玩家反馈故障修补。
+
+公开仓库 `SakuraZuk/GMA-Revive-Server-Public` 使用经过隐私清理的独立提交历史，因此 GitHub 页面不显示 fork 标记；项目来源与派生关系仍按上述说明保留。上游项目的访问取决于其仓库权限。
+
 现行实现为 Go / PostgreSQL 服务端，适配 Android 1.0.128。当前交付包含 `runtime2026100911` 的登录大厅收尾、升格材料副本恢复、幻书归还、抽卡回调及界面偏好修补。普通副本保持 Android 原生计算；PVP 使用服务端单原生权威，具体已验收范围与未完成项以交接资料为准。
 
 本仓库只保存服务端源码、生成后的规则目录、部署工具、测试和详细资料。客户端 APK/NPK/音视频、玩家存档与日志、数据库备份、构建产物、登录私钥和原生 Python2 运行时均不上传。原有Python版保留在原私有fork；公开仓库只接收审核后的现行Go源码树，使用独立提交历史，不携带原仓库历史配置或密钥。
