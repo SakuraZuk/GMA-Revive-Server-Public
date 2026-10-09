@@ -1,0 +1,1659 @@
+{
+  "来源": {
+    "cards": {
+      "路径": "out\\client_catalogs\\tables\\cards.json",
+      "SHA256": "b8f88a6e812ba1192dbfa08a993da1a703901b6adfa26207135391d5f13f1fd0"
+    },
+    "cards_rarity": {
+      "路径": "out\\client_catalogs\\tables\\cards_rarity.json",
+      "SHA256": "d206eab9746ec61126623319f18871ba7496c03c878905d3b06927a592ffa462"
+    },
+    "cards_level_exp": {
+      "路径": "out\\client_catalogs\\tables\\cards_level_exp.json",
+      "SHA256": "866e94430da033ba35047296efed46d65acefd62c62862f98cf623a0a0cbdcd1"
+    }
+  },
+  "cards": {
+    "4": {
+      "materials": [
+        [
+          1004,
+          50
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": false,
+      "rarity": 4
+    },
+    "90": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": false,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "91": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": false,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "92": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": false,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "117": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": false,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "118": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": false,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "119": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": false,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "120": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": false,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "121": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": false,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "1101": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "1102": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "1201": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "1202": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 2
+    },
+    "1203": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 2
+    },
+    "1204": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "1205": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "1301": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "1302": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "1303": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "1304": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "1401": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "1501": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 2
+    },
+    "1502": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "1601": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2101": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "2102": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "2103": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2201": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 2
+    },
+    "2202": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2203": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2204": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2205": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2206": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 5
+    },
+    "2207": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 5
+    },
+    "2208": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2301": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 2
+    },
+    "2302": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 2
+    },
+    "2303": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2401": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2402": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 2
+    },
+    "2403": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2404": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2405": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2406": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2407": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 5
+    },
+    "2501": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "2502": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2503": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "2504": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "2505": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "3101": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 2
+    },
+    "3102": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "3201": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "3202": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "3203": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "3301": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "3401": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "3402": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "3403": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 2
+    },
+    "3404": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "3405": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "3406": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "3407": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "3408": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "3409": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "3410": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "3411": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "3412": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 5
+    },
+    "3501": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "3502": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "3504": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 2
+    },
+    "4101": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 2
+    },
+    "4102": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "4201": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "4202": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "4401": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": false,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "4402": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "4403": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "4404": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 2
+    },
+    "4405": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "4406": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "4407": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "4408": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "4409": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "4410": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "4411": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "4501": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "4502": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "4503": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "4601": {
+      "materials": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 4
+    },
+    "4602": {
+      "materials": [
+        [
+          100,
+          5
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 3
+    },
+    "5101": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5102": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5112": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5201": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5211": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5222": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5301": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5302": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5311": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5401": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5402": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5403": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5411": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5501": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5502": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5511": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5601": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    },
+    "5602": {
+      "materials": [
+        [
+          100,
+          3
+        ]
+      ],
+      "allowed": true,
+      "battle_allowed": true,
+      "rarity": 1
+    }
+  },
+  "levels": {
+    "1": {
+      "exp": 104,
+      "factor": 1.0
+    },
+    "2": {
+      "exp": 118,
+      "factor": 1.0
+    },
+    "3": {
+      "exp": 131,
+      "factor": 1.0
+    },
+    "4": {
+      "exp": 145,
+      "factor": 1.0
+    },
+    "5": {
+      "exp": 375,
+      "factor": 1.0
+    },
+    "6": {
+      "exp": 412,
+      "factor": 1.0
+    },
+    "7": {
+      "exp": 450,
+      "factor": 1.0
+    },
+    "8": {
+      "exp": 487,
+      "factor": 1.0
+    },
+    "9": {
+      "exp": 525,
+      "factor": 1.0
+    },
+    "10": {
+      "exp": 1285,
+      "factor": 0.9
+    },
+    "11": {
+      "exp": 1542,
+      "factor": 0.9
+    },
+    "12": {
+      "exp": 1800,
+      "factor": 0.9
+    },
+    "13": {
+      "exp": 2057,
+      "factor": 0.9
+    },
+    "14": {
+      "exp": 2314,
+      "factor": 0.9
+    },
+    "15": {
+      "exp": 4285,
+      "factor": 0.9
+    },
+    "16": {
+      "exp": 5142,
+      "factor": 0.9
+    },
+    "17": {
+      "exp": 6000,
+      "factor": 0.9
+    },
+    "18": {
+      "exp": 6857,
+      "factor": 0.9
+    },
+    "19": {
+      "exp": 7714,
+      "factor": 0.9
+    },
+    "20": {
+      "exp": 10285,
+      "factor": 0.8
+    },
+    "21": {
+      "exp": 12342,
+      "factor": 0.8
+    },
+    "22": {
+      "exp": 14400,
+      "factor": 0.8
+    },
+    "23": {
+      "exp": 16457,
+      "factor": 0.8
+    },
+    "24": {
+      "exp": 18514,
+      "factor": 0.8
+    },
+    "25": {
+      "exp": 25714,
+      "factor": 0.8
+    },
+    "26": {
+      "exp": 30857,
+      "factor": 0.8
+    },
+    "27": {
+      "exp": 36000,
+      "factor": 0.8
+    },
+    "28": {
+      "exp": 41142,
+      "factor": 0.8
+    },
+    "29": {
+      "exp": 46285,
+      "factor": 0.8
+    },
+    "30": {
+      "exp": 68571,
+      "factor": 0.8
+    },
+    "31": {
+      "exp": 82285,
+      "factor": 0.8
+    },
+    "32": {
+      "exp": 96000,
+      "factor": 0.8
+    },
+    "33": {
+      "exp": 109714,
+      "factor": 0.8
+    },
+    "34": {
+      "exp": 123428,
+      "factor": 0.8
+    },
+    "35": {
+      "exp": 205714,
+      "factor": 0.8
+    },
+    "36": {
+      "exp": 246857,
+      "factor": 0.8
+    },
+    "37": {
+      "exp": 288000,
+      "factor": 0.8
+    },
+    "38": {
+      "exp": 329142,
+      "factor": 0.8
+    },
+    "39": {
+      "exp": 370285,
+      "factor": 0.8
+    },
+    "40": {
+      "exp": 342857,
+      "factor": 0.8
+    },
+    "41": {
+      "exp": 411428,
+      "factor": 0.8
+    },
+    "42": {
+      "exp": 480000,
+      "factor": 0.8
+    },
+    "43": {
+      "exp": 548571,
+      "factor": 0.8
+    },
+    "44": {
+      "exp": 617142,
+      "factor": 0.8
+    },
+    "45": {
+      "exp": 1097142,
+      "factor": 0.8
+    },
+    "46": {
+      "exp": 1316571,
+      "factor": 0.8
+    },
+    "47": {
+      "exp": 1536000,
+      "factor": 0.8
+    },
+    "48": {
+      "exp": 1755428,
+      "factor": 0.8
+    },
+    "49": {
+      "exp": 1974857,
+      "factor": 0.8
+    },
+    "50": {
+      "exp": 4608000,
+      "factor": 0.8
+    },
+    "51": {
+      "exp": 5068800,
+      "factor": 0.8
+    },
+    "52": {
+      "exp": 5529600,
+      "factor": 0.8
+    },
+    "53": {
+      "exp": 5990400,
+      "factor": 0.8
+    },
+    "54": {
+      "exp": 6451200,
+      "factor": 0.8
+    },
+    "55": {
+      "exp": 6656000,
+      "factor": 0.8
+    },
+    "56": {
+      "exp": 7321600,
+      "factor": 0.8
+    },
+    "57": {
+      "exp": 7987200,
+      "factor": 0.8
+    },
+    "58": {
+      "exp": 8652800,
+      "factor": 0.8
+    },
+    "59": {
+      "exp": 9318400,
+      "factor": 0.8
+    },
+    "60": {
+      "exp": 51200000,
+      "factor": 0.8
+    },
+    "61": {
+      "exp": 56320000,
+      "factor": 0.8
+    },
+    "62": {
+      "exp": 61440000,
+      "factor": 0.8
+    },
+    "63": {
+      "exp": 66560000,
+      "factor": 0.8
+    },
+    "64": {
+      "exp": 71680000,
+      "factor": 0.8
+    },
+    "65": {
+      "exp": 76800000,
+      "factor": 0.8
+    },
+    "66": {
+      "exp": 84480000,
+      "factor": 0.8
+    },
+    "67": {
+      "exp": 92160000,
+      "factor": 0.8
+    },
+    "68": {
+      "exp": 99840000,
+      "factor": 0.8
+    },
+    "69": {
+      "exp": 107520000,
+      "factor": 0.8
+    },
+    "70": {
+      "exp": 0,
+      "factor": 0.8
+    }
+  }
+}

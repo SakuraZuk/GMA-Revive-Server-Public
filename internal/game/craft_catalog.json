@@ -1,0 +1,2509 @@
+{
+  "recipes": {
+    "111": {
+      "src_material_ids": [
+        [
+          110,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          100
+        ]
+      ],
+      "compose_material_id": 111,
+      "rank": 1
+    },
+    "112": {
+      "src_material_ids": [
+        [
+          111,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          500
+        ]
+      ],
+      "compose_material_id": 112,
+      "rank": 2
+    },
+    "113": {
+      "src_material_ids": [
+        [
+          112,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          1000
+        ]
+      ],
+      "compose_material_id": 113,
+      "rank": 3
+    },
+    "114": {
+      "src_material_ids": [
+        [
+          113,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          30000
+        ]
+      ],
+      "compose_material_id": 114,
+      "rank": 4
+    },
+    "121": {
+      "src_material_ids": [
+        [
+          120,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          100
+        ]
+      ],
+      "compose_material_id": 121,
+      "rank": 1
+    },
+    "122": {
+      "src_material_ids": [
+        [
+          121,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          500
+        ]
+      ],
+      "compose_material_id": 122,
+      "rank": 2
+    },
+    "123": {
+      "src_material_ids": [
+        [
+          122,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          1000
+        ]
+      ],
+      "compose_material_id": 123,
+      "rank": 3
+    },
+    "124": {
+      "src_material_ids": [
+        [
+          123,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          30000
+        ]
+      ],
+      "compose_material_id": 124,
+      "rank": 4
+    },
+    "131": {
+      "src_material_ids": [
+        [
+          130,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          100
+        ]
+      ],
+      "compose_material_id": 131,
+      "rank": 1
+    },
+    "132": {
+      "src_material_ids": [
+        [
+          131,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          500
+        ]
+      ],
+      "compose_material_id": 132,
+      "rank": 2
+    },
+    "133": {
+      "src_material_ids": [
+        [
+          132,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          1000
+        ]
+      ],
+      "compose_material_id": 133,
+      "rank": 3
+    },
+    "134": {
+      "src_material_ids": [
+        [
+          133,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          30000
+        ]
+      ],
+      "compose_material_id": 134,
+      "rank": 4
+    },
+    "141": {
+      "src_material_ids": [
+        [
+          140,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          100
+        ]
+      ],
+      "compose_material_id": 141,
+      "rank": 1
+    },
+    "142": {
+      "src_material_ids": [
+        [
+          141,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          500
+        ]
+      ],
+      "compose_material_id": 142,
+      "rank": 2
+    },
+    "143": {
+      "src_material_ids": [
+        [
+          142,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          1000
+        ]
+      ],
+      "compose_material_id": 143,
+      "rank": 3
+    },
+    "144": {
+      "src_material_ids": [
+        [
+          143,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          30000
+        ]
+      ],
+      "compose_material_id": 144,
+      "rank": 4
+    },
+    "151": {
+      "src_material_ids": [
+        [
+          150,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          100
+        ]
+      ],
+      "compose_material_id": 151,
+      "rank": 1
+    },
+    "152": {
+      "src_material_ids": [
+        [
+          151,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          500
+        ]
+      ],
+      "compose_material_id": 152,
+      "rank": 2
+    },
+    "153": {
+      "src_material_ids": [
+        [
+          152,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          1000
+        ]
+      ],
+      "compose_material_id": 153,
+      "rank": 3
+    },
+    "154": {
+      "src_material_ids": [
+        [
+          153,
+          6
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          30000
+        ]
+      ],
+      "compose_material_id": 154,
+      "rank": 4
+    },
+    "161": {
+      "src_material_ids": [
+        [
+          160,
+          10
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          100000
+        ]
+      ],
+      "compose_material_id": 161,
+      "rank": 5
+    },
+    "162": {
+      "src_material_ids": [
+        [
+          160,
+          10
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          100000
+        ]
+      ],
+      "compose_material_id": 162,
+      "rank": 5
+    },
+    "163": {
+      "src_material_ids": [
+        [
+          160,
+          10
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          100000
+        ]
+      ],
+      "compose_material_id": 163,
+      "rank": 5
+    },
+    "164": {
+      "src_material_ids": [
+        [
+          160,
+          10
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          100000
+        ]
+      ],
+      "compose_material_id": 164,
+      "rank": 5
+    },
+    "165": {
+      "src_material_ids": [
+        [
+          160,
+          10
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          100000
+        ]
+      ],
+      "compose_material_id": 165,
+      "rank": 5
+    },
+    "212": {
+      "src_material_ids": [
+        [
+          211,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          200
+        ]
+      ],
+      "compose_material_id": 212,
+      "rank": 1
+    },
+    "213": {
+      "src_material_ids": [
+        [
+          212,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          800
+        ]
+      ],
+      "compose_material_id": 213,
+      "rank": 2
+    },
+    "214": {
+      "src_material_ids": [
+        [
+          213,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          1500
+        ]
+      ],
+      "compose_material_id": 214,
+      "rank": 3
+    },
+    "222": {
+      "src_material_ids": [
+        [
+          221,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          200
+        ]
+      ],
+      "compose_material_id": 222,
+      "rank": 1
+    },
+    "223": {
+      "src_material_ids": [
+        [
+          222,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          800
+        ]
+      ],
+      "compose_material_id": 223,
+      "rank": 2
+    },
+    "224": {
+      "src_material_ids": [
+        [
+          223,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          1500
+        ]
+      ],
+      "compose_material_id": 224,
+      "rank": 3
+    },
+    "232": {
+      "src_material_ids": [
+        [
+          231,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          200
+        ]
+      ],
+      "compose_material_id": 232,
+      "rank": 1
+    },
+    "233": {
+      "src_material_ids": [
+        [
+          232,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          800
+        ]
+      ],
+      "compose_material_id": 233,
+      "rank": 2
+    },
+    "234": {
+      "src_material_ids": [
+        [
+          233,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          1500
+        ]
+      ],
+      "compose_material_id": 234,
+      "rank": 3
+    },
+    "242": {
+      "src_material_ids": [
+        [
+          241,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          200
+        ]
+      ],
+      "compose_material_id": 242,
+      "rank": 1
+    },
+    "243": {
+      "src_material_ids": [
+        [
+          242,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          800
+        ]
+      ],
+      "compose_material_id": 243,
+      "rank": 2
+    },
+    "244": {
+      "src_material_ids": [
+        [
+          243,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          1500
+        ]
+      ],
+      "compose_material_id": 244,
+      "rank": 3
+    },
+    "252": {
+      "src_material_ids": [
+        [
+          251,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          200
+        ]
+      ],
+      "compose_material_id": 252,
+      "rank": 1
+    },
+    "253": {
+      "src_material_ids": [
+        [
+          252,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          800
+        ]
+      ],
+      "compose_material_id": 253,
+      "rank": 2
+    },
+    "254": {
+      "src_material_ids": [
+        [
+          253,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          1500
+        ]
+      ],
+      "compose_material_id": 254,
+      "rank": 3
+    },
+    "6011005": {
+      "src_material_ids": [
+        [
+          6011004,
+          16
+        ],
+        [
+          6011006,
+          16
+        ],
+        [
+          6011008,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6011005,
+      "rank": 26
+    },
+    "6011007": {
+      "src_material_ids": [
+        [
+          6011002,
+          10
+        ],
+        [
+          6011010,
+          15
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6011007,
+      "rank": 24
+    },
+    "6011011": {
+      "src_material_ids": [
+        [
+          6011001,
+          3
+        ],
+        [
+          6011009,
+          3
+        ],
+        [
+          6011016,
+          4
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6011011,
+      "rank": 25
+    },
+    "6012002": {
+      "src_material_ids": [
+        [
+          6012003,
+          10
+        ],
+        [
+          6012004,
+          10
+        ],
+        [
+          6012005,
+          5
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6012002,
+      "rank": 23
+    },
+    "6012006": {
+      "src_material_ids": [
+        [
+          6012001,
+          2
+        ],
+        [
+          6012008,
+          1
+        ],
+        [
+          6012019,
+          1
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6012006,
+      "rank": 22
+    },
+    "6012011": {
+      "src_material_ids": [
+        [
+          6012009,
+          32
+        ],
+        [
+          6012010,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6012011,
+      "rank": 21
+    },
+    "6015004": {
+      "src_material_ids": [
+        [
+          6015016,
+          5
+        ],
+        [
+          6015021,
+          5
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6015004,
+      "rank": 20
+    },
+    "6015007": {
+      "src_material_ids": [
+        [
+          6015006,
+          4
+        ],
+        [
+          6015008,
+          1
+        ],
+        [
+          6015009,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6015007,
+      "rank": 19
+    },
+    "6015010": {
+      "src_material_ids": [
+        [
+          6015001,
+          32
+        ],
+        [
+          6015002,
+          5
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6015010,
+      "rank": 18
+    },
+    "6015015": {
+      "src_material_ids": [
+        [
+          6015011,
+          16
+        ],
+        [
+          6015012,
+          16
+        ],
+        [
+          6015013,
+          5
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6015015,
+      "rank": 17
+    },
+    "6016004": {
+      "src_material_ids": [
+        [
+          6016003,
+          10
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6016004,
+      "rank": 16
+    },
+    "6016007": {
+      "src_material_ids": [
+        [
+          6016005,
+          2
+        ],
+        [
+          6016006,
+          2
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6016007,
+      "rank": 15
+    },
+    "6016011": {
+      "src_material_ids": [
+        [
+          6016010,
+          5
+        ],
+        [
+          6016012,
+          5
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6016011,
+      "rank": 14
+    },
+    "6017006": {
+      "src_material_ids": [
+        [
+          6017001,
+          2
+        ],
+        [
+          6017002,
+          32
+        ],
+        [
+          6017005,
+          3
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6017006,
+      "rank": 13
+    },
+    "6017011": {
+      "src_material_ids": [
+        [
+          6017010,
+          16
+        ],
+        [
+          6017016,
+          16
+        ],
+        [
+          6017019,
+          5
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6017011,
+      "rank": 12
+    },
+    "6017015": {
+      "src_material_ids": [
+        [
+          6017003,
+          16
+        ],
+        [
+          6017004,
+          16
+        ],
+        [
+          6017008,
+          5
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6017015,
+      "rank": 11
+    },
+    "6017017": {
+      "src_material_ids": [
+        [
+          6017013,
+          32
+        ],
+        [
+          6017018,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6017017,
+      "rank": 10
+    },
+    "6018016": {
+      "src_material_ids": [
+        [
+          6012007,
+          16
+        ],
+        [
+          6012012,
+          16
+        ],
+        [
+          6012014,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6018016,
+      "rank": 9
+    },
+    "6018020": {
+      "src_material_ids": [
+        [
+          6018002,
+          5
+        ],
+        [
+          6018003,
+          5
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6018020,
+      "rank": 8
+    },
+    "6020011": {
+      "src_material_ids": [
+        [
+          6020010,
+          4
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6020011,
+      "rank": 7
+    },
+    "6022001": {
+      "src_material_ids": [
+        [
+          6017001,
+          5
+        ],
+        [
+          6014003,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022001,
+      "rank": 99999
+    },
+    "6022002": {
+      "src_material_ids": [
+        [
+          6017002,
+          32
+        ],
+        [
+          6027002,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022002,
+      "rank": 99998
+    },
+    "6022003": {
+      "src_material_ids": [
+        [
+          6017003,
+          32
+        ],
+        [
+          6014001,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022003,
+      "rank": 99997
+    },
+    "6022004": {
+      "src_material_ids": [
+        [
+          6017004,
+          32
+        ],
+        [
+          6027001,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022004,
+      "rank": 99996
+    },
+    "6022005": {
+      "src_material_ids": [
+        [
+          6017005,
+          5
+        ],
+        [
+          6027003,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022005,
+      "rank": 99995
+    },
+    "6022006": {
+      "src_material_ids": [
+        [
+          6017006,
+          1
+        ],
+        [
+          6027004,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022006,
+      "rank": 99994
+    },
+    "6022007": {
+      "src_material_ids": [
+        [
+          6017007,
+          2
+        ],
+        [
+          6027006,
+          2
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022007,
+      "rank": 99993
+    },
+    "6022008": {
+      "src_material_ids": [
+        [
+          6017008,
+          5
+        ],
+        [
+          6014002,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022008,
+      "rank": 99992
+    },
+    "6022009": {
+      "src_material_ids": [
+        [
+          6017009,
+          2
+        ],
+        [
+          6027009,
+          2
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022009,
+      "rank": 99991
+    },
+    "6022010": {
+      "src_material_ids": [
+        [
+          6017010,
+          32
+        ],
+        [
+          6014005,
+          16
+        ],
+        [
+          6014005,
+          16
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022010,
+      "rank": 99990
+    },
+    "6022011": {
+      "src_material_ids": [
+        [
+          6017011,
+          1
+        ],
+        [
+          6027005,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022011,
+      "rank": 99989
+    },
+    "6022012": {
+      "src_material_ids": [
+        [
+          6017012,
+          1
+        ],
+        [
+          6027009,
+          1
+        ],
+        [
+          6014006,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022012,
+      "rank": 99988
+    },
+    "6022013": {
+      "src_material_ids": [
+        [
+          6017013,
+          32
+        ],
+        [
+          6014012,
+          16
+        ],
+        [
+          6027008,
+          16
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022013,
+      "rank": 99987
+    },
+    "6022014": {
+      "src_material_ids": [
+        [
+          6017014,
+          1
+        ],
+        [
+          6027007,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022014,
+      "rank": 99986
+    },
+    "6022016": {
+      "src_material_ids": [
+        [
+          6017016,
+          32
+        ],
+        [
+          6014007,
+          16
+        ],
+        [
+          6014008,
+          16
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022016,
+      "rank": 99985
+    },
+    "6022017": {
+      "src_material_ids": [
+        [
+          6017017,
+          1
+        ],
+        [
+          6027010,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022017,
+      "rank": 99984
+    },
+    "6022018": {
+      "src_material_ids": [
+        [
+          6017019,
+          5
+        ],
+        [
+          6014009,
+          16
+        ],
+        [
+          6014010,
+          16
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022018,
+      "rank": 99983
+    },
+    "6022020": {
+      "src_material_ids": [
+        [
+          6017020,
+          1
+        ],
+        [
+          6017019,
+          1
+        ],
+        [
+          6014011,
+          32
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6022020,
+      "rank": 99982
+    },
+    "6025006": {
+      "src_material_ids": [
+        [
+          6025002,
+          10
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6025006,
+      "rank": 6
+    },
+    "6028001": {
+      "src_material_ids": [
+        [
+          6028011,
+          3
+        ],
+        [
+          6028013,
+          3
+        ],
+        [
+          6028014,
+          4
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6028001,
+      "rank": 5
+    },
+    "6028002": {
+      "src_material_ids": [
+        [
+          6028005,
+          1
+        ],
+        [
+          6028016,
+          2
+        ],
+        [
+          6028017,
+          1
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6028002,
+      "rank": 4
+    },
+    "6028007": {
+      "src_material_ids": [
+        [
+          6028003,
+          2
+        ],
+        [
+          6028006,
+          1
+        ],
+        [
+          6028012,
+          1
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6028007,
+      "rank": 3
+    },
+    "6028010": {
+      "src_material_ids": [
+        [
+          6028004,
+          2
+        ],
+        [
+          6028015,
+          1
+        ],
+        [
+          6028018,
+          1
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6028010,
+      "rank": 2
+    },
+    "6028020": {
+      "src_material_ids": [
+        [
+          6028021,
+          2
+        ],
+        [
+          6028022,
+          1
+        ],
+        [
+          6028023,
+          1
+        ]
+      ],
+      "cost_material_ids": [
+        [
+          12,
+          2000
+        ]
+      ],
+      "compose_material_id": 6028020,
+      "rank": 1
+    }
+  },
+  "unlocks": {
+    "1": {
+      "_id": 1,
+      "material_ids": [
+        161,
+        162,
+        163,
+        164,
+        165,
+        114,
+        124,
+        134,
+        144,
+        154
+      ]
+    },
+    "2": {
+      "_id": 2,
+      "material_ids": [
+        111,
+        112,
+        121,
+        122,
+        131,
+        132,
+        141,
+        142,
+        151,
+        152,
+        113,
+        123,
+        133,
+        143,
+        153
+      ]
+    },
+    "3": {
+      "_id": 3,
+      "material_ids": [
+        212,
+        213,
+        222,
+        223,
+        232,
+        233,
+        242,
+        243,
+        252,
+        253
+      ]
+    },
+    "4": {
+      "_id": 4,
+      "material_ids": [
+        214,
+        224,
+        234,
+        244,
+        254
+      ]
+    },
+    "5": {
+      "_id": 5,
+      "material_ids": [
+        6022001,
+        6022002,
+        6022003,
+        6022004,
+        6022005,
+        6022006,
+        6022007,
+        6022008,
+        6022009,
+        6022010,
+        6022011,
+        6022012,
+        6022013,
+        6022014,
+        6022016,
+        6022017,
+        6022018,
+        6022020,
+        6011005,
+        6011011,
+        6011007,
+        6012002,
+        6012006,
+        6012011,
+        6015004,
+        6015007,
+        6015010,
+        6015015,
+        6016004,
+        6016007,
+        6016011,
+        6017006,
+        6017011,
+        6017015,
+        6017017,
+        6018016,
+        6018020,
+        6020011,
+        6025006,
+        6028001,
+        6028002,
+        6028007,
+        6028010,
+        6028020
+      ]
+    }
+  },
+  "furniture_unlock": {
+    "1": {
+      "_id": 1,
+      "material_id": 19,
+      "material_count": 2000000,
+      "unlock_desc": "解锁后开放家具合成功能\n解锁后开放家具融合功能",
+      "wishlist_desc": "消耗的家具舒适度和大于等于150时，融合出现融合限定家具时，出现选择的【心愿单】家具的概率提升至60。",
+      "wishlish_source_id": 4
+    }
+  },
+  "levels": {
+    "0": {
+      "level": 0,
+      "material_id": 806,
+      "material_count": 1,
+      "model_id": 8900,
+      "facility_icon": "large_img/restroom/restroom_immortal_base_big_01.png",
+      "loop_sfxs": [],
+      "facility_spine_anim": "idle1",
+      "facility_spine_scale": 0.21,
+      "facility_spine_offset": [
+        -1.0,
+        -40.0
+      ],
+      "upgrade_bonus_id": null,
+      "upgrade_effect": [
+        [
+          "10",
+          0
+        ],
+        [
+          "composition_cost",
+          null
+        ]
+      ],
+      "upgrade_effect_text": [
+        "未解锁"
+      ],
+      "effect_detail": [
+        [
+          8,
+          null,
+          null,
+          null
+        ]
+      ],
+      "level_effect": []
+    },
+    "1": {
+      "level": 1,
+      "material_id": 19,
+      "material_count": 0,
+      "model_id": 8911,
+      "facility_icon": "large_img/restroom/restroom_immortal_tower_02.png",
+      "loop_sfxs": [],
+      "facility_spine_anim": "idle2",
+      "facility_spine_scale": 0.21,
+      "facility_spine_offset": [
+        -1.0,
+        -40.0
+      ],
+      "upgrade_bonus_id": null,
+      "upgrade_effect": [
+        [
+          "10",
+          1
+        ],
+        [
+          "composition_cost",
+          null
+        ]
+      ],
+      "upgrade_effect_text": [
+        "#c756b7b开放#cce5708至理·升格材料#c756b7b合成",
+        "#c756b7b开放#cce5708华丽·升格材料#c756b7b合成"
+      ],
+      "effect_detail": [
+        [
+          8,
+          "合成花费",
+          1.0,
+          null
+        ]
+      ],
+      "level_effect": [
+        [
+          "开放下列材料合成：",
+          null
+        ],
+        [
+          "至理·升格材料",
+          null
+        ],
+        [
+          "华丽·升格材料",
+          null
+        ]
+      ]
+    },
+    "2": {
+      "level": 2,
+      "material_id": 19,
+      "material_count": 50000,
+      "model_id": 8912,
+      "facility_icon": "large_img/restroom/restroom_immortal_tower_03.png",
+      "loop_sfxs": [],
+      "facility_spine_anim": "idle3",
+      "facility_spine_scale": 0.19,
+      "facility_spine_offset": [
+        -1.0,
+        -43.0
+      ],
+      "upgrade_bonus_id": null,
+      "upgrade_effect": [
+        [
+          "10",
+          2
+        ],
+        [
+          "composition_cost",
+          null
+        ]
+      ],
+      "upgrade_effect_text": [
+        "#c756b7b开放#cce5708精致·升格材料#c756b7b合成",
+        "#c756b7b开放#cce5708普通·升格材料#c756b7b合成",
+        "#c756b7b开放#cce5708残缺·升格材料#c756b7b合成"
+      ],
+      "effect_detail": [
+        [
+          8,
+          "合成花费",
+          1.0,
+          null
+        ]
+      ],
+      "level_effect": [
+        [
+          "开放下列材料合成：",
+          null
+        ],
+        [
+          "至理·升格材料",
+          null
+        ],
+        [
+          "华丽·升格材料",
+          null
+        ],
+        [
+          "精致·升格材料",
+          null
+        ],
+        [
+          "普通·升格材料",
+          null
+        ],
+        [
+          "残缺·升格材料",
+          null
+        ]
+      ]
+    },
+    "3": {
+      "level": 3,
+      "material_id": 19,
+      "material_count": 300000,
+      "model_id": 8913,
+      "facility_icon": "large_img/restroom/restroom_immortal_tower_04.png",
+      "loop_sfxs": [],
+      "facility_spine_anim": "idle4",
+      "facility_spine_scale": 0.18,
+      "facility_spine_offset": [
+        -1.0,
+        -44.0
+      ],
+      "upgrade_bonus_id": null,
+      "upgrade_effect": [
+        [
+          "10",
+          3
+        ],
+        [
+          "composition_cost",
+          null
+        ]
+      ],
+      "upgrade_effect_text": [
+        "#c756b7b开放#cce5708精致·技能材料#c756b7b合成",
+        "#c756b7b开放#cce5708普通·技能材料#c756b7b合成",
+        "#c756b7b开放#cce5708家具合成、家具融合#c756b7b入口"
+      ],
+      "effect_detail": [
+        [
+          8,
+          "合成花费",
+          1.0,
+          null
+        ]
+      ],
+      "level_effect": [
+        [
+          "开放下列材料合成：",
+          null
+        ],
+        [
+          "至理·升格材料",
+          null
+        ],
+        [
+          "华丽·升格材料",
+          null
+        ],
+        [
+          "精致·升格材料",
+          null
+        ],
+        [
+          "普通·升格材料",
+          null
+        ],
+        [
+          "残缺·升格材料",
+          null
+        ],
+        [
+          "普通·技能材料",
+          null
+        ],
+        [
+          "精致·技能材料",
+          null
+        ]
+      ]
+    },
+    "4": {
+      "level": 4,
+      "material_id": 19,
+      "material_count": 1000000,
+      "model_id": 8914,
+      "facility_icon": "large_img/restroom/restroom_immortal_tower_05.png",
+      "loop_sfxs": [],
+      "facility_spine_anim": "idle5",
+      "facility_spine_scale": 0.18,
+      "facility_spine_offset": [
+        -1.0,
+        -44.0
+      ],
+      "upgrade_bonus_id": null,
+      "upgrade_effect": [
+        [
+          "10",
+          4
+        ],
+        [
+          "composition_cost",
+          null
+        ],
+        [
+          "18",
+          5
+        ]
+      ],
+      "upgrade_effect_text": [
+        "#c756b7b开放#cce5708华丽·技能材料#c756b7b合成"
+      ],
+      "effect_detail": [
+        [
+          8,
+          "合成花费",
+          1.0,
+          null
+        ]
+      ],
+      "level_effect": [
+        [
+          "开放下列材料合成：",
+          null
+        ],
+        [
+          "至理·升格材料",
+          null
+        ],
+        [
+          "华丽·升格材料",
+          null
+        ],
+        [
+          "精致·升格材料",
+          null
+        ],
+        [
+          "普通·升格材料",
+          null
+        ],
+        [
+          "残缺·升格材料",
+          null
+        ],
+        [
+          "普通·技能材料",
+          null
+        ],
+        [
+          "精致·技能材料",
+          null
+        ],
+        [
+          "华丽·技能材料",
+          null
+        ],
+        [
+          "开放家具合成、家具融合入口",
+          null
+        ]
+      ]
+    }
+  },
+  "furniture_sources": {
+    "1": [
+      6033001,
+      6033002,
+      6033003,
+      6033004,
+      6033005,
+      6033007,
+      6033008,
+      6033009,
+      6033010,
+      6033011,
+      6033012,
+      6033013,
+      6033016,
+      6033018,
+      6033019,
+      6033020,
+      6033021,
+      6033022,
+      6033023,
+      6033024,
+      6033025,
+      6033026,
+      6033027,
+      6033028,
+      6033029,
+      6033030,
+      6033031,
+      6027001,
+      6027002,
+      6027003,
+      6027004,
+      6027005,
+      6027006,
+      6027007,
+      6027008,
+      6027009,
+      6027010,
+      6027012,
+      6027013,
+      6027014,
+      6017001,
+      6017002,
+      6017003,
+      6017004,
+      6017005,
+      6017006,
+      6017007,
+      6017008,
+      6017009,
+      6017010,
+      6017011,
+      6017012,
+      6017013,
+      6017014,
+      6017015,
+      6017016,
+      6017017,
+      6017018,
+      6017019,
+      6017020,
+      6015001,
+      6015002,
+      6015003,
+      6015004,
+      6015005,
+      6015006,
+      6015007,
+      6015008,
+      6015009,
+      6015010,
+      6015011,
+      6015012,
+      6015013,
+      6015014,
+      6015015,
+      6015016,
+      6015017,
+      6015018,
+      6015019,
+      6015020,
+      6015021,
+      6011001,
+      6011002,
+      6011004,
+      6011005,
+      6011006,
+      6011007,
+      6011008,
+      6011009,
+      6011010,
+      6011011,
+      6011012,
+      6011013,
+      6011014,
+      6011015,
+      6011016,
+      6030002,
+      6030003,
+      6030004,
+      6030005,
+      6030006,
+      6030007,
+      6030008,
+      6030012,
+      6030013,
+      6030014,
+      6030015,
+      6030016,
+      6030017,
+      6030018,
+      6030019,
+      6030020,
+      6028001,
+      6028002,
+      6028003,
+      6028004,
+      6028006,
+      6028007,
+      6028008,
+      6028010,
+      6028011,
+      6028013,
+      6028014,
+      6028015,
+      6028016,
+      6028017,
+      6028019,
+      6028020,
+      6028021,
+      6028022,
+      6028023,
+      6026023,
+      6026024,
+      6026025,
+      6026026,
+      6026027,
+      6026028,
+      6018001,
+      6018002,
+      6018003,
+      6018004,
+      6018005,
+      6018006,
+      6018007,
+      6018008,
+      6018009,
+      6018010,
+      6018011,
+      6018013,
+      6018014,
+      6018015,
+      6018017,
+      6018019,
+      6018020,
+      6016001,
+      6016002,
+      6016003,
+      6016004,
+      6016005,
+      6016006,
+      6016007,
+      6016008,
+      6016009,
+      6016010,
+      6016011,
+      6016012,
+      6014001,
+      6014002,
+      6014003,
+      6014004,
+      6014005,
+      6014006,
+      6014007,
+      6014008,
+      6014009,
+      6014010,
+      6014011,
+      6014012,
+      6012001,
+      6012002,
+      6012003,
+      6012004,
+      6012005,
+      6012006,
+      6012007,
+      6012008,
+      6012009,
+      6012010,
+      6012011,
+      6012012,
+      6012014,
+      6012015,
+      6012016,
+      6012017,
+      6012018,
+      6012019
+    ],
+    "2": [
+      6033006,
+      6033014,
+      6033015,
+      6033017,
+      6029001,
+      6029002,
+      6029003,
+      6029004,
+      6029005,
+      6029006,
+      6030001,
+      6030009,
+      6030010,
+      6030011,
+      6028005,
+      6028009,
+      6028012,
+      6028018,
+      6028024,
+      6028025,
+      6028026,
+      6026001,
+      6026002,
+      6026003,
+      6026004,
+      6026005,
+      6026006,
+      6026007,
+      6026008,
+      6026009,
+      6026010,
+      6026011,
+      6026012,
+      6026013,
+      6026014,
+      6026015,
+      6026016,
+      6026017,
+      6026018,
+      6026019,
+      6026020,
+      6026021,
+      6026022,
+      6020001,
+      6020005,
+      6020006,
+      6020008,
+      6020009,
+      6020010,
+      6020011,
+      6020012,
+      6020013,
+      6020014,
+      6020015,
+      6018012,
+      6018016,
+      6018018
+    ],
+    "3": [
+      6022001,
+      6022002,
+      6022003,
+      6022004,
+      6022005,
+      6022006,
+      6022007,
+      6022008,
+      6022009,
+      6022010,
+      6022011,
+      6022012,
+      6022013,
+      6022014,
+      6022016,
+      6022017,
+      6022018,
+      6022020
+    ],
+    "4": [
+      6031001,
+      6031002,
+      6031003,
+      6031004,
+      6031005,
+      6031006,
+      6031007,
+      6031008,
+      6031009,
+      6031010,
+      6031011,
+      6031012,
+      6031013,
+      6031014,
+      6031015,
+      6031016,
+      6031017,
+      6031018,
+      6031019,
+      6031020,
+      6031021,
+      6031022,
+      6031023,
+      6031024,
+      6031025,
+      6031026,
+      6031027,
+      6031028,
+      6031029,
+      6031030,
+      6031031,
+      6031032,
+      6031033,
+      6031034
+    ],
+    "5": [
+      6025001,
+      6025002,
+      6025003,
+      6025004,
+      6025005,
+      6025006,
+      6025007
+    ],
+    "999": [
+      609999013
+    ]
+  },
+  "fusion": {
+    "1": {
+      "comfort": 90,
+      "cost": [
+        19,
+        30000
+      ],
+      "groups": [
+        {
+          "selector": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          "weight": 98,
+          "wish_probability": 0
+        },
+        {
+          "selector": [
+            [
+              2
+            ],
+            [
+              6999999
+            ]
+          ],
+          "weight": 2,
+          "wish_probability": 0
+        },
+        {
+          "selector": [],
+          "weight": 0,
+          "wish_probability": 0
+        }
+      ]
+    },
+    "2": {
+      "comfort": 120,
+      "cost": [
+        19,
+        30000
+      ],
+      "groups": [
+        {
+          "selector": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          "weight": 92,
+          "wish_probability": 0
+        },
+        {
+          "selector": [
+            [
+              1
+            ],
+            [
+              4
+            ]
+          ],
+          "weight": 6,
+          "wish_probability": 0
+        },
+        {
+          "selector": [
+            [
+              2
+            ],
+            [
+              6999999
+            ]
+          ],
+          "weight": 2,
+          "wish_probability": 0
+        }
+      ]
+    },
+    "3": {
+      "comfort": 150,
+      "cost": [
+        19,
+        30000
+      ],
+      "groups": [
+        {
+          "selector": [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          "weight": 92,
+          "wish_probability": 0
+        },
+        {
+          "selector": [
+            [
+              1
+            ],
+            [
+              4
+            ]
+          ],
+          "weight": 6,
+          "wish_probability": 0.6
+        },
+        {
+          "selector": [
+            [
+              2
+            ],
+            [
+              6999999
+            ]
+          ],
+          "weight": 2,
+          "wish_probability": 0
+        }
+      ]
+    }
+  },
+  "fusion_input_count": 3,
+  "来源": {
+    "furniture_compose": {
+      "路径": "out/client_catalogs/tables/furniture_compose.json",
+      "SHA256": "ee91087f279e3d557303ff7247fa59771ef15c9b513665931b40458e1b09c638"
+    },
+    "material_compose": {
+      "路径": "out/client_catalogs/tables/material_compose.json",
+      "SHA256": "d862507098506fcec3096f78448ad790274b6828aebda5f0c18616bd0c0bf220"
+    },
+    "facility_process_unlock_materials": {
+      "路径": "out/client_catalogs/tables/facility_process_unlock_materials.json",
+      "SHA256": "d36bb2404cc3f48eee2b9638b19a940d45a872744fc673e2ec93df6efc5829b4"
+    },
+    "facility_unlock_furniture_compose": {
+      "路径": "out/client_catalogs/tables/facility_unlock_furniture_compose.json",
+      "SHA256": "913ec098ef7dd3fb0c5fb557b84b036083d2696bd9efec8394c60384517ad077"
+    },
+    "facility_process": {
+      "路径": "out/client_catalogs/tables/facility_process.json",
+      "SHA256": "2c67008eeffc5dd427dfc33177f16d32602966f0763282d10aff49310010121e"
+    },
+    "furniture_source": {
+      "路径": "out/client_catalogs/tables/furniture_source.json",
+      "SHA256": "c2c1657205957322001bcd0bb5de5e1212cab42ed0999ce1bf471108244f0edd"
+    }
+  }
+}

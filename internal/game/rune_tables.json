@@ -1,0 +1,4876 @@
+{
+ "tables": {
+  "errors": {
+   "RET_CARD_NOT_EXIST": 3,
+   "RET_DECOMPOSE_RUNE_EMPTY": 5252,
+   "RET_DECOMPOSE_RUNE_SINGLE_COUNT_LIMIT": 5251,
+   "RET_GOLD_NOT_ENOUGH": 7,
+   "RET_MATERIAL_NOT_ENOUGH": 5,
+   "RET_RUNE_ATTR_ID_ERROR": 5128,
+   "RET_RUNE_ATTR_INVALID": 5120,
+   "RET_RUNE_CANNOT_RESET_IT": 5129,
+   "RET_RUNE_CHANGE_ATTR_INDEX_ERROR": 5127,
+   "RET_RUNE_EMBED_OTHER_CARD": 5112,
+   "RET_RUNE_LOCKED": 5113,
+   "RET_RUNE_LOCK_ATTR_EMPTY": 5126,
+   "RET_RUNE_LOCK_POS_EMPTY": 5125,
+   "RET_RUNE_LOCK_SETTING_NOT_EXIST": 5122,
+   "RET_RUNE_LOCK_SETTING_REPEAT": 5121,
+   "RET_RUNE_LOCK_STAR_EMPTY": 5124,
+   "RET_RUNE_LOCK_SUIT_EMPTY": 5123,
+   "RET_RUNE_MAX_COUNT_EXCEED": 5105,
+   "RET_RUNE_MAX_COUNT_LIMIT": 5111,
+   "RET_RUNE_NOT_EMBED": 5104,
+   "RET_RUNE_NOT_EXIST": 5101,
+   "RET_RUNE_POS_INVALID": 5119,
+   "RET_RUNE_REACH_MAX_LEVEL": 5102,
+   "RET_RUNE_SELECT_SAME_SUIT": 5115,
+   "RET_RUNE_SELECT_SUIT_MAX": 5116,
+   "RET_RUNE_SHOP_OPEN_STONE_MAX": 36004,
+   "RET_RUNE_SHOP_POLISH_FINISH": 36002,
+   "RET_RUNE_SHOP_POLISH_MAX": 36001,
+   "RET_RUNE_SHOP_POLISH_NO_RUNE": 36003,
+   "RET_RUNE_STAR_INVALID": 5118,
+   "RET_RUNE_SUIT_INVALID": 5117,
+   "RET_RUNE_TEMPLATE_DELETE_SUCCEED": 5110,
+   "RET_RUNE_TEMPLATE_MAX_COUNT_LIMIT": 5106,
+   "RET_RUNE_TEMPLATE_NAME_TOO_LONG": 5107,
+   "RET_SUCCESS": 0
+  },
+  "limits": {
+   "MAX_RUNE_COUNT": 6000
+  },
+  "runes": [
+   {
+    "base_attr_count": 1,
+    "base_attr_ids": [
+     10101,
+     10102,
+     10103
+    ],
+    "extra_attr_count": 0,
+    "extra_attr_ids": [
+     20101,
+     20102,
+     20103,
+     20104,
+     20105,
+     20106,
+     20107,
+     20108
+    ],
+    "extra_attr_probability": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "position": 1,
+    "star": 1
+   },
+   {
+    "base_attr_count": 1,
+    "base_attr_ids": [
+     10201,
+     10202,
+     10203
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20201,
+     20202,
+     20203,
+     20204,
+     20205,
+     20206,
+     20207,
+     20208
+    ],
+    "extra_attr_probability": [
+     800.0,
+     200.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "position": 1,
+    "star": 2
+   },
+   {
+    "base_attr_count": 1,
+    "base_attr_ids": [
+     10301,
+     10302,
+     10303
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20301,
+     20302,
+     20303,
+     20304,
+     20305,
+     20306,
+     20307,
+     20308
+    ],
+    "extra_attr_probability": [
+     200.0,
+     400.0,
+     400.0,
+     0.0,
+     0.0
+    ],
+    "position": 1,
+    "star": 3
+   },
+   {
+    "base_attr_count": 2,
+    "base_attr_ids": [
+     10401,
+     10402,
+     10403
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20401,
+     20402,
+     20403,
+     20404,
+     20405,
+     20406,
+     20407,
+     20408
+    ],
+    "extra_attr_probability": [
+     0.0,
+     300.0,
+     500.0,
+     200.0,
+     0.0
+    ],
+    "position": 1,
+    "star": 4
+   },
+   {
+    "base_attr_count": 2,
+    "base_attr_ids": [
+     10501,
+     10502,
+     10503
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20501,
+     20502,
+     20503,
+     20504,
+     20505,
+     20506,
+     20507,
+     20508
+    ],
+    "extra_attr_probability": [
+     0.0,
+     200.0,
+     300.0,
+     300.0,
+     200.0
+    ],
+    "position": 1,
+    "star": 5
+   },
+   {
+    "base_attr_count": 1,
+    "base_attr_ids": [
+     10108,
+     10111,
+     10112,
+     10113
+    ],
+    "extra_attr_count": 0,
+    "extra_attr_ids": [
+     20101,
+     20102,
+     20103,
+     20104,
+     20105,
+     20106,
+     20107,
+     20108
+    ],
+    "extra_attr_probability": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "position": 2,
+    "star": 1
+   },
+   {
+    "base_attr_count": 1,
+    "base_attr_ids": [
+     10208,
+     10211,
+     10212,
+     10213
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20201,
+     20202,
+     20203,
+     20204,
+     20205,
+     20206,
+     20207,
+     20208
+    ],
+    "extra_attr_probability": [
+     800.0,
+     200.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "position": 2,
+    "star": 2
+   },
+   {
+    "base_attr_count": 1,
+    "base_attr_ids": [
+     10308,
+     10311,
+     10312,
+     10313
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20301,
+     20302,
+     20303,
+     20304,
+     20305,
+     20306,
+     20307,
+     20308
+    ],
+    "extra_attr_probability": [
+     200.0,
+     400.0,
+     400.0,
+     0.0,
+     0.0
+    ],
+    "position": 2,
+    "star": 3
+   },
+   {
+    "base_attr_count": 2,
+    "base_attr_ids": [
+     10408,
+     10411,
+     10412,
+     10413
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20401,
+     20402,
+     20403,
+     20404,
+     20405,
+     20406,
+     20407,
+     20408
+    ],
+    "extra_attr_probability": [
+     0.0,
+     300.0,
+     500.0,
+     200.0,
+     0.0
+    ],
+    "position": 2,
+    "star": 4
+   },
+   {
+    "base_attr_count": 2,
+    "base_attr_ids": [
+     10508,
+     10511,
+     10512,
+     10513
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20501,
+     20502,
+     20503,
+     20504,
+     20505,
+     20506,
+     20507,
+     20508
+    ],
+    "extra_attr_probability": [
+     0.0,
+     200.0,
+     300.0,
+     300.0,
+     200.0
+    ],
+    "position": 2,
+    "star": 5
+   },
+   {
+    "base_attr_count": 1,
+    "base_attr_ids": [
+     10104,
+     10105,
+     10111,
+     10112,
+     10113
+    ],
+    "extra_attr_count": 0,
+    "extra_attr_ids": [
+     20101,
+     20102,
+     20103,
+     20104,
+     20105,
+     20106,
+     20107,
+     20108
+    ],
+    "extra_attr_probability": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "position": 3,
+    "star": 1
+   },
+   {
+    "base_attr_count": 1,
+    "base_attr_ids": [
+     10204,
+     10205,
+     10211,
+     10212,
+     10213
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20201,
+     20202,
+     20203,
+     20204,
+     20205,
+     20206,
+     20207,
+     20208
+    ],
+    "extra_attr_probability": [
+     800.0,
+     200.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "position": 3,
+    "star": 2
+   },
+   {
+    "base_attr_count": 1,
+    "base_attr_ids": [
+     10304,
+     10305,
+     10311,
+     10312,
+     10313
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20301,
+     20302,
+     20303,
+     20304,
+     20305,
+     20306,
+     20307,
+     20308
+    ],
+    "extra_attr_probability": [
+     200.0,
+     400.0,
+     400.0,
+     0.0,
+     0.0
+    ],
+    "position": 3,
+    "star": 3
+   },
+   {
+    "base_attr_count": 2,
+    "base_attr_ids": [
+     10404,
+     10405,
+     10411,
+     10412,
+     10413
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20401,
+     20402,
+     20403,
+     20404,
+     20405,
+     20406,
+     20407,
+     20408
+    ],
+    "extra_attr_probability": [
+     0.0,
+     300.0,
+     500.0,
+     200.0,
+     0.0
+    ],
+    "position": 3,
+    "star": 4
+   },
+   {
+    "base_attr_count": 2,
+    "base_attr_ids": [
+     10504,
+     10505,
+     10511,
+     10512,
+     10513
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20501,
+     20502,
+     20503,
+     20504,
+     20505,
+     20506,
+     20507,
+     20508
+    ],
+    "extra_attr_probability": [
+     0.0,
+     200.0,
+     300.0,
+     300.0,
+     200.0
+    ],
+    "position": 3,
+    "star": 5
+   },
+   {
+    "base_attr_count": 1,
+    "base_attr_ids": [
+     10106,
+     10107,
+     10111,
+     10112,
+     10113
+    ],
+    "extra_attr_count": 0,
+    "extra_attr_ids": [
+     20101,
+     20102,
+     20103,
+     20104,
+     20105,
+     20106,
+     20107,
+     20108
+    ],
+    "extra_attr_probability": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "position": 4,
+    "star": 1
+   },
+   {
+    "base_attr_count": 1,
+    "base_attr_ids": [
+     10206,
+     10207,
+     10211,
+     10212,
+     10213
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20201,
+     20202,
+     20203,
+     20204,
+     20205,
+     20206,
+     20207,
+     20208
+    ],
+    "extra_attr_probability": [
+     800.0,
+     200.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "position": 4,
+    "star": 2
+   },
+   {
+    "base_attr_count": 1,
+    "base_attr_ids": [
+     10306,
+     10307,
+     10311,
+     10312,
+     10313
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20301,
+     20302,
+     20303,
+     20304,
+     20305,
+     20306,
+     20307,
+     20308
+    ],
+    "extra_attr_probability": [
+     200.0,
+     400.0,
+     400.0,
+     0.0,
+     0.0
+    ],
+    "position": 4,
+    "star": 3
+   },
+   {
+    "base_attr_count": 2,
+    "base_attr_ids": [
+     10406,
+     10407,
+     10411,
+     10412,
+     10413
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20401,
+     20402,
+     20403,
+     20404,
+     20405,
+     20406,
+     20407,
+     20408
+    ],
+    "extra_attr_probability": [
+     0.0,
+     300.0,
+     500.0,
+     200.0,
+     0.0
+    ],
+    "position": 4,
+    "star": 4
+   },
+   {
+    "base_attr_count": 2,
+    "base_attr_ids": [
+     10506,
+     10507,
+     10511,
+     10512,
+     10513
+    ],
+    "extra_attr_count": 4,
+    "extra_attr_ids": [
+     20501,
+     20502,
+     20503,
+     20504,
+     20505,
+     20506,
+     20507,
+     20508
+    ],
+    "extra_attr_probability": [
+     0.0,
+     200.0,
+     300.0,
+     300.0,
+     200.0
+    ],
+    "position": 4,
+    "star": 5
+   }
+  ],
+  "runes_attrs": [
+   {
+    "_id": 1,
+    "attr_name": "atk",
+    "attr_operator": "percent",
+    "attr_weight": 0,
+    "base_value": 0.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 201,
+    "attr_name": "atk",
+    "attr_operator": "percent",
+    "attr_weight": 0,
+    "base_value": 0.05,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 202,
+    "attr_name": "defence",
+    "attr_operator": "percent",
+    "attr_weight": 0,
+    "base_value": 0.05,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 203,
+    "attr_name": "hp",
+    "attr_operator": "percent",
+    "attr_weight": 0,
+    "base_value": 0.05,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 204,
+    "attr_name": "crit_prob",
+    "attr_operator": "fixed",
+    "attr_weight": 0,
+    "base_value": 0.1,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 205,
+    "attr_name": "crit_mul",
+    "attr_operator": "fixed",
+    "attr_weight": 0,
+    "base_value": 0.15,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 206,
+    "attr_name": "effect_accuracy",
+    "attr_operator": "fixed",
+    "attr_weight": 0,
+    "base_value": 0.15,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 207,
+    "attr_name": "effect_evasion",
+    "attr_operator": "fixed",
+    "attr_weight": 0,
+    "base_value": 0.25,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 208,
+    "attr_name": "ap_speed",
+    "attr_operator": "fixed",
+    "attr_weight": 0,
+    "base_value": 0.1,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10101,
+    "attr_name": "atk",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 16.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 7.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10102,
+    "attr_name": "defence",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 16.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 8.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10103,
+    "attr_name": "hp",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 61.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 31.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10104,
+    "attr_name": "crit_prob",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.01,
+    "mutex_attr": 10105,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10105,
+    "attr_name": "crit_mul",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.03,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.01,
+    "mutex_attr": 10104,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10106,
+    "attr_name": "effect_accuracy",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.01,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10107,
+    "attr_name": "effect_evasion",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.03,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.01,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10108,
+    "attr_name": "ap_speed",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 2.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 1.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10111,
+    "attr_name": "atk",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.01,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10112,
+    "attr_name": "defence",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.01,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10113,
+    "attr_name": "hp",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.01,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10201,
+    "attr_name": "atk",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 53.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 29.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10202,
+    "attr_name": "defence",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 49.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 23.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10203,
+    "attr_name": "hp",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 232.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 114.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10204,
+    "attr_name": "crit_prob",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.04,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.01,
+    "mutex_attr": 10205,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10205,
+    "attr_name": "crit_mul",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.06,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.015,
+    "mutex_attr": 10204,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10206,
+    "attr_name": "effect_accuracy",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.04,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.01,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10207,
+    "attr_name": "effect_evasion",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.06,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.015,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10208,
+    "attr_name": "ap_speed",
+    "attr_operator": "fixed",
+    "attr_weight": 90,
+    "base_value": 4.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 1.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10211,
+    "attr_name": "atk",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.04,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.01,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10212,
+    "attr_name": "defence",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.04,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.01,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10213,
+    "attr_name": "hp",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.04,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.01,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10301,
+    "attr_name": "atk",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 100.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 50.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10302,
+    "attr_name": "defence",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 72.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 39.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10303,
+    "attr_name": "hp",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 394.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 198.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10304,
+    "attr_name": "crit_prob",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.06,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.02,
+    "mutex_attr": 10305,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10305,
+    "attr_name": "crit_mul",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.09,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.03,
+    "mutex_attr": 10304,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10306,
+    "attr_name": "effect_accuracy",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.06,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.02,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10307,
+    "attr_name": "effect_evasion",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.09,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.03,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10308,
+    "attr_name": "ap_speed",
+    "attr_operator": "fixed",
+    "attr_weight": 80,
+    "base_value": 6.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 1.5,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10311,
+    "attr_name": "atk",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.06,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.015,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10312,
+    "attr_name": "defence",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.06,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.015,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10313,
+    "attr_name": "hp",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.06,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.015,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10401,
+    "attr_name": "atk",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 146.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 71.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10402,
+    "attr_name": "defence",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 104.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 54.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10403,
+    "attr_name": "hp",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 565.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 281.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10404,
+    "attr_name": "crit_prob",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.08,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.03,
+    "mutex_attr": 10405,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10405,
+    "attr_name": "crit_mul",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.12,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.045,
+    "mutex_attr": 10404,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10406,
+    "attr_name": "effect_accuracy",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.08,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.03,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10407,
+    "attr_name": "effect_evasion",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.12,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.045,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10408,
+    "attr_name": "ap_speed",
+    "attr_operator": "fixed",
+    "attr_weight": 70,
+    "base_value": 8.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 1.5,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10411,
+    "attr_name": "atk",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.08,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.015,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10412,
+    "attr_name": "defence",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.08,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.015,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10413,
+    "attr_name": "hp",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.08,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.015,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10501,
+    "attr_name": "atk",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 183.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 93.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10502,
+    "attr_name": "defence",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 137.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 69.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10503,
+    "attr_name": "hp",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 726.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 365.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10504,
+    "attr_name": "crit_prob",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.1,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.04,
+    "mutex_attr": 10505,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10505,
+    "attr_name": "crit_mul",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.15,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.06,
+    "mutex_attr": 10504,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10506,
+    "attr_name": "effect_accuracy",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.1,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.04,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10507,
+    "attr_name": "effect_evasion",
+    "attr_operator": "fixed",
+    "attr_weight": 50,
+    "base_value": 0.15,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.06,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10508,
+    "attr_name": "ap_speed",
+    "attr_operator": "fixed",
+    "attr_weight": 60,
+    "base_value": 10.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 2.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 10511,
+    "attr_name": "atk",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.1,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.02,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10512,
+    "attr_name": "defence",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.1,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.02,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 10513,
+    "attr_name": "hp",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.1,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.02,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20101,
+    "attr_name": "atk",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.0,
+    "bind_extra_attr": 20111,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20102,
+    "attr_name": "defence",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.0,
+    "bind_extra_attr": 20112,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20103,
+    "attr_name": "hp",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.0,
+    "bind_extra_attr": 20113,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20104,
+    "attr_name": "crit_prob",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20105,
+    "attr_name": "crit_mul",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20106,
+    "attr_name": "effect_accuracy",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20107,
+    "attr_name": "effect_evasion",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20108,
+    "attr_name": "ap_speed",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20111,
+    "attr_name": "atk",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20112,
+    "attr_name": "defence",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20113,
+    "attr_name": "hp",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20201,
+    "attr_name": "atk",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 15.0,
+    "bind_extra_attr": 20211,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20202,
+    "attr_name": "defence",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 6.0,
+    "bind_extra_attr": 20212,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20203,
+    "attr_name": "hp",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 58.0,
+    "bind_extra_attr": 20213,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20204,
+    "attr_name": "crit_prob",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20205,
+    "attr_name": "crit_mul",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.01,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20206,
+    "attr_name": "effect_accuracy",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20207,
+    "attr_name": "effect_evasion",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.03,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20208,
+    "attr_name": "ap_speed",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 1.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20211,
+    "attr_name": "atk",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.01,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20212,
+    "attr_name": "defence",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.01,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20213,
+    "attr_name": "hp",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.01,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20301,
+    "attr_name": "atk",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 24.0,
+    "bind_extra_attr": 20311,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20302,
+    "attr_name": "defence",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 8.0,
+    "bind_extra_attr": 20312,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20303,
+    "attr_name": "hp",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 95.0,
+    "bind_extra_attr": 20313,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20304,
+    "attr_name": "crit_prob",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.03,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20305,
+    "attr_name": "crit_mul",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20306,
+    "attr_name": "effect_accuracy",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.04,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20307,
+    "attr_name": "effect_evasion",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.06,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20308,
+    "attr_name": "ap_speed",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 2.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20311,
+    "attr_name": "atk",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20312,
+    "attr_name": "defence",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20313,
+    "attr_name": "hp",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20401,
+    "attr_name": "atk",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 38.0,
+    "bind_extra_attr": 20411,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20402,
+    "attr_name": "defence",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 12.0,
+    "bind_extra_attr": 20412,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20403,
+    "attr_name": "hp",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 148.0,
+    "bind_extra_attr": 20413,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20404,
+    "attr_name": "crit_prob",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.04,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20405,
+    "attr_name": "crit_mul",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.03,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20406,
+    "attr_name": "effect_accuracy",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.04,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20407,
+    "attr_name": "effect_evasion",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.06,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20408,
+    "attr_name": "ap_speed",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 2.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20411,
+    "attr_name": "atk",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20412,
+    "attr_name": "defence",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20413,
+    "attr_name": "hp",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.02,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20501,
+    "attr_name": "atk",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 58.0,
+    "bind_extra_attr": 20511,
+    "level_up_factor_range": [
+     [
+      300,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      400,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      500,
+      [
+       1,
+       1
+      ]
+     ]
+    ],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20502,
+    "attr_name": "defence",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 16.0,
+    "bind_extra_attr": 20512,
+    "level_up_factor_range": [
+     [
+      300,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      400,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      500,
+      [
+       1,
+       1
+      ]
+     ]
+    ],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20503,
+    "attr_name": "hp",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 229.0,
+    "bind_extra_attr": 20513,
+    "level_up_factor_range": [
+     [
+      300,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      400,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      500,
+      [
+       1,
+       1
+      ]
+     ]
+    ],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20504,
+    "attr_name": "crit_prob",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.05,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [
+     [
+      300,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      400,
+      [
+       1,
+       8
+      ]
+     ],
+     [
+      500,
+      [
+       1,
+       15
+      ]
+     ]
+    ],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20505,
+    "attr_name": "crit_mul",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.04,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [
+     [
+      300,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      400,
+      [
+       1,
+       3
+      ]
+     ],
+     [
+      500,
+      [
+       1,
+       6
+      ]
+     ]
+    ],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20506,
+    "attr_name": "effect_accuracy",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.06,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [
+     [
+      300,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      400,
+      [
+       1,
+       5
+      ]
+     ],
+     [
+      500,
+      [
+       1,
+       10
+      ]
+     ]
+    ],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20507,
+    "attr_name": "effect_evasion",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 0.09,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [
+     [
+      300,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      400,
+      [
+       1,
+       5
+      ]
+     ],
+     [
+      500,
+      [
+       1,
+       10
+      ]
+     ]
+    ],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20508,
+    "attr_name": "ap_speed",
+    "attr_operator": "fixed",
+    "attr_weight": 100,
+    "base_value": 3.0,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [
+     [
+      300,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      400,
+      [
+       1,
+       10
+      ]
+     ],
+     [
+      500,
+      [
+       1,
+       20
+      ]
+     ]
+    ],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "fixed"
+   },
+   {
+    "_id": 20511,
+    "attr_name": "atk",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.03,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [
+     [
+      300,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      400,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      500,
+      [
+       1,
+       1
+      ]
+     ]
+    ],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20512,
+    "attr_name": "defence",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.03,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [
+     [
+      300,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      400,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      500,
+      [
+       1,
+       1
+      ]
+     ]
+    ],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   },
+   {
+    "_id": 20513,
+    "attr_name": "hp",
+    "attr_operator": "percent",
+    "attr_weight": 100,
+    "base_value": 0.03,
+    "bind_extra_attr": null,
+    "level_up_factor_range": [
+     [
+      300,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      400,
+      [
+       1,
+       1
+      ]
+     ],
+     [
+      500,
+      [
+       1,
+       1
+      ]
+     ]
+    ],
+    "level_value": 0.0,
+    "mutex_attr": null,
+    "name": null,
+    "show_type": "percent"
+   }
+  ],
+  "runes_level": {
+   "max": 11,
+   "max_pos": 4,
+   "max_star": 5,
+   "min": 1,
+   "unlock_limit": {
+    "0": 3,
+    "20": 5,
+    "30": 7,
+    "40": 9,
+    "50": 11
+   }
+  },
+  "runes_levels": [
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      1
+     ]
+    ],
+    "level": 1,
+    "lock_tips": null,
+    "star": 1,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      2
+     ],
+     [
+      12,
+      5000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      3
+     ]
+    ],
+    "level": 2,
+    "lock_tips": null,
+    "star": 1,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      4
+     ],
+     [
+      12,
+      10000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      7
+     ]
+    ],
+    "level": 3,
+    "lock_tips": null,
+    "star": 1,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      6
+     ],
+     [
+      12,
+      12500
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      13
+     ]
+    ],
+    "level": 4,
+    "lock_tips": "馆主等级达到20级后强化上限提升",
+    "star": 1,
+    "unlock_condition": [
+     [
+      [
+       2,
+       20
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      8
+     ],
+     [
+      12,
+      17500
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      20
+     ]
+    ],
+    "level": 5,
+    "lock_tips": "馆主等级达到20级后强化上限提升",
+    "star": 1,
+    "unlock_condition": [
+     [
+      [
+       2,
+       20
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      10
+     ],
+     [
+      12,
+      20000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      28
+     ]
+    ],
+    "level": 6,
+    "lock_tips": "馆主等级达到30级后强化上限提升",
+    "star": 1,
+    "unlock_condition": [
+     [
+      [
+       2,
+       30
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      12
+     ],
+     [
+      12,
+      25000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      37
+     ]
+    ],
+    "level": 7,
+    "lock_tips": "馆主等级达到30级后强化上限提升",
+    "star": 1,
+    "unlock_condition": [
+     [
+      [
+       2,
+       30
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      14
+     ],
+     [
+      12,
+      27500
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      46
+     ]
+    ],
+    "level": 8,
+    "lock_tips": "馆主等级达到40级后强化上限提升",
+    "star": 1,
+    "unlock_condition": [
+     [
+      [
+       2,
+       40
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      16
+     ],
+     [
+      12,
+      32500
+     ]
+    ]
+   },
+   {
+    "auto_lock": 1,
+    "decompose_material": [
+     [
+      600,
+      55
+     ]
+    ],
+    "level": 9,
+    "lock_tips": "馆主等级达到40级后强化上限提升",
+    "star": 1,
+    "unlock_condition": [
+     [
+      [
+       2,
+       40
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      18
+     ],
+     [
+      12,
+      35000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      64
+     ]
+    ],
+    "level": 10,
+    "lock_tips": "馆主等级达到50级后强化上限提升",
+    "star": 1,
+    "unlock_condition": [
+     [
+      [
+       2,
+       50
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      20
+     ],
+     [
+      12,
+      40000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      72
+     ]
+    ],
+    "level": 11,
+    "lock_tips": "馆主等级达到50级后强化上限提升",
+    "star": 1,
+    "unlock_condition": [
+     [
+      [
+       2,
+       50
+      ]
+     ]
+    ],
+    "upgrade_material": []
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      2
+     ]
+    ],
+    "level": 1,
+    "lock_tips": null,
+    "star": 2,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      4
+     ],
+     [
+      12,
+      7500
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      6
+     ]
+    ],
+    "level": 2,
+    "lock_tips": null,
+    "star": 2,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      8
+     ],
+     [
+      12,
+      15000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      14
+     ]
+    ],
+    "level": 3,
+    "lock_tips": null,
+    "star": 2,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      12
+     ],
+     [
+      12,
+      18750
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      26
+     ]
+    ],
+    "level": 4,
+    "lock_tips": "馆主等级达到20级后强化上限提升",
+    "star": 2,
+    "unlock_condition": [
+     [
+      [
+       2,
+       20
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      16
+     ],
+     [
+      12,
+      26250
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      40
+     ]
+    ],
+    "level": 5,
+    "lock_tips": "馆主等级达到20级后强化上限提升",
+    "star": 2,
+    "unlock_condition": [
+     [
+      [
+       2,
+       20
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      20
+     ],
+     [
+      12,
+      30000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      56
+     ]
+    ],
+    "level": 6,
+    "lock_tips": "馆主等级达到30级后强化上限提升",
+    "star": 2,
+    "unlock_condition": [
+     [
+      [
+       2,
+       30
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      24
+     ],
+     [
+      12,
+      37500
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      74
+     ]
+    ],
+    "level": 7,
+    "lock_tips": "馆主等级达到30级后强化上限提升",
+    "star": 2,
+    "unlock_condition": [
+     [
+      [
+       2,
+       30
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      28
+     ],
+     [
+      12,
+      41250
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      92
+     ]
+    ],
+    "level": 8,
+    "lock_tips": "馆主等级达到40级后强化上限提升",
+    "star": 2,
+    "unlock_condition": [
+     [
+      [
+       2,
+       40
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      32
+     ],
+     [
+      12,
+      48750
+     ]
+    ]
+   },
+   {
+    "auto_lock": 1,
+    "decompose_material": [
+     [
+      600,
+      110
+     ]
+    ],
+    "level": 9,
+    "lock_tips": "馆主等级达到40级后强化上限提升",
+    "star": 2,
+    "unlock_condition": [
+     [
+      [
+       2,
+       40
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      36
+     ],
+     [
+      12,
+      52500
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      128
+     ]
+    ],
+    "level": 10,
+    "lock_tips": "馆主等级达到50级后强化上限提升",
+    "star": 2,
+    "unlock_condition": [
+     [
+      [
+       2,
+       50
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      40
+     ],
+     [
+      12,
+      60000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      144
+     ]
+    ],
+    "level": 11,
+    "lock_tips": "馆主等级达到50级后强化上限提升",
+    "star": 2,
+    "unlock_condition": [
+     [
+      [
+       2,
+       50
+      ]
+     ]
+    ],
+    "upgrade_material": []
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      3
+     ]
+    ],
+    "level": 1,
+    "lock_tips": null,
+    "star": 3,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      6
+     ],
+     [
+      12,
+      10000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      9
+     ]
+    ],
+    "level": 2,
+    "lock_tips": null,
+    "star": 3,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      12
+     ],
+     [
+      12,
+      20000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      21
+     ]
+    ],
+    "level": 3,
+    "lock_tips": null,
+    "star": 3,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      18
+     ],
+     [
+      12,
+      25000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      39
+     ]
+    ],
+    "level": 4,
+    "lock_tips": "馆主等级达到20级后强化上限提升",
+    "star": 3,
+    "unlock_condition": [
+     [
+      [
+       2,
+       20
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      24
+     ],
+     [
+      12,
+      35000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      60
+     ]
+    ],
+    "level": 5,
+    "lock_tips": "馆主等级达到20级后强化上限提升",
+    "star": 3,
+    "unlock_condition": [
+     [
+      [
+       2,
+       20
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      30
+     ],
+     [
+      12,
+      40000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      84
+     ]
+    ],
+    "level": 6,
+    "lock_tips": "馆主等级达到30级后强化上限提升",
+    "star": 3,
+    "unlock_condition": [
+     [
+      [
+       2,
+       30
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      36
+     ],
+     [
+      12,
+      50000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      111
+     ]
+    ],
+    "level": 7,
+    "lock_tips": "馆主等级达到30级后强化上限提升",
+    "star": 3,
+    "unlock_condition": [
+     [
+      [
+       2,
+       30
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      42
+     ],
+     [
+      12,
+      55000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      138
+     ]
+    ],
+    "level": 8,
+    "lock_tips": "馆主等级达到40级后强化上限提升",
+    "star": 3,
+    "unlock_condition": [
+     [
+      [
+       2,
+       40
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      48
+     ],
+     [
+      12,
+      65000
+     ]
+    ]
+   },
+   {
+    "auto_lock": 1,
+    "decompose_material": [
+     [
+      600,
+      165
+     ]
+    ],
+    "level": 9,
+    "lock_tips": "馆主等级达到40级后强化上限提升",
+    "star": 3,
+    "unlock_condition": [
+     [
+      [
+       2,
+       40
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      54
+     ],
+     [
+      12,
+      70000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      192
+     ]
+    ],
+    "level": 10,
+    "lock_tips": "馆主等级达到50级后强化上限提升",
+    "star": 3,
+    "unlock_condition": [
+     [
+      [
+       2,
+       50
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      60
+     ],
+     [
+      12,
+      80000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      216
+     ]
+    ],
+    "level": 11,
+    "lock_tips": "馆主等级达到50级后强化上限提升",
+    "star": 3,
+    "unlock_condition": [
+     [
+      [
+       2,
+       50
+      ]
+     ]
+    ],
+    "upgrade_material": []
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      4
+     ]
+    ],
+    "level": 1,
+    "lock_tips": null,
+    "star": 4,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      8
+     ],
+     [
+      12,
+      17500
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      12
+     ]
+    ],
+    "level": 2,
+    "lock_tips": null,
+    "star": 4,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      16
+     ],
+     [
+      12,
+      35000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      28
+     ]
+    ],
+    "level": 3,
+    "lock_tips": null,
+    "star": 4,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      24
+     ],
+     [
+      12,
+      43750
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      52
+     ]
+    ],
+    "level": 4,
+    "lock_tips": "馆主等级达到20级后强化上限提升",
+    "star": 4,
+    "unlock_condition": [
+     [
+      [
+       2,
+       20
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      32
+     ],
+     [
+      12,
+      61250
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      80
+     ]
+    ],
+    "level": 5,
+    "lock_tips": "馆主等级达到20级后强化上限提升",
+    "star": 4,
+    "unlock_condition": [
+     [
+      [
+       2,
+       20
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      40
+     ],
+     [
+      12,
+      70000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      112
+     ]
+    ],
+    "level": 6,
+    "lock_tips": "馆主等级达到30级后强化上限提升",
+    "star": 4,
+    "unlock_condition": [
+     [
+      [
+       2,
+       30
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      48
+     ],
+     [
+      12,
+      87500
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      148
+     ]
+    ],
+    "level": 7,
+    "lock_tips": "馆主等级达到30级后强化上限提升",
+    "star": 4,
+    "unlock_condition": [
+     [
+      [
+       2,
+       30
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      56
+     ],
+     [
+      12,
+      96250
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      184
+     ]
+    ],
+    "level": 8,
+    "lock_tips": "馆主等级达到40级后强化上限提升",
+    "star": 4,
+    "unlock_condition": [
+     [
+      [
+       2,
+       40
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      64
+     ],
+     [
+      12,
+      113750
+     ]
+    ]
+   },
+   {
+    "auto_lock": 1,
+    "decompose_material": [
+     [
+      600,
+      220
+     ]
+    ],
+    "level": 9,
+    "lock_tips": "馆主等级达到40级后强化上限提升",
+    "star": 4,
+    "unlock_condition": [
+     [
+      [
+       2,
+       40
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      72
+     ],
+     [
+      12,
+      122500
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      256
+     ]
+    ],
+    "level": 10,
+    "lock_tips": "馆主等级达到50级后强化上限提升",
+    "star": 4,
+    "unlock_condition": [
+     [
+      [
+       2,
+       50
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      80
+     ],
+     [
+      12,
+      140000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      288
+     ]
+    ],
+    "level": 11,
+    "lock_tips": "馆主等级达到50级后强化上限提升",
+    "star": 4,
+    "unlock_condition": [
+     [
+      [
+       2,
+       50
+      ]
+     ]
+    ],
+    "upgrade_material": []
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      5
+     ],
+     [
+      601,
+      6
+     ]
+    ],
+    "level": 1,
+    "lock_tips": null,
+    "star": 5,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      10
+     ],
+     [
+      12,
+      25000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      15
+     ],
+     [
+      601,
+      6
+     ]
+    ],
+    "level": 2,
+    "lock_tips": null,
+    "star": 5,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      20
+     ],
+     [
+      12,
+      50000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      35
+     ],
+     [
+      601,
+      6
+     ]
+    ],
+    "level": 3,
+    "lock_tips": null,
+    "star": 5,
+    "unlock_condition": [],
+    "upgrade_material": [
+     [
+      600,
+      30
+     ],
+     [
+      12,
+      62500
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      65
+     ],
+     [
+      601,
+      6
+     ]
+    ],
+    "level": 4,
+    "lock_tips": "馆主等级达到20级后强化上限提升",
+    "star": 5,
+    "unlock_condition": [
+     [
+      [
+       2,
+       20
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      40
+     ],
+     [
+      12,
+      87500
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      100
+     ],
+     [
+      601,
+      6
+     ]
+    ],
+    "level": 5,
+    "lock_tips": "馆主等级达到20级后强化上限提升",
+    "star": 5,
+    "unlock_condition": [
+     [
+      [
+       2,
+       20
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      50
+     ],
+     [
+      12,
+      100000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      140
+     ],
+     [
+      601,
+      6
+     ]
+    ],
+    "level": 6,
+    "lock_tips": "馆主等级达到30级后强化上限提升",
+    "star": 5,
+    "unlock_condition": [
+     [
+      [
+       2,
+       30
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      60
+     ],
+     [
+      12,
+      125000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      185
+     ],
+     [
+      601,
+      6
+     ]
+    ],
+    "level": 7,
+    "lock_tips": "馆主等级达到30级后强化上限提升",
+    "star": 5,
+    "unlock_condition": [
+     [
+      [
+       2,
+       30
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      70
+     ],
+     [
+      12,
+      137500
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      230
+     ],
+     [
+      601,
+      6
+     ]
+    ],
+    "level": 8,
+    "lock_tips": "馆主等级达到40级后强化上限提升",
+    "star": 5,
+    "unlock_condition": [
+     [
+      [
+       2,
+       40
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      80
+     ],
+     [
+      12,
+      162500
+     ]
+    ]
+   },
+   {
+    "auto_lock": 1,
+    "decompose_material": [
+     [
+      600,
+      275
+     ],
+     [
+      601,
+      6
+     ]
+    ],
+    "level": 9,
+    "lock_tips": "馆主等级达到40级后强化上限提升",
+    "star": 5,
+    "unlock_condition": [
+     [
+      [
+       2,
+       40
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      90
+     ],
+     [
+      12,
+      175000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      320
+     ],
+     [
+      601,
+      6
+     ]
+    ],
+    "level": 10,
+    "lock_tips": "馆主等级达到50级后强化上限提升",
+    "star": 5,
+    "unlock_condition": [
+     [
+      [
+       2,
+       50
+      ]
+     ]
+    ],
+    "upgrade_material": [
+     [
+      600,
+      100
+     ],
+     [
+      12,
+      200000
+     ]
+    ]
+   },
+   {
+    "auto_lock": null,
+    "decompose_material": [
+     [
+      600,
+      360
+     ],
+     [
+      601,
+      6
+     ]
+    ],
+    "level": 11,
+    "lock_tips": "馆主等级达到50级后强化上限提升",
+    "star": 5,
+    "unlock_condition": [
+     [
+      [
+       2,
+       50
+      ]
+     ]
+    ],
+    "upgrade_material": []
+   }
+  ],
+  "runes_reset": [
+   {
+    "item_num": 1,
+    "material_id": 36,
+    "star": 5
+   }
+  ],
+  "runes_suits": [
+   {
+    "_id": 101,
+    "attr_2": 202,
+    "attr_4": 202,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "防御+5%",
+    "desc_3": "受到伤害降低为1/1.2=83.33%",
+    "desc_4": "防御+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1201,
+    "name": "测试-减伤",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 20101,
+    "suit_desc": "防御",
+    "suit_show": 0
+   },
+   {
+    "_id": 102,
+    "attr_2": 204,
+    "attr_4": 204,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "暴击+10%",
+    "desc_3": "伤害增加为120%",
+    "desc_4": "暴击+10%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1101,
+    "name": "测试-增伤",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 20201,
+    "suit_desc": "暴击",
+    "suit_show": 0
+   },
+   {
+    "_id": 103,
+    "attr_2": 203,
+    "attr_4": 203,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "生命+5%",
+    "desc_3": "治疗量提升为120%",
+    "desc_4": "生命+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1301,
+    "name": "测试-增疗",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 20301,
+    "suit_desc": "生命",
+    "suit_show": 0
+   },
+   {
+    "_id": 104,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "攻击+5%",
+    "desc_3": "每次攻击时对目标附加一层中毒状态，处于中毒状态的目标，每回合开始时，受到剩余回合数*施法者攻击25%的伤害",
+    "desc_4": "攻击+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1403,
+    "name": "测试-毒伤",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 11010,
+    "suit_desc": "攻击",
+    "suit_show": 0
+   },
+   {
+    "_id": 105,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "攻击+5%",
+    "desc_3": "伤害提升50%，但每回合结束，对自身造成50%攻击的伤害",
+    "desc_4": "攻击+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1403,
+    "name": "测试-自伤爆发",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 15030,
+    "suit_desc": "攻击",
+    "suit_show": 0
+   },
+   {
+    "_id": 106,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "攻击+5%",
+    "desc_3": "回合结束时，为场上血量最低的队友施加最大生命值7.5%的护盾，护盾持续2回合",
+    "desc_4": "攻击+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1403,
+    "name": "测试-回合单盾",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 13040,
+    "suit_desc": "攻击",
+    "suit_show": 0
+   },
+   {
+    "_id": 107,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "攻击+5%",
+    "desc_3": "普通攻击时，若[攻击X600%>目标当前血量]，则有[当前剩余能量X5%]的概率直接击倒主目标",
+    "desc_4": "攻击+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1403,
+    "name": "测试-概率必杀",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 14010,
+    "suit_desc": "攻击",
+    "suit_show": 0
+   },
+   {
+    "_id": 108,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "攻击+5%",
+    "desc_3": "每击倒一个目标，回复1点能量",
+    "desc_4": "攻击+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1403,
+    "name": "测试-杀人回火",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 15010,
+    "suit_desc": "攻击",
+    "suit_show": 0
+   },
+   {
+    "_id": 109,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "攻击+5%",
+    "desc_3": "造成伤害后，30%基础概率扣除主目标1点能量",
+    "desc_4": "攻击+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1403,
+    "name": "测试-概率扣火",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 16030,
+    "suit_desc": "攻击",
+    "suit_show": 0
+   },
+   {
+    "_id": 110,
+    "attr_2": 1,
+    "attr_4": 1,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "只有回火",
+    "desc_3": "每波战斗开始时，所有友方单位获得1能量，但首次行动后的1回合减速30%",
+    "desc_4": "只有回火",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1303,
+    "name": "天子的受命",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 13030,
+    "suit_desc": "只有回火",
+    "suit_show": 0
+   },
+   {
+    "_id": 111,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "攻击+5%",
+    "desc_3": "造成伤害时，每命中一个目标，有20%概率回复1能量",
+    "desc_4": "攻击+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1602,
+    "name": "大圈回火",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 20401,
+    "suit_desc": "攻击",
+    "suit_show": 0
+   },
+   {
+    "_id": 112,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "攻击+5%",
+    "desc_3": "自身周围小范围内，每有一个敌方单位，伤害提升10%，最多提升60%",
+    "desc_4": "攻击+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1602,
+    "name": "一接多",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 20501,
+    "suit_desc": "攻击",
+    "suit_show": 0
+   },
+   {
+    "_id": 114,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "攻击+5%",
+    "desc_3": "战斗开始为自身周围小范围队友提供1回合生命50%的护盾，护盾存在期间免疫静止、眩晕效果（队内唯一生效）",
+    "desc_4": "攻击+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1602,
+    "name": "反制先手",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 20701,
+    "suit_desc": "攻击",
+    "suit_show": 0
+   },
+   {
+    "_id": 116,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": null,
+    "desc_2": "攻击+5%",
+    "desc_3": "普攻或技能后回到行动前位置，如果产生了移动，增伤30%",
+    "desc_4": "攻击+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1602,
+    "name": "移动",
+    "poetry_desc": null,
+    "related_rune": null,
+    "sfx_texture_id": 1101,
+    "skill_3": 20901,
+    "suit_desc": "攻击",
+    "suit_show": 0
+   },
+   {
+    "_id": 1101,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": "予汝刀剑，攻无不克",
+    "desc_2": "攻击+5%",
+    "desc_3": "对主目标伤害提升25%，自己身上每有一个正面状态，伤害额外提升5%，最多额外提升25%",
+    "desc_4": "攻击+5%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1101,
+    "name": "黄帝的攻伐",
+    "poetry_desc": "首山之铜，赤县之封。阪泉、涿鹿之后，华夏一统。",
+    "related_rune": 131101,
+    "sfx_texture_id": 1101,
+    "skill_3": 11010,
+    "suit_desc": "攻击",
+    "suit_show": 1
+   },
+   {
+    "_id": 1102,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": "予汝刀剑，攻无不克",
+    "desc_2": "攻击+5%",
+    "desc_3": "场上我方角色数量达到4个时，攻击提升16%，若超过4个，每有1个角色，攻击额外提升10%，最多额外提升40%",
+    "desc_4": "攻击+5%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1102,
+    "name": "查理曼的欢悦",
+    "poetry_desc": "圣剑常驻巴黎，歌颂欧洲之父的歌声，却来自亚琛。",
+    "related_rune": 131102,
+    "sfx_texture_id": 1102,
+    "skill_3": 11020,
+    "suit_desc": "攻击",
+    "suit_show": 1
+   },
+   {
+    "_id": 1103,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": "予汝刀剑，攻无不克",
+    "desc_2": "攻击+5%",
+    "desc_3": "攻击有负面状态的目标时，每个负面状态使本次伤害提升10%，最多提升50%",
+    "desc_4": "攻击+5%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1103,
+    "name": "村正的妙法",
+    "poetry_desc": "凡人皆难逃一死，这便是妖刀的真相。",
+    "related_rune": 131103,
+    "sfx_texture_id": 1103,
+    "skill_3": 11030,
+    "suit_desc": "攻击",
+    "suit_show": 1
+   },
+   {
+    "_id": 1104,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": "予汝刀剑，攻无不克",
+    "desc_2": "攻击+5%",
+    "desc_3": "造成间接伤害、间接治疗时，自身暴击率属性+100%，持续3回合（召唤物不可继承）",
+    "desc_4": "攻击+5%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1104,
+    "name": "阿育王的觉悟",
+    "poetry_desc": "成佛者王子，弘法者国王。无忧的孔雀，南亚的佛国。",
+    "related_rune": 131104,
+    "sfx_texture_id": 1104,
+    "skill_3": 11040,
+    "suit_desc": "攻击",
+    "suit_show": 1
+   },
+   {
+    "_id": 1105,
+    "attr_2": 201,
+    "attr_4": 201,
+    "auto_lock_stars": null,
+    "category_desc": "予汝刀剑，攻无不克",
+    "desc_2": "攻击+5%",
+    "desc_3": "普通攻击伤害提升50%",
+    "desc_4": "攻击+5%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1105,
+    "name": "威廉的征服",
+    "poetry_desc": "他改变了英格兰。",
+    "related_rune": 131105,
+    "sfx_texture_id": 1105,
+    "skill_3": 11050,
+    "suit_desc": "攻击",
+    "suit_show": 1
+   },
+   {
+    "_id": 1201,
+    "attr_2": 202,
+    "attr_4": 202,
+    "auto_lock_stars": null,
+    "category_desc": "予汝军势，永固家邦",
+    "desc_2": "防御+5%",
+    "desc_3": "每回合可为其他我方角色护卫单体攻击1次，代替其成为本次攻击的目标，为其承担本次伤害的65%（召唤物不可继承）",
+    "desc_4": "防御+5%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1201,
+    "name": "斯巴达之坚韧",
+    "poetry_desc": "温泉关的三天，决定了千年。",
+    "related_rune": 131201,
+    "sfx_texture_id": 1201,
+    "skill_3": 12010,
+    "suit_desc": "防御",
+    "suit_show": 1
+   },
+   {
+    "_id": 1202,
+    "attr_2": 202,
+    "attr_4": 202,
+    "auto_lock_stars": null,
+    "category_desc": "予汝军势，永固家邦",
+    "desc_2": "防御+5%",
+    "desc_3": "被攻击时，下次行动提前5%，如果周围小范围内有我方角色生命低于50%，则改为提前20%",
+    "desc_4": "防御+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1202,
+    "name": "汉尼拔之伟略",
+    "poetry_desc": "阿尔卑斯的奇迹，坎尼的死神，扎马的宿命。",
+    "related_rune": 131202,
+    "sfx_texture_id": 1202,
+    "skill_3": 12020,
+    "suit_desc": "防御",
+    "suit_show": 0
+   },
+   {
+    "_id": 1203,
+    "attr_2": 202,
+    "attr_4": 202,
+    "auto_lock_stars": null,
+    "category_desc": "予汝军势，永固家邦",
+    "desc_2": "防御+5%",
+    "desc_3": "其他我方角色攻击时，有40%概率协同攻击，但该次伤害降低80%，且不触发被动效果",
+    "desc_4": "防御+5%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1203,
+    "name": "罗马荣耀",
+    "poetry_desc": "为了元老院与罗马人民。",
+    "related_rune": 131203,
+    "sfx_texture_id": 1203,
+    "skill_3": 12030,
+    "suit_desc": "防御",
+    "suit_show": 0
+   },
+   {
+    "_id": 1204,
+    "attr_2": 202,
+    "attr_4": 202,
+    "auto_lock_stars": null,
+    "category_desc": "予汝军势，永固家邦",
+    "desc_2": "防御+5%",
+    "desc_3": "周围大范围内的我方角色攻击提升10%（不可叠加）",
+    "desc_4": "防御+5%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1204,
+    "name": "维京传奇",
+    "poetry_desc": "他们带来恐惧，他们也带来传奇。",
+    "related_rune": 131204,
+    "sfx_texture_id": 1204,
+    "skill_3": 12040,
+    "suit_desc": "防御",
+    "suit_show": 1
+   },
+   {
+    "_id": 1301,
+    "attr_2": 203,
+    "attr_4": 203,
+    "auto_lock_stars": null,
+    "category_desc": "予汝权柄，至于万世",
+    "desc_2": "生命+5%",
+    "desc_3": "主动治疗时，治疗量提升60%",
+    "desc_4": "生命+5%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1301,
+    "name": "法老的永生",
+    "poetry_desc": "手持安卡，渴求永生，直到无尽的尽头。",
+    "related_rune": 131301,
+    "sfx_texture_id": 1301,
+    "skill_3": 13010,
+    "suit_desc": "生命",
+    "suit_show": 1
+   },
+   {
+    "_id": 1302,
+    "attr_2": 203,
+    "attr_4": 203,
+    "auto_lock_stars": null,
+    "category_desc": "予汝权柄，至于万世",
+    "desc_2": "生命+5%",
+    "desc_3": "自身每行动4次，回复1点能量",
+    "desc_4": "生命+5%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1302,
+    "name": "第一公民桂冠",
+    "poetry_desc": "从第一公民，到奥古斯都。从罗慕路斯，到罗慕路斯。",
+    "related_rune": 131302,
+    "sfx_texture_id": 1302,
+    "skill_3": 13020,
+    "suit_desc": "生命",
+    "suit_show": 1
+   },
+   {
+    "_id": 1303,
+    "attr_2": 203,
+    "attr_4": 203,
+    "auto_lock_stars": null,
+    "category_desc": "予汝权柄，至于万世",
+    "desc_2": "生命+5%",
+    "desc_3": "每波战斗自身首次行动前，所有我方角色获得1点能量（唯一生效）",
+    "desc_4": "生命+5%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1303,
+    "name": "天子的受命",
+    "poetry_desc": "「受命于天，既寿永昌。」得之天命，失之亦天命。",
+    "related_rune": 131303,
+    "sfx_texture_id": 1303,
+    "skill_3": 13030,
+    "suit_desc": "生命",
+    "suit_show": 1
+   },
+   {
+    "_id": 1304,
+    "attr_2": 203,
+    "attr_4": 203,
+    "auto_lock_stars": null,
+    "category_desc": "予汝权柄，至于万世",
+    "desc_2": "生命+5%",
+    "desc_3": "为自身周围小范围内的我方角色提供数值为该范围内<10%×其他我方角色人数>的伤害减免，最多60%（任意角色回合开始时刷新，唯一生效）",
+    "desc_4": "生命+5%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1304,
+    "name": "九州的划分",
+    "poetry_desc": "划界九鼎虽早已不存，问鼎之人仍接踵而至。",
+    "related_rune": 131304,
+    "sfx_texture_id": 1304,
+    "skill_3": 13040,
+    "suit_desc": "生命",
+    "suit_show": 1
+   },
+   {
+    "_id": 1401,
+    "attr_2": 204,
+    "attr_4": 204,
+    "auto_lock_stars": null,
+    "category_desc": "予汝救赎，超凡得胜",
+    "desc_2": "暴击+10%",
+    "desc_3": "攻击范围内每有1个敌方角色，伤害提升7%，最多提升42%",
+    "desc_4": "暴击+10%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1401,
+    "name": "圣朗基努斯",
+    "poetry_desc": "从盲目到复明，主的生命与此枪同在。",
+    "related_rune": 131401,
+    "sfx_texture_id": 1401,
+    "skill_3": 14010,
+    "suit_desc": "暴击",
+    "suit_show": 1
+   },
+   {
+    "_id": 1402,
+    "attr_2": 204,
+    "attr_4": 204,
+    "auto_lock_stars": null,
+    "category_desc": "予汝救赎，超凡得胜",
+    "desc_2": "暴击+10%",
+    "desc_3": "攻击时，附带该次攻击伤害20%的小范围溅射伤害，此伤害不能暴击，不结算目标防御，不触发被动和契印纹效果",
+    "desc_4": "暴击+10%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1402,
+    "name": "圣子的救赎",
+    "poetry_desc": "重要的不是杯子，而是杯中之物。",
+    "related_rune": 131402,
+    "sfx_texture_id": 1402,
+    "skill_3": 14020,
+    "suit_desc": "暴击",
+    "suit_show": 1
+   },
+   {
+    "_id": 1403,
+    "attr_2": 204,
+    "attr_4": 204,
+    "auto_lock_stars": null,
+    "category_desc": "予汝救赎，超凡得胜",
+    "desc_2": "暴击+10%",
+    "desc_3": "攻击时，目标每有1个负面状态，有6%基础概率附加1回合[静止]，基础概率最高48%",
+    "desc_4": "暴击+10%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1403,
+    "name": "圣彼得的选择",
+    "poetry_desc": "捆绑或释放，无论在天上还是地上。",
+    "related_rune": 131403,
+    "sfx_texture_id": 1403,
+    "skill_3": 14030,
+    "suit_desc": "暴击",
+    "suit_show": 0
+   },
+   {
+    "_id": 1501,
+    "attr_2": 205,
+    "attr_4": 205,
+    "auto_lock_stars": null,
+    "category_desc": "予汝秘法，穷极未知",
+    "desc_2": "暴击倍率+15%",
+    "desc_3": "出战时获得状态：精准属性+40%，成功控制的目标在接下来的两回合内，抗性属性+100%",
+    "desc_4": "暴击倍率+15%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1501,
+    "name": "全知凝视",
+    "poetry_desc": "有人正在看着你。",
+    "related_rune": 131501,
+    "sfx_texture_id": 1501,
+    "skill_3": 15010,
+    "suit_desc": "暴击倍率",
+    "suit_show": 1
+   },
+   {
+    "_id": 1502,
+    "attr_2": 205,
+    "attr_4": 205,
+    "auto_lock_stars": null,
+    "category_desc": "予汝秘法，穷极未知",
+    "desc_2": "暴击倍率+15%",
+    "desc_3": "回合结束后，攻击提升8.5%，最多提升68%",
+    "desc_4": "暴击倍率+15%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1502,
+    "name": "灯神的呼唤",
+    "poetry_desc": "它能实现任何人的愿望，除了它自己的。",
+    "related_rune": 131502,
+    "sfx_texture_id": 1502,
+    "skill_3": 15020,
+    "suit_desc": "暴击倍率",
+    "suit_show": 1
+   },
+   {
+    "_id": 1503,
+    "attr_2": 205,
+    "attr_4": 205,
+    "auto_lock_stars": null,
+    "category_desc": "予汝秘法，穷极未知",
+    "desc_2": "暴击倍率+15%",
+    "desc_3": "战斗开始后的前3个回合造成的伤害提升60%",
+    "desc_4": "暴击倍率+15%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1503,
+    "name": "所罗门的智慧",
+    "poetry_desc": "「因为多有智慧、就多有愁烦；加增知识的、就加增忧伤。」",
+    "related_rune": 131503,
+    "sfx_texture_id": 1503,
+    "skill_3": 15030,
+    "suit_desc": "暴击倍率",
+    "suit_show": 0
+   },
+   {
+    "_id": 1601,
+    "attr_2": 206,
+    "attr_4": 206,
+    "auto_lock_stars": null,
+    "category_desc": "予汝幸运，有求必应",
+    "desc_2": "精准+15%",
+    "desc_3": "回合开始时，驱散自身的2个负面状态，如果成功驱散，获得1回合速度提升，数值为<30%×驱散负面状态个数>",
+    "desc_4": "精准+15%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1601,
+    "name": "德鲁伊的沉思",
+    "poetry_desc": "静谧森林，自然之力，了解橡树的人，也了解未来。",
+    "related_rune": 131601,
+    "sfx_texture_id": 1601,
+    "skill_3": 16010,
+    "suit_desc": "精准",
+    "suit_show": 1
+   },
+   {
+    "_id": 1603,
+    "attr_2": 206,
+    "attr_4": 206,
+    "auto_lock_stars": null,
+    "category_desc": "予汝幸运，有求必应",
+    "desc_2": "精准+15%",
+    "desc_3": "攻击时，有20%固定概率对目标附加1个随机负面状态，持续2回合（召唤物不可继承）",
+    "desc_4": "精准+15%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1603,
+    "name": "殷商的龙骨",
+    "poetry_desc": "卜吉凶，知兴替，而天道，无人可逆转。",
+    "related_rune": 131603,
+    "sfx_texture_id": 1603,
+    "skill_3": 16030,
+    "suit_desc": "精准",
+    "suit_show": 1
+   },
+   {
+    "_id": 1701,
+    "attr_2": 207,
+    "attr_4": 207,
+    "auto_lock_stars": null,
+    "category_desc": "予汝信条，脱离苦难",
+    "desc_2": "抗性+25%",
+    "desc_3": "使用能量时，提升大范围内其他我方角色的抗性，数值为本角色抗性的90%，持续2回合",
+    "desc_4": "抗性+25%",
+    "drop_flag": null,
+    "extra_intimacy": null,
+    "gm_flag": 0,
+    "icon_id": 1701,
+    "name": "法拉瓦哈",
+    "poetry_desc": "「我，居鲁士，世界之王，伟大的王。」",
+    "related_rune": 131701,
+    "sfx_texture_id": 1701,
+    "skill_3": 17010,
+    "suit_desc": "抗性",
+    "suit_show": 0
+   },
+   {
+    "_id": 1702,
+    "attr_2": 207,
+    "attr_4": 207,
+    "auto_lock_stars": null,
+    "category_desc": "予汝信条，脱离苦难",
+    "desc_2": "抗性+25%",
+    "desc_3": "提供护盾时，为目标提供本角色防御20%的防御，提升效果随护盾一起消失",
+    "desc_4": "抗性+25%",
+    "drop_flag": 1,
+    "extra_intimacy": null,
+    "gm_flag": 1,
+    "icon_id": 1702,
+    "name": "日出的象征",
+    "poetry_desc": "众所周知，圣甲虫可不是好惹的，它带电。",
+    "related_rune": 131702,
+    "sfx_texture_id": 1702,
+    "skill_3": 17020,
+    "suit_desc": "抗性",
+    "suit_show": 1
+   },
+   {
+    "_id": 1901,
+    "attr_2": 1,
+    "attr_4": 1,
+    "auto_lock_stars": [
+     5
+    ],
+    "category_desc": "予汝繁花，相思不绝",
+    "desc_2": "空气中充满甜蜜气息",
+    "desc_3": "携带者参与战斗结束后，额外获取1点好感度（援护位依然生效）",
+    "desc_4": "空气中充满甜蜜气息",
+    "drop_flag": null,
+    "extra_intimacy": 1,
+    "gm_flag": 0,
+    "icon_id": 1901,
+    "name": "瓦伦丁之心",
+    "poetry_desc": "牧神节早已被遗忘，殉道者也早已长眠，唯有爱情永不退色。",
+    "related_rune": 131901,
+    "sfx_texture_id": 1901,
+    "skill_3": 19010,
+    "suit_desc": "暧昧氛围",
+    "suit_show": 1
+   }
+  ],
+  "runes_unlock_attrs": [
+   {
+    "level": 1,
+    "unlock": null
+   },
+   {
+    "level": 2,
+    "unlock": null
+   },
+   {
+    "level": 3,
+    "unlock": 1
+   },
+   {
+    "level": 4,
+    "unlock": null
+   },
+   {
+    "level": 5,
+    "unlock": 1
+   },
+   {
+    "level": 6,
+    "unlock": null
+   },
+   {
+    "level": 7,
+    "unlock": 1
+   },
+   {
+    "level": 8,
+    "unlock": null
+   },
+   {
+    "level": 9,
+    "unlock": 1
+   },
+   {
+    "level": 10,
+    "unlock": null
+   },
+   {
+    "level": 11,
+    "unlock": 1
+   }
+  ]
+ },
+ "常量来源": "runes_level/limits/errors 为客户端 datas/runes.py 模块常量与错误码的整理值（沿用 GMA-Revive-Server 同源导出，行数据全部来自本项目导出表）",
+ "来源": {
+  "runes": {
+   "导出SHA256": "cb592b9c821d88e7f0aeacf06153a113ef28568fc50b52194e9c3ec29c186e65",
+   "条目数": 20,
+   "模块SHA256": "b1151822fa21049f5cf361c6d28aa4b4ddcc6f4076a365beda19ab4a79e5d6d9",
+   "路径": "out\\client_catalogs\\tables\\runes.json"
+  },
+  "runes_attrs": {
+   "导出SHA256": "cd548ced993404f282fdf518b99b1cecac130ed96ae5c489dae385d964d91d52",
+   "条目数": 119,
+   "模块SHA256": "86a7e902d08203f861b45ac3e06794d54390937471729e2d30fd799c919c8fef",
+   "路径": "out\\client_catalogs\\tables\\runes_attrs.json"
+  },
+  "runes_levels": {
+   "导出SHA256": "ee220861594a249f79a70c74b0383a3660075291d1699402128e84a7380748fe",
+   "条目数": 55,
+   "模块SHA256": "6c51bb99036146bd3a7b572dc33965a1942af7325a2b727541e3d2a33a50f92d",
+   "路径": "out\\client_catalogs\\tables\\runes_levels.json"
+  },
+  "runes_reset": {
+   "导出SHA256": "dfa0107b78d45d4dc9c78043135d4c4604ea2a0a246ed0cd7ebc15e2ecaf7b1f",
+   "条目数": 1,
+   "模块SHA256": "63ef76d5ad10f6a6f35ca55567db310964b82c5822db56cddbecd9a82eb96fe6",
+   "路径": "out\\client_catalogs\\tables\\runes_reset.json"
+  },
+  "runes_suits": {
+   "导出SHA256": "d2a5ec0fc45397bd964d1ef1708626e1b2007ef08da3bc3fd8df0f2c9c00fed3",
+   "条目数": 38,
+   "模块SHA256": "6e33328e1baacca0bc70e3eb3e822f2ee4fb05af576805c6ef99989aa9e43c8c",
+   "路径": "out\\client_catalogs\\tables\\runes_suits.json"
+  },
+  "runes_unlock_attrs": {
+   "导出SHA256": "f826d5cce07c953a8676863eff1af02d0017c567396e28cb9f68f9680f9992b9",
+   "条目数": 11,
+   "模块SHA256": "f92e10b24110dbf24f26cef9668eb20ca669b469c3703f54aac4ae1aa04daafc",
+   "路径": "out\\client_catalogs\\tables\\runes_unlock_attrs.json"
+  }
+ },
+ "生成时间": "2026-10-07 01:36:12"
+}

@@ -1,0 +1,1004 @@
+{
+  "constants": {
+    "preset_record_num": 20,
+    "preset_record_name_len": 7,
+    "fighting_cards_num": 4,
+    "support_cards_num": 2,
+    "support_unlock": "support",
+    "battle_forbid": 1
+  },
+  "cards": {
+    "4": {
+      "position": 3,
+      "disable": 0,
+      "gm_flag": 0,
+      "forbid": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        8,
+        9
+      ]
+    },
+    "90": {
+      "position": 5,
+      "disable": 1,
+      "gm_flag": 0,
+      "forbid": [
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "91": {
+      "position": 5,
+      "disable": 1,
+      "gm_flag": 0,
+      "forbid": [
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "92": {
+      "position": 5,
+      "disable": 1,
+      "gm_flag": 0,
+      "forbid": [
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "117": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 0,
+      "forbid": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ]
+    },
+    "118": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 0,
+      "forbid": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ]
+    },
+    "119": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 0,
+      "forbid": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ]
+    },
+    "120": {
+      "position": 3,
+      "disable": 0,
+      "gm_flag": 0,
+      "forbid": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ]
+    },
+    "121": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 0,
+      "forbid": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ]
+    },
+    "1101": {
+      "position": 3,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1102": {
+      "position": 3,
+      "disable": 1,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1201": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1202": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1203": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1204": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1205": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1301": {
+      "position": 2,
+      "disable": 1,
+      "gm_flag": 0,
+      "forbid": []
+    },
+    "1302": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1303": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1304": {
+      "position": 2,
+      "disable": 1,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1401": {
+      "position": 2,
+      "disable": 1,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1501": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1502": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "1601": {
+      "position": 4,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2101": {
+      "position": 3,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2102": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2103": {
+      "position": 3,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2201": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2202": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2203": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2204": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2205": {
+      "position": 3,
+      "disable": 1,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2206": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2207": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2208": {
+      "position": 2,
+      "disable": 1,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2301": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2302": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2303": {
+      "position": 5,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2401": {
+      "position": 5,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2402": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2403": {
+      "position": 5,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2404": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2405": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2406": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2407": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2501": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2502": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2503": {
+      "position": 5,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2504": {
+      "position": 5,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "2505": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3101": {
+      "position": 3,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3102": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3201": {
+      "position": 5,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3202": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3203": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3301": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3401": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3402": {
+      "position": 4,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3403": {
+      "position": 4,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3404": {
+      "position": 4,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3405": {
+      "position": 3,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3406": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3407": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3408": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3409": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3410": {
+      "position": 3,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3411": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3412": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3501": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3502": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "3504": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4101": {
+      "position": 3,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4102": {
+      "position": 3,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4201": {
+      "position": 5,
+      "disable": 1,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4202": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4401": {
+      "position": 5,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        5,
+        6
+      ]
+    },
+    "4402": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4403": {
+      "position": 5,
+      "disable": 0,
+      "gm_flag": 0,
+      "forbid": []
+    },
+    "4404": {
+      "position": 5,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4405": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4406": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4407": {
+      "position": 4,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4408": {
+      "position": 5,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4409": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4410": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4411": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4501": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4502": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4503": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4601": {
+      "position": 4,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "4602": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": []
+    },
+    "5101": {
+      "position": 3,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5102": {
+      "position": 3,
+      "disable": 1,
+      "gm_flag": 0,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5112": {
+      "position": 3,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5201": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5211": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5222": {
+      "position": 5,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5301": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5302": {
+      "position": 2,
+      "disable": 1,
+      "gm_flag": 0,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5311": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5401": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5402": {
+      "position": 1,
+      "disable": 1,
+      "gm_flag": 0,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5403": {
+      "position": 1,
+      "disable": 1,
+      "gm_flag": 0,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5411": {
+      "position": 4,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5501": {
+      "position": 2,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5502": {
+      "position": 2,
+      "disable": 1,
+      "gm_flag": 0,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5511": {
+      "position": 1,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5601": {
+      "position": 4,
+      "disable": 0,
+      "gm_flag": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5602": {
+      "position": 4,
+      "disable": 1,
+      "gm_flag": 0,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    }
+  },
+  "mini_duty": {
+    "1": {
+      "_id": 1,
+      "duty_name": "守护",
+      "duty_skill_ids": [
+        52001,
+        52004
+      ],
+      "duty_limit_card_position": 3,
+      "duty_advice_card_position": 3
+    },
+    "2": {
+      "_id": 2,
+      "duty_name": "守护",
+      "duty_skill_ids": [
+        52001,
+        52004
+      ],
+      "duty_limit_card_position": null,
+      "duty_advice_card_position": 3
+    },
+    "3": {
+      "_id": 3,
+      "duty_name": "进攻",
+      "duty_skill_ids": [
+        52002,
+        52005
+      ],
+      "duty_limit_card_position": 2,
+      "duty_advice_card_position": 2
+    },
+    "4": {
+      "_id": 4,
+      "duty_name": "进攻",
+      "duty_skill_ids": [
+        52002,
+        52005
+      ],
+      "duty_limit_card_position": null,
+      "duty_advice_card_position": 1
+    },
+    "5": {
+      "_id": 5,
+      "duty_name": "支援",
+      "duty_skill_ids": [
+        52003,
+        52006
+      ],
+      "duty_limit_card_position": 4,
+      "duty_advice_card_position": 4
+    },
+    "6": {
+      "_id": 6,
+      "duty_name": "支援",
+      "duty_skill_ids": [
+        52003,
+        52006
+      ],
+      "duty_limit_card_position": null,
+      "duty_advice_card_position": 4
+    }
+  },
+  "sync_pvp_score_rule": {
+    "1": {
+      "_id": 1,
+      "segment_name": "1段",
+      "name": "镜面初闻",
+      "segment_icon": "sync_1",
+      "min_score": 1000,
+      "max_score": 1199,
+      "section": 1,
+      "k": 60,
+      "lose_protect_ratio": 0.0,
+      "division_bonus_id": 1221,
+      "season_num": 11,
+      "lineup_num": 1,
+      "dungeon_battle_id": 21,
+      "robot_group_id": 1,
+      "lose_times": 1,
+      "lose_match_time": [
+        3,
+        10
+      ]
+    },
+    "2": {
+      "_id": 2,
+      "segment_name": "2段",
+      "name": "螺旋双生",
+      "segment_icon": "sync_2",
+      "min_score": 1200,
+      "max_score": 1399,
+      "section": 1,
+      "k": 50,
+      "lose_protect_ratio": 0.5,
+      "division_bonus_id": 1222,
+      "season_num": 9,
+      "lineup_num": 1,
+      "dungeon_battle_id": 21,
+      "robot_group_id": 2,
+      "lose_times": 1,
+      "lose_match_time": [
+        3,
+        10
+      ]
+    },
+    "3": {
+      "_id": 3,
+      "segment_name": "3段",
+      "name": "星间飞行",
+      "segment_icon": "sync_3",
+      "min_score": 1400,
+      "max_score": 1599,
+      "section": 2,
+      "k": 40,
+      "lose_protect_ratio": 0.8,
+      "division_bonus_id": 1223,
+      "season_num": 7,
+      "lineup_num": 1,
+      "dungeon_battle_id": 22,
+      "robot_group_id": 3,
+      "lose_times": 2,
+      "lose_match_time": [
+        3,
+        10
+      ]
+    },
+    "4": {
+      "_id": 4,
+      "segment_name": "4段",
+      "name": "银河回响",
+      "segment_icon": "sync_4",
+      "min_score": 1600,
+      "max_score": 1799,
+      "section": 3,
+      "k": 30,
+      "lose_protect_ratio": 0.8,
+      "division_bonus_id": 1224,
+      "season_num": 5,
+      "lineup_num": 2,
+      "dungeon_battle_id": 22,
+      "robot_group_id": 4,
+      "lose_times": 2,
+      "lose_match_time": [
+        3,
+        10
+      ]
+    },
+    "5": {
+      "_id": 5,
+      "segment_name": "5段",
+      "name": "虚空瞻礼",
+      "segment_icon": "sync_5",
+      "min_score": 1800,
+      "max_score": 1999,
+      "section": 3,
+      "k": 20,
+      "lose_protect_ratio": 1.0,
+      "division_bonus_id": 1225,
+      "season_num": 3,
+      "lineup_num": 2,
+      "dungeon_battle_id": 23,
+      "robot_group_id": 5,
+      "lose_times": 3,
+      "lose_match_time": [
+        3,
+        10
+      ]
+    },
+    "6": {
+      "_id": 6,
+      "segment_name": "6段",
+      "name": "原初归宿",
+      "segment_icon": "sync_6",
+      "min_score": 2000,
+      "max_score": 99999999,
+      "section": 3,
+      "k": 10,
+      "lose_protect_ratio": 1.0,
+      "division_bonus_id": 1226,
+      "season_num": 3,
+      "lineup_num": 2,
+      "dungeon_battle_id": 23,
+      "robot_group_id": 5,
+      "lose_times": 4,
+      "lose_match_time": [
+        3,
+        10
+      ]
+    }
+  },
+  "source": {
+    "cards": {
+      "path": "out\\client_catalogs\\tables\\cards.json",
+      "sha256": "b8f88a6e812ba1192dbfa08a993da1a703901b6adfa26207135391d5f13f1fd0"
+    },
+    "mini_duty": {
+      "path": "out\\client_catalogs\\tables\\mini_duty.json",
+      "sha256": "cb2745bcbd21eb961c91964f3f6bf9cd1f449e4c15645ba31124b394f6716604"
+    },
+    "sync_pvp_score_rule": {
+      "path": "out\\client_catalogs\\tables\\sync_pvp_score_rule.json",
+      "sha256": "dd94cb3eaa6883f3f807cd4b1a2f807c3671f97bfb2f0548d237f41e93fd582c"
+    }
+  }
+}

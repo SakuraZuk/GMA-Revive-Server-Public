@@ -1,0 +1,10 @@
+[Unit]
+Description=幻书项目证书续期与恢复
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/hs-server/tls/renew-hs-certificate.sh renew
+TimeoutStartSec=360
+UMask=0077

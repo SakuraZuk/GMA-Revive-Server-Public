@@ -1,0 +1,11 @@
+[Unit]
+Description=幻书项目证书每日到期检查
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 Asia/Shanghai
+RandomizedDelaySec=1800
+Persistent=true
+Unit=hs-certificate-renew.service
+
+[Install]
+WantedBy=timers.target

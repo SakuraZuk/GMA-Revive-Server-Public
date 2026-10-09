@@ -1,0 +1,42 @@
+"""活动六组接口、状态、证据、验证与打包资料供根任务整合入现有MD。"""
+from pathlib import Path
+import datetime,hashlib,json,sys
+root=Path(__file__).resolve().parents[2]
+sys.stdout.reconfigure(encoding='utf-8')
+files=['internal/game/activity_confirmed_buffs.go','internal/game/activity_business.go','internal/game/battle.go','internal/game/activity_buffs_script.py','internal/game/client_extensions.go','internal/game/cthulhu_business.go','internal/game/cthulhu_checks.go','internal/game/miku_business.go','internal/game/miku_exploration.go','internal/game/miku_surprise.go','internal/game/summer_business.go','internal/game/mountain_guard.go','internal/game/mountain_nian_business.go','internal/game/mountain_cycles.go','internal/game/activity_metrics.go','internal/game/activity_calendar.go','internal/game/nian_total.go','internal/game/activity_rank.go','internal/game/dbstore/activity_rank.go','internal/game/remaining_activity_buffs_test.go','internal/game/remaining_activity_policy_test.go','internal/game/dbstore/remaining_activity_test.go','internal/nativepvp/activity_buffs_native.py','internal/nativepvp/battle_native.py','internal/nativepvp/battle_native_host.py','out/tools/merge_battle_bridge_hotfix.py','out/tools/test_remaining_activity_native.py','out/tools/rebuild_remaining_activity_native_archive.py']
+inventory=json.loads((root/'out/npk_scripts/android_inventory.json').read_text(encoding='utf-8'))
+modules=['FBBE590A','2BCB4D1C','2CC3F05D','A091551F','5FFFCFD8','DE67DC42','F1606E31','991031A8','2907B608','BFBDA1E2','BAC02512','CF38A2E4']
+origin=[]
+for entry in inventory['modules']:
+ if entry['hash'] in modules:origin.append({'模块':entry['hash'],'路径':entry['filename'],'SHA256':entry['marshal_sha256']})
+report={
+ '时间':datetime.datetime.now().isoformat(),'范围':['G08','G09','G10','G11','G12','G13'],
+ '政策':'用户已明确统一采用推荐本服规则；HS_REMAINING_GAMEPLAY_POLICY=local-20261008-v1。直接原表/原生buff不依赖政策开关；新增玩法规则统一检查remainingPolicyEnabled，正式环境由根启用。',
+ '分组':[
+ {'编号':'G08','完成':'新夏活战斗冻结hs_summer_closed_beta，书名对应8角色模板，原生damage/cure共用效果类型DIRECT/INDIRECT加入独立1.6倍率，原生舍入/上限保留；鱼长原区间内0.01步进闭区间均匀，开始钓鱼鱼种/长度/鱼饵/时间已冻结，重试用原快照。','状态':'ActivityBattleContext.SummerClosedBeta；既有SummerFishing.Pending服务端结果','规则来源':'六种书名四类收益+60%有原生tips；概率生成缺原厂服务端，0.01闭区间采用获批本服政策。'},
+ {'编号':'G09','完成':'cthulhu_item_check(item_id,map_id)、cthulhu_check_all_in同序；回on_cthulhu_item_check(ret,res,box)，res含dice1/dice2/check_res(1成功2失败)/big_enable。2骰1..6；普通骰和+fix_check<=属性；原始2/12优先大成功/大失败；原表SAN+20/-10、封100/0；首次失败包括大失败可在原事件停留时扣20SAN重掷一次；异图完成unlock层亦解锁。','状态':'CthulhuItem.CheckReceipt服务端字段保存Moves/Cycle/Layer/Trunk/Branch/Dice/Success/Big/AllIn/Box；Checks递增及FirstCheck=true；同轮同方法复试返回冻结结果，JSONB冷恢复兼容奖励盒规范化。失败离开再重返由原cthulhuVisitItem恢复status1并以新visit重新检定。','事务':'属性、成本、SAN、奖励、状态、次数、结果收据在玩家同事务；原表fix=-2以plus使用，非推测minus。','规则来源':'普通fix与UI比较、SAN成本/上下限、重返已证；2/12优先及防重账本为获批本服规则。'},
+ {'编号':'G10','完成':'新会话validateActivityDungeonExtra设置MapID后冻结该地图激活手册条目，不去重2080021/2080001，camp1、property=null走原生幻书tag12过滤。receive_miku_surprise_bonus(map_id)完整終点后一次发对应208095..208098和声10个。','状态':'MikuMap.CompletedRuns从完整endMikuRun增加，SurpriseClaimed/SurpriseBox同事务永存；旧存档不以globalEnds伪造单图完成资格。','规则来源':'手册原配置及原生层叠；10和声/每图首完整终点一次为获批本服政策。'},
+ {'编号':'G11','完成':'守护类型1每材料各槽比率先汇总冻结MaterialRates，结算floor(原奖励*汇总比率)只发新增部分。常驻同一挑战每7天新季，原挑战窗口及22点截止不改；Seasons逐季Progress/Bonus/RankAt/RankHard/AP/阵容归档，ActiveSeasons指现季，法阵与已获资产保留；全服事务结期按原mountain_game_rank邮件。','状态':'MountainState.Seasons/ActiveSeasons服务端字段，ActivityBattleContext.MountainSeason+MaterialRates；Calendar.MountainSeasons的pid/season收据含cutoff/rank/bonus/Issued；season0继续原历史账本。','边界':'空过无成绩季不补奖；跨季已开会话只加原季进度、不给新季榜成绩；旧本服历史结期首次基线不补造。','规则来源':'原倍率/七日窗口/22点/奖表已证，汇总floor与循环新季获批本服政策。'},
+ {'编号':'G12','完成':'新战斗冻结未占领影响节点combat_power_added和buff_added；战力比按原表得到-20/-10/0/45/150；enemy_level_added非0让原生on_bid_set执行max(base+added,5)，敌buff给camp2 property=null；占领后仅新战斗重取，恢复用旧快照。','状态':'ActivityBattleContext.EnemyLevelAdded指针保留0的明确冻结，NativeBuffs[2]；清理上传的enemy_level/skill/hp/atk/defence假覆盖。','规则来源':'2BCB4D1C get_node_affected_nodes/get_node_combat_power/get_node_buff_list/get_correction_level和2CC3F05D字段已直接验证，全部直接原生规则，无需推测等级直接赋值。'},
+ {'编号':'G13','完成':'query_rank_list(10,0)支持三分榜名次和升序，缺席=分榜实际人数+1，至少1榜，和相同参榜数多优先/OID稳定；每整点从全量同服真实周成绩历史冻结总榜，页面上限1000不限制个人名次；周三23:59:59以截止成绩发原总奖并清新周成绩，个人MaxDamage/TotalDamage保留。','状态':'ActivityState.NianHistory[did][hour]保存At/Damage/Cards；Calendar.NianTotal保存Hour/Rank/Score/Joined/SubRanks/Cards；NianWeeks周收据扩展TotalRank/Score/Joined/Bonus/Issued；回包score=[正名次和]、sub_ranks。数据库总榜从冻结JSONB快照读取，不用SQL伤害临时冒充总榜。','事务':'周邮件满会阻止全服事务，重试不重复；清周榜之前冻结当日23点展示；新参赛周史明确时不阻塞旧奖，旧档截止后覆盖best且缺历史则不补造。','原奖表':'monster_nian_total_rank（BFBDA1E2），1..100=20205001、101..1000=20205002、1001..9999999=20205003；提案旧误称monster_nian_rank已纠正无数值变化。','规则来源':'小时/周三/三个原DID/周奖表已证；名次和、缺席惩罚、并列顺序获批本服政策。'}],
+ '原生宿主':'battle_native.py/Python2 battle_native_host.py同白名单校验enemy_level_added必须原表5值与夏活bool；Host.install装activity_buffs_native.py。新native脚本与Androidactivity_buffs_script安装函数强制逐字同源；多个Host重装不会捕获旧gworld。',
+ '构建与组合':'client_extensions和merge_battle_bridge_hotfix新增HS_ACTIVITY_BUFFS_BEGIN/END，函数_start_hs_activity_buffs、revision1；未写hotfix.json，根最后合并index。rebuild_remaining_activity_native_archive.py保留3099原生字节码并重包全部最新宿主及活动源/测试，可在最终源修改后重跑。',
+ '验证':{'本地Go':json.loads((root/'out/remaining-activity-go-verification.json').read_text(encoding='utf-8')),'原生执行':'out/remaining-activity-native-execution.json与log：24项夏活过滤/倍率、重复安装、初音实际两攻击一生命层叠、汪言最低5/+150与敌攻击buff+50%通过，已移除测试专用字段透传，使用生产白名单及安装。','兼容':'out/tools/test_native_pvp_engine.py真实Python2原引擎双阵容确定性与无效手动输入拒绝/超时已通过。','真实PG':'4项TestPostgresRemainingActivity已编译；本地缺HS_TEST_DATABASE_URL明确SKIP，根统一真实隔离PG运行。覆盖1105人JSONB个人总名次/分页/跨服、周奖全服邮箱容量故障回滚/重试、实际检定/all-in/惊喜RPC冷恢复幂等；零分有Ranked/RankAt收据参与、旧未知无收据仍缺席。','Linux命令':'解包运行时workspace中：HS_NATIVE_PVP_PYTHON2=<私有run-python2> /usr/bin/python3 out/tools/test_remaining_activity_native.py；脚本根路径跨平台。','未验收':'本组未执行正式部署或MuMu，不能将本地/原生测试当Android验收。'},
+'备份':'out/backups/remaining-20261008-activity（各改前文件及旧资源包.bak）',
+ '源码SHA256':{path:hashlib.sha256((root/path).read_bytes()).hexdigest() for path in files},'原生来源':origin,
+ '资料整合':'根将本JSON详细资料合并原有MD与四核心MD/清单，不额外新增散乱项目MD；删除原报告中G08..G13仍拒绝/未接线的过期描述，同时保留原服未知与本服政策及Android边界。'
+}
+report['源码SHA256']['internal/game/activity_metrics_script.py']=hashlib.sha256((root/'internal/game/activity_metrics_script.py').read_bytes()).hexdigest()
+report['源码SHA256']['out/tools/test_activity_metrics_script.py']=hashlib.sha256((root/'out/tools/test_activity_metrics_script.py').read_bytes()).hexdigest()
+report['验证']['雅努斯原生统计']='Python2执行BAC02512.is_league_protect原方法code，并断言component_mgr.shadow_battle确实装有battle_performance.battle_performance；原生server_battle.get_statistics/get_battle_ap_statistics/get_total_extra_statistics及本版数据表参与测试。普通/雅努斯×原桥/真人包装4组合均单次result；原报送/notify壳为隔离夹具，不能冒充GUI/Android执行。'
+report['验证']['Linux命令']+='；/usr/bin/python3 out/tools/test_activity_metrics_script.py执行原桥/真人闭包兼容。'
+report['运行时包']=json.loads((root/'out/remaining-activity-native-package.json').read_text(encoding='utf-8'))
+report['源码SHA256']['internal/game/miku_legacy_login_test.go']=hashlib.sha256((root/'internal/game/miku_legacy_login_test.go').read_bytes()).hexdigest()
+report['验证']['初音旧档真实登录']='ensureMiku修复已有对象中map_infos/achv_info/tasks为null，亦恢复已有地图nodes/treasure/coins/stories/handbook_items/receipt_materials和空奖励盒；不重掷节点、不重建旧完成次数/惊喜收据。TestRemainingActivityMikuOldNullJSONActualLoginAndColdService使用实际热修目录和Service.Handle quick_login→BecomePlayer→set_reconnect_auth_msg，对全null和已有地图嵌套null两形状验证，并JSON序列化后重建Store/Service/Connection冷登录；活动、材料、卡牌、契印不重复变化。可选omitempty空映射可在冷存变nil，但所有实际写入口ensureMiku重建可写映射。'
+for path in ['internal/game/activity_calendar_test.go','internal/game/dbstore/activity_calendar_test.go','internal/game/dbstore/activity_rank_test.go']:
+ report['源码SHA256'][path]=hashlib.sha256((root/path).read_bytes()).hexdigest()
+report['验证']['旧档正式规则']='TestRemainingActivityMountainLegacyNullJSONMigratesAndReloads从实际旧JSON的mountain_dungeon:null及无赛季字段，经存储冷拷贝/全服刷新/再JSON恢复/换季，保持无奖和0进度；另验证旧123进度与3领奖位原档归档不丢失。正式env下原ZeroRankLateInitial未关闭政策，5个旧calendar及11个新Remaining共16 PASS。仅专测默认未启用综合公式的旧game/PG Calendar及旧PG Ranking用明确Setenv空，原分榜/回滚断言保留。'
+for group in report['分组']:
+ if group['编号']=='G13':group['零分资格']='原厂零分资格生成端未提供；按已批准本服真实参与规则，实际result产生Ranked+RankAt及小时结果收据，即便伤害0也在分榜和总榜计参与/实际人数。未参赛或旧无时间收据的零字段仍缺席；后来实际result才能重建有效成绩。SQL与Fixture及总榜采用相同资格，正分优先和OID并列序不改。'
+(root/'out/remaining-activity-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+print('活动六组详细资料已写out/remaining-activity-report.json')

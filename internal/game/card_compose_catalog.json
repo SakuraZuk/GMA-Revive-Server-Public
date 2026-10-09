@@ -1,0 +1,730 @@
+{
+  "来源": {
+    "materials": {
+      "路径": "out\\client_catalogs\\tables\\materials.json",
+      "SHA256": "023c643971e57fe8bd8ca24784755308fe85472c673fb025a18fd4504d6df93a"
+    },
+    "cards": {
+      "路径": "out\\client_catalogs\\tables\\cards.json",
+      "SHA256": "b8f88a6e812ba1192dbfa08a993da1a703901b6adfa26207135391d5f13f1fd0"
+    },
+    "cards_rarity": {
+      "路径": "out\\client_catalogs\\tables\\cards_rarity.json",
+      "SHA256": "d206eab9746ec61126623319f18871ba7496c03c878905d3b06927a592ffa462"
+    },
+    "random_frage_rules": {
+      "路径": "out\\client_catalogs\\tables\\random_frage_rules.json",
+      "SHA256": "18881cb562474bfbc9d2dd5c7e1a3b529cd6d65209bbbd3325a0e082f7fe1f1f"
+    },
+    "bonus": {
+      "路径": "out\\client_catalogs\\tables\\bonus.json",
+      "SHA256": "42edae16df63e276eda82be592189b723d8d34f40335ef1cac47cd8d1b8a09cf"
+    },
+    "item_libs": {
+      "路径": "out\\client_catalogs\\tables\\item_libs.json",
+      "SHA256": "c8e6292895aaaf8c272b0ec418110fd314d77cc1995bb56aa172bc0366707caf"
+    },
+    "item_libs_data": {
+      "路径": "out\\client_catalogs\\tables\\item_libs_data.json",
+      "SHA256": "f2b63994b0ed88885041dd2dc1292b9acedc605e63609deb814298132510be66"
+    }
+  },
+  "recipes": {
+    "1004": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 4,
+          "weight": 1
+        }
+      ]
+    },
+    "1101": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 1101,
+          "weight": 1
+        }
+      ]
+    },
+    "1201": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 1201,
+          "weight": 1
+        }
+      ]
+    },
+    "1202": {
+      "need": 30,
+      "cards": [
+        {
+          "card_id": 1202,
+          "weight": 1
+        }
+      ]
+    },
+    "1203": {
+      "need": 30,
+      "cards": [
+        {
+          "card_id": 1203,
+          "weight": 1
+        }
+      ]
+    },
+    "1204": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 1204,
+          "weight": 1
+        }
+      ]
+    },
+    "1205": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 1205,
+          "weight": 1
+        }
+      ]
+    },
+    "1302": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 1302,
+          "weight": 1
+        }
+      ]
+    },
+    "1303": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 1303,
+          "weight": 1
+        }
+      ]
+    },
+    "1501": {
+      "need": 30,
+      "cards": [
+        {
+          "card_id": 1501,
+          "weight": 1
+        }
+      ]
+    },
+    "1502": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 1502,
+          "weight": 1
+        }
+      ]
+    },
+    "1601": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 1601,
+          "weight": 1
+        }
+      ]
+    },
+    "2101": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 2101,
+          "weight": 1
+        }
+      ]
+    },
+    "2102": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 2102,
+          "weight": 1
+        }
+      ]
+    },
+    "2103": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 2103,
+          "weight": 1
+        }
+      ]
+    },
+    "2201": {
+      "need": 30,
+      "cards": [
+        {
+          "card_id": 2201,
+          "weight": 1
+        }
+      ]
+    },
+    "2202": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 2202,
+          "weight": 1
+        }
+      ]
+    },
+    "2203": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 2203,
+          "weight": 1
+        }
+      ]
+    },
+    "2301": {
+      "need": 30,
+      "cards": [
+        {
+          "card_id": 2301,
+          "weight": 1
+        }
+      ]
+    },
+    "2302": {
+      "need": 30,
+      "cards": [
+        {
+          "card_id": 2302,
+          "weight": 1
+        }
+      ]
+    },
+    "2303": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 2303,
+          "weight": 1
+        }
+      ]
+    },
+    "2401": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 2401,
+          "weight": 1
+        }
+      ]
+    },
+    "2402": {
+      "need": 30,
+      "cards": [
+        {
+          "card_id": 2402,
+          "weight": 1
+        }
+      ]
+    },
+    "2403": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 2403,
+          "weight": 1
+        }
+      ]
+    },
+    "2404": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 2404,
+          "weight": 1
+        }
+      ]
+    },
+    "2405": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 2405,
+          "weight": 1
+        }
+      ]
+    },
+    "2406": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 2406,
+          "weight": 1
+        }
+      ]
+    },
+    "2501": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 2501,
+          "weight": 1
+        }
+      ]
+    },
+    "2502": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 2502,
+          "weight": 1
+        }
+      ]
+    },
+    "2503": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 2503,
+          "weight": 1
+        }
+      ]
+    },
+    "2504": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 2504,
+          "weight": 1
+        }
+      ]
+    },
+    "2505": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 2505,
+          "weight": 1
+        }
+      ]
+    },
+    "3101": {
+      "need": 30,
+      "cards": [
+        {
+          "card_id": 3101,
+          "weight": 1
+        }
+      ]
+    },
+    "3102": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 3102,
+          "weight": 1
+        }
+      ]
+    },
+    "3201": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 3201,
+          "weight": 1
+        }
+      ]
+    },
+    "3202": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 3202,
+          "weight": 1
+        }
+      ]
+    },
+    "3203": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 3203,
+          "weight": 1
+        }
+      ]
+    },
+    "3301": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 3301,
+          "weight": 1
+        }
+      ]
+    },
+    "3401": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 3401,
+          "weight": 1
+        }
+      ]
+    },
+    "3402": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 3402,
+          "weight": 1
+        }
+      ]
+    },
+    "3403": {
+      "need": 30,
+      "cards": [
+        {
+          "card_id": 3403,
+          "weight": 1
+        }
+      ]
+    },
+    "3404": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 3404,
+          "weight": 1
+        }
+      ]
+    },
+    "3405": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 3405,
+          "weight": 1
+        }
+      ]
+    },
+    "3406": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 3406,
+          "weight": 1
+        }
+      ]
+    },
+    "3407": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 3407,
+          "weight": 1
+        }
+      ]
+    },
+    "3411": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 3411,
+          "weight": 1
+        }
+      ]
+    },
+    "3501": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 3501,
+          "weight": 1
+        }
+      ]
+    },
+    "3502": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 3502,
+          "weight": 1
+        }
+      ]
+    },
+    "3504": {
+      "need": 30,
+      "cards": [
+        {
+          "card_id": 3504,
+          "weight": 1
+        }
+      ]
+    },
+    "4101": {
+      "need": 30,
+      "cards": [
+        {
+          "card_id": 4101,
+          "weight": 1
+        }
+      ]
+    },
+    "4102": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 4102,
+          "weight": 1
+        }
+      ]
+    },
+    "4202": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 4202,
+          "weight": 1
+        }
+      ]
+    },
+    "4402": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 4402,
+          "weight": 1
+        }
+      ]
+    },
+    "4404": {
+      "need": 30,
+      "cards": [
+        {
+          "card_id": 4404,
+          "weight": 1
+        }
+      ]
+    },
+    "4405": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 4405,
+          "weight": 1
+        }
+      ]
+    },
+    "4406": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 4406,
+          "weight": 1
+        }
+      ]
+    },
+    "4407": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 4407,
+          "weight": 1
+        }
+      ]
+    },
+    "4409": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 4409,
+          "weight": 1
+        }
+      ]
+    },
+    "4410": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 4410,
+          "weight": 1
+        }
+      ]
+    },
+    "4411": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 4411,
+          "weight": 1
+        }
+      ]
+    },
+    "4501": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 4501,
+          "weight": 1
+        }
+      ]
+    },
+    "4502": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 4502,
+          "weight": 1
+        }
+      ]
+    },
+    "4503": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 4503,
+          "weight": 1
+        }
+      ]
+    },
+    "4601": {
+      "need": 50,
+      "cards": [
+        {
+          "card_id": 4601,
+          "weight": 1
+        }
+      ]
+    },
+    "4602": {
+      "need": 40,
+      "cards": [
+        {
+          "card_id": 4602,
+          "weight": 1
+        }
+      ]
+    },
+    "5101": {
+      "need": 20,
+      "cards": [
+        {
+          "card_id": 5101,
+          "weight": 1
+        }
+      ]
+    },
+    "5112": {
+      "need": 20,
+      "cards": [
+        {
+          "card_id": 5112,
+          "weight": 1
+        }
+      ]
+    },
+    "5201": {
+      "need": 20,
+      "cards": [
+        {
+          "card_id": 5201,
+          "weight": 1
+        }
+      ]
+    },
+    "5211": {
+      "need": 20,
+      "cards": [
+        {
+          "card_id": 5211,
+          "weight": 1
+        }
+      ]
+    },
+    "5222": {
+      "need": 20,
+      "cards": [
+        {
+          "card_id": 5222,
+          "weight": 1
+        }
+      ]
+    },
+    "5301": {
+      "need": 20,
+      "cards": [
+        {
+          "card_id": 5301,
+          "weight": 1
+        }
+      ]
+    },
+    "5311": {
+      "need": 20,
+      "cards": [
+        {
+          "card_id": 5311,
+          "weight": 1
+        }
+      ]
+    },
+    "5401": {
+      "need": 20,
+      "cards": [
+        {
+          "card_id": 5401,
+          "weight": 1
+        }
+      ]
+    },
+    "5411": {
+      "need": 20,
+      "cards": [
+        {
+          "card_id": 5411,
+          "weight": 1
+        }
+      ]
+    },
+    "5501": {
+      "need": 20,
+      "cards": [
+        {
+          "card_id": 5501,
+          "weight": 1
+        }
+      ]
+    },
+    "5511": {
+      "need": 20,
+      "cards": [
+        {
+          "card_id": 5511,
+          "weight": 1
+        }
+      ]
+    },
+    "5601": {
+      "need": 20,
+      "cards": [
+        {
+          "card_id": 5601,
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "max_cards": 2000,
+  "max_compose": 50,
+  "常量来源": "37C6CA84 common_const.py MAX_CARD_COUNT/CARD_COMPOSE_MAX_NUMBER"
+}

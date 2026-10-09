@@ -1,0 +1,2141 @@
+{
+  "methods": [
+    "add_fighting_cards",
+    "after_pre_play",
+    "battle_end_notice",
+    "battle_fighting",
+    "boss_dungeon_id_change",
+    "change_series_buff",
+    "continue_wait_for_player_input",
+    "handle_league_boss_hps",
+    "master_input",
+    "notify_short_time_eid_list",
+    "on_battle_start",
+    "on_exit_battle",
+    "on_set_auto_battle_habit",
+    "prepare",
+    "real_battle_end",
+    "real_change_auto_state",
+    "real_continue_old_round",
+    "real_do_command",
+    "real_round_end",
+    "real_start_next_round",
+    "set_battle_candidate",
+    "set_battle_speed",
+    "set_focus_target",
+    "set_last_fighting_cards",
+    "set_replace_seed",
+    "start",
+    "sync_command",
+    "sync_valid_commands",
+    "wait_for_master_input"
+  ],
+  "custom_types": [
+    "achv.achv",
+    "achv.achv_dict",
+    "activity_task.activity_task",
+    "activity_task.activity_task_dict",
+    "archive.avatar_remark",
+    "archive.avatar_remark_dict",
+    "archive.card_remark",
+    "archive.comment_info",
+    "archive.comment_list",
+    "archive.comment_rank_info",
+    "archive.comment_rank_list",
+    "assist.assist_dict",
+    "assist.assist_habit",
+    "assist.assist_info",
+    "assist.assist_list",
+    "assist.assist_times_dict",
+    "avatar_back_task.avatar_back_task",
+    "avatar_back_task.avatar_back_task_dict",
+    "avatar_info.avatar_info",
+    "avatar_info.avatar_info_dict",
+    "avatar_info.avatar_info_list",
+    "ban_info.ban_id_dict",
+    "ban_info.ban_info",
+    "ban_info.ban_str_dict",
+    "base_types.BinData",
+    "base_types.Bool",
+    "base_types.Callback",
+    "base_types.Dict",
+    "base_types.Float",
+    "base_types.Int",
+    "base_types.List",
+    "base_types.Long",
+    "base_types.ObjId",
+    "base_types.ObjIdList",
+    "base_types.Str",
+    "base_types.Time",
+    "base_types.Tuple",
+    "base_types.type_base",
+    "battle_cards.battle_cards",
+    "battle_cards.battle_cards_dict",
+    "battle_cards.preset_battle_cards",
+    "battle_cards.preset_battle_cards_dict",
+    "battle_pass.battle_pass",
+    "battle_pass.battle_pass_dict",
+    "battle_task_info.battle_tasks",
+    "battle_task_info.task_info",
+    "binary_indexed_tree.binary_indexed_tree",
+    "binary_indexed_tree.binary_indexed_tree_list",
+    "bonus.bonus",
+    "bounty_task.bounty_task",
+    "bounty_task.bounty_task_dict",
+    "box.box",
+    "box.boxList",
+    "card.card",
+    "card.card_habit",
+    "card.card_list",
+    "card.card_mgr",
+    "card_common.card_common",
+    "card_common.card_common_mgr",
+    "card_house_sites.card_house_site",
+    "card_house_sites.card_house_sites",
+    "chat.chat",
+    "chat.chat_mgr",
+    "check_in_records.check_in_record",
+    "check_in_records.check_in_records",
+    "coin_statistics_info.coin_statistics_info",
+    "commodity_detail.commodity_detail",
+    "commodity_detail.commodity_detail_info",
+    "commodity_detail.gift_box_detail",
+    "commodity_detail.gift_box_info",
+    "common_rank_list_info.common_rank_list",
+    "common_rank_list_info.common_rank_list_info",
+    "common_rank_list_info.rank_list_container",
+    "common_rank_list_info.rank_list_item",
+    "consign_task.consign_task_dict",
+    "consign_task.consign_task_info",
+    "crossword.crossword_friend_send_history",
+    "crossword.crossword_friend_send_info",
+    "crossword.crossword_info",
+    "crossword.crossword_riddle_dict",
+    "crossword.crossword_riddle_info",
+    "cthulhu.cthulhu_grid",
+    "cthulhu.cthulhu_grid_infos",
+    "cthulhu.cthulhu_infos",
+    "cthulhu.cthulhu_item",
+    "cthulhu.cthulhu_item_infos",
+    "cthulhu.cthulhu_item_libs",
+    "cthulhu.cthulhu_map",
+    "custom_text.custom_text",
+    "custom_type.BinDataList",
+    "custom_type.CustomAttr",
+    "custom_type.CustomDeque",
+    "custom_type.CustomDict",
+    "custom_type.CustomList",
+    "custom_type.CustomMetaAttr",
+    "custom_type.CustomTuple",
+    "custom_type.CustomType",
+    "custom_type.FloatList",
+    "custom_type.Int2BoolDict",
+    "custom_type.Int2IntDict",
+    "custom_type.Int2IntIntDict",
+    "custom_type.Int2ListDict",
+    "custom_type.Int2ObjIdDict",
+    "custom_type.Int2ObjIdListDict",
+    "custom_type.Int2StrDict",
+    "custom_type.Int2TupleDict",
+    "custom_type.IntList",
+    "custom_type.IntTuple",
+    "custom_type.ObjId2BoolDict",
+    "custom_type.ObjId2DictDict",
+    "custom_type.ObjId2FloatDict",
+    "custom_type.ObjId2IntDict",
+    "custom_type.ObjId2IntListDict",
+    "custom_type.ObjId2ObjIdDict",
+    "custom_type.ObjId2StrDict",
+    "custom_type.ObjectIdList",
+    "custom_type.Str2BoolDict",
+    "custom_type.Str2DictDict",
+    "custom_type.Str2IntDict",
+    "custom_type.Str2IntIntDict",
+    "custom_type.Str2IntListDict",
+    "custom_type.Str2ObjIdDict",
+    "custom_type.Str2ObjIdIntDict",
+    "custom_type.Str2StrDict",
+    "custom_type.Str2TupleListDict",
+    "custom_type.StrList",
+    "custom_type.Tuple2BoolDict",
+    "custom_type.Tuple2IntDict",
+    "custom_type.Tuple2TupleDict",
+    "custom_type.TupleList",
+    "custom_type.type_meta",
+    "daily_task.daily_task",
+    "daily_task.daily_task_dict",
+    "danmaku.danmaku_pool_dict",
+    "danmaku.danmaku_pool_info",
+    "danmaku.danmaku_queue",
+    "defence_records.defence_record",
+    "defence_records.defence_records",
+    "dictionary_game_info.dictionary_game_info",
+    "dormitory_energy.dormitory_energy",
+    "dragonboat.dragonboat_info",
+    "dungeon.dungeon",
+    "dungeon.dungeon_mgr",
+    "dungeon.dungeon_type_mgr",
+    "dungeon.dungeontype",
+    "exam.choose_info",
+    "exam.exam_choose_info",
+    "exam.exam_dungeon_dict",
+    "exam.exam_dungeon_info",
+    "exam.exam_game_info",
+    "exam.exam_task_dict",
+    "exam.exam_task_info",
+    "extra_info.extra_info",
+    "extra_info.extra_info_mgr",
+    "facility_info.facility",
+    "facility_info.facility_info",
+    "frage_stone.frage_stone",
+    "free_stage.free_stage",
+    "free_stage.free_stage_info",
+    "friend.friend",
+    "friend.friend_dict",
+    "friend.friend_request",
+    "friend.friend_request_dict",
+    "friend_miku_fragment_info.friend_miku_fragment",
+    "friend_miku_fragment_info.friend_miku_fragment_list",
+    "friend_miku_fragment_info.friend_miku_fragments_info",
+    "friend_random_card_info.friend_random_card_info",
+    "friend_random_card_info.friend_random_card_list",
+    "friend_random_card_info.friend_random_cards_info",
+    "guide_task.guide_task",
+    "guide_task.guide_task_dict",
+    "head_boxes.head_boxes",
+    "images.image",
+    "images.images",
+    "intimacy_record.intimacy_record",
+    "league.league",
+    "league.league_apply_queue",
+    "league.league_info",
+    "league.league_pvp_match_info",
+    "league.league_pvp_report",
+    "league.league_pvp_result",
+    "league.league_trial_exchange_apply_info",
+    "league.league_trial_exchange_apply_infos",
+    "league_activity_weekly_info.league_activity_weekly_info",
+    "league_card.league_card",
+    "league_daily_task.league_daily_task",
+    "league_daily_task.league_daily_task_dict",
+    "league_event_info.league_event",
+    "league_event_info.league_event_info",
+    "league_explore_state_info.league_explore_state",
+    "league_explore_state_info.league_explore_state_info",
+    "league_invited_info.league_invite_detail",
+    "league_invited_info.league_invited_info",
+    "league_member_info.league_member",
+    "league_member_info.league_member_info",
+    "league_pvp_boss_infos.guess_pvp_auto_result",
+    "league_pvp_boss_infos.guess_pvp_result",
+    "league_pvp_boss_infos.guess_result_card_info",
+    "league_pvp_boss_infos.guess_result_card_list",
+    "league_pvp_boss_infos.league_pvp_boss_bonus",
+    "league_pvp_boss_infos.league_pvp_boss_bonus_dict",
+    "league_pvp_boss_infos.league_pvp_boss_infos",
+    "league_pvp_boss_infos.league_pvp_bosses",
+    "league_pvp_boss_infos.new_league_challenge_info",
+    "league_pvp_boss_infos.pvp_boss_bonus_info",
+    "league_pvp_personal_info.league_pvp_personal_achv",
+    "league_pvp_personal_info.league_pvp_personal_achv_dict",
+    "league_pvp_personal_info.league_pvp_personal_real_score",
+    "league_pvp_personal_info.league_pvp_personal_score_dict",
+    "league_pvp_personal_info.league_pvp_personal_score_info",
+    "league_pvp_personal_info.league_pvp_personal_shop_dict",
+    "league_task.league_task",
+    "league_task.league_task_dict",
+    "league_trial_state_info.league_trial_state",
+    "league_trial_state_info.league_trial_state_info",
+    "main_task.main_task",
+    "main_task.main_task_dict",
+    "match_index.match_index",
+    "match_index.match_node",
+    "match_index.match_nodes",
+    "material.material",
+    "material.material_mgr",
+    "material_consume_dict.material_consume_dict",
+    "material_consume_dict.material_consume_info",
+    "message.LeagueMessageBoard",
+    "message.message",
+    "message.messages",
+    "mid_age_game_info.avatar_back_info",
+    "mid_age_game_info.formula",
+    "mid_age_game_info.formula_dict",
+    "mid_age_game_info.mid_age_drop_info",
+    "mid_age_game_info.mid_age_drop_queue",
+    "mid_age_game_info.mid_age_game_info",
+    "mid_age_game_info.mid_age_item",
+    "mid_age_game_info.mid_age_item_drop",
+    "mid_age_game_info.mid_age_item_info",
+    "mid_age_game_info.mid_age_two_info",
+    "mid_age_game_info.rune_forge",
+    "miku_info.handbook",
+    "miku_info.handbook_item",
+    "miku_info.handbook_items_dict",
+    "miku_info.handbook_items_list",
+    "miku_info.miiku_story_info",
+    "miku_info.miiku_story_item",
+    "miku_info.miku_achv",
+    "miku_info.miku_achv_dict",
+    "miku_info.miku_game_info",
+    "miku_info.miku_map",
+    "miku_info.miku_map_info",
+    "miku_info.miku_node",
+    "miku_info.miku_node_info",
+    "miku_info.miku_treasure_state",
+    "monster_nian_info.monster_nian_dungeon_dict",
+    "monster_nian_info.monster_nian_dungeon_info",
+    "monster_nian_info.north_wind_footprint_info",
+    "mountain_game_info.magic_circle",
+    "mountain_game_info.magic_circle_dict",
+    "mountain_game_info.mountain_dungeon_dict",
+    "mountain_game_info.mountain_dungeon_info",
+    "mountain_game_info.mountain_game_info",
+    "new_task.new_task",
+    "new_task.new_task_dict",
+    "pass_team.avatar_pass_team",
+    "pass_team.dungeon_pass_team_rank",
+    "pass_team.level_pass_team_rank",
+    "pass_team.pass_team_rank",
+    "payment_gift.payment_gift",
+    "payment_gift.payment_gift_info",
+    "random_cards_record.promise_card_record",
+    "random_cards_record.promise_cards_record",
+    "random_cards_record.random_card_record",
+    "random_cards_record.random_cards_record",
+    "rank_detail_info.rank_detail",
+    "rank_detail_info.rank_detail_info",
+    "rank_list_score.rank_list_score",
+    "rank_list_score.rank_list_score_dict",
+    "raw_mail.raw_mail",
+    "recommend_gift.recommend_gift",
+    "recommend_gift.recommend_gift_dict",
+    "report_info.report_info",
+    "report_info.report_record",
+    "report_info.report_record_mgr",
+    "restroom.dormitory_card_dict",
+    "restroom.house_daily_random_reward_dict",
+    "restroom.house_total_info",
+    "restroom.restroom",
+    "restroom.restroom_card",
+    "restroom.restroom_card_info",
+    "restroom.restroom_info",
+    "rune.embed_runes",
+    "rune.rune",
+    "rune.rune_lock_setting",
+    "rune.rune_lock_setting_dict",
+    "rune.rune_mgr",
+    "rune.runes_template",
+    "rune.runes_templates",
+    "rune_stone.rune_stone",
+    "secret_tower.secret_tower",
+    "secret_tower.secret_tower_dict",
+    "short_mail.short_mail",
+    "short_mail.short_mail_info",
+    "signin_info.signin_info",
+    "simple_rank_list.simple_rank_list",
+    "skill.skill",
+    "skill.skill_mgr",
+    "stage_site.stage_site",
+    "stage_site.stage_site_info",
+    "stress_test_statistics.stress_test_statistics",
+    "summer_game_info.summer_game_info",
+    "summer_game_info.summer_map",
+    "summer_game_info.summer_map_infos",
+    "talent_node.talent_branch",
+    "talent_node.talent_node",
+    "talent_node.talent_tree",
+    "task_tower_info.floor_info",
+    "task_tower_info.floor_infos",
+    "task_tower_info.task_tower_info",
+    "task_tower_info.tower_info",
+    "task_tower_info.tower_infos",
+    "time_auto_attr.time_auto_attr",
+    "wangyan_game_info.wangyan_game_info",
+    "wangyan_game_info.wangyan_map",
+    "wangyan_game_info.wangyan_map_infos",
+    "yuanxiao_game_info.yuanxiao_game_info"
+  ],
+  "sources": [
+    {
+      "方法": "set_replace_seed",
+      "模块": "battle_logic\\battle_base.py",
+      "来源": "2a641a2ddb6b71f22cfa4b0becdc8c1c98e0d86f82244c9b7146669e36a3cee3"
+    },
+    {
+      "方法": "add_fighting_cards",
+      "模块": "battle_logic\\battle_base.py",
+      "来源": "2a641a2ddb6b71f22cfa4b0becdc8c1c98e0d86f82244c9b7146669e36a3cee3"
+    },
+    {
+      "方法": "set_last_fighting_cards",
+      "模块": "battle_logic\\battle_base.py",
+      "来源": "2a641a2ddb6b71f22cfa4b0becdc8c1c98e0d86f82244c9b7146669e36a3cee3"
+    },
+    {
+      "方法": "set_battle_candidate",
+      "模块": "battle_logic\\battle_base.py",
+      "来源": "2a641a2ddb6b71f22cfa4b0becdc8c1c98e0d86f82244c9b7146669e36a3cee3"
+    },
+    {
+      "方法": "prepare",
+      "模块": "battle_logic\\battle_base.py",
+      "来源": "2a641a2ddb6b71f22cfa4b0becdc8c1c98e0d86f82244c9b7146669e36a3cee3"
+    },
+    {
+      "方法": "start",
+      "模块": "battle_logic\\battle_base.py",
+      "来源": "2a641a2ddb6b71f22cfa4b0becdc8c1c98e0d86f82244c9b7146669e36a3cee3"
+    },
+    {
+      "方法": "on_exit_battle",
+      "模块": "battle_logic\\battle_base.py",
+      "来源": "2a641a2ddb6b71f22cfa4b0becdc8c1c98e0d86f82244c9b7146669e36a3cee3"
+    },
+    {
+      "方法": "gm_do_trigger_action",
+      "模块": "battle_logic\\battle_base.py",
+      "来源": "2a641a2ddb6b71f22cfa4b0becdc8c1c98e0d86f82244c9b7146669e36a3cee3"
+    },
+    {
+      "方法": "battle_fighting",
+      "模块": "battle_logic\\battle_base.py",
+      "来源": "2a641a2ddb6b71f22cfa4b0becdc8c1c98e0d86f82244c9b7146669e36a3cee3"
+    },
+    {
+      "方法": "battle_end_notice",
+      "模块": "battle_logic\\battle_base.py",
+      "来源": "2a641a2ddb6b71f22cfa4b0becdc8c1c98e0d86f82244c9b7146669e36a3cee3"
+    },
+    {
+      "方法": "real_battle_end",
+      "模块": "battle_logic\\battle_base.py",
+      "来源": "2a641a2ddb6b71f22cfa4b0becdc8c1c98e0d86f82244c9b7146669e36a3cee3"
+    },
+    {
+      "方法": "sync_valid_commands",
+      "模块": "battle_logic\\battle_input.py",
+      "来源": "e8fa084174771e5461c540392223f98b6c039f76ed02c64fdec56a402f56c67a"
+    },
+    {
+      "方法": "wait_for_master_input",
+      "模块": "battle_logic\\controlers\\server.py",
+      "来源": "f615152040221f7e6e4dd1f9f0397b01df9632eb5ebb2c6c50bebf6026a6abda"
+    },
+    {
+      "方法": "sync_valid_commands",
+      "模块": "battle_logic\\controlers\\server.py",
+      "来源": "f615152040221f7e6e4dd1f9f0397b01df9632eb5ebb2c6c50bebf6026a6abda"
+    },
+    {
+      "方法": "sync_command",
+      "模块": "battle_logic\\controlers\\server.py",
+      "来源": "f615152040221f7e6e4dd1f9f0397b01df9632eb5ebb2c6c50bebf6026a6abda"
+    },
+    {
+      "方法": "handle_league_boss_hps",
+      "模块": "battle_logic\\damage_logic.py",
+      "来源": "4ce5d451864a10ad9de11429d582b586856d4fbeece956372a24af264146ef8c"
+    },
+    {
+      "方法": "boss_dungeon_id_change",
+      "模块": "battle_logic\\damage_logic.py",
+      "来源": "4ce5d451864a10ad9de11429d582b586856d4fbeece956372a24af264146ef8c"
+    },
+    {
+      "方法": "on_battle_start",
+      "模块": "battle_logic\\driver.py",
+      "来源": "61bdc59f4143264da1461aac0490571a0aa20288301b1543e46e8d2495dd5cfc"
+    },
+    {
+      "方法": "real_round_end",
+      "模块": "battle_logic\\driver.py",
+      "来源": "61bdc59f4143264da1461aac0490571a0aa20288301b1543e46e8d2495dd5cfc"
+    },
+    {
+      "方法": "continue_wait_for_player_input",
+      "模块": "battle_logic\\driver.py",
+      "来源": "61bdc59f4143264da1461aac0490571a0aa20288301b1543e46e8d2495dd5cfc"
+    },
+    {
+      "方法": "after_pre_play",
+      "模块": "battle_logic\\driver.py",
+      "来源": "61bdc59f4143264da1461aac0490571a0aa20288301b1543e46e8d2495dd5cfc"
+    },
+    {
+      "方法": "real_continue_old_round",
+      "模块": "battle_logic\\driver.py",
+      "来源": "61bdc59f4143264da1461aac0490571a0aa20288301b1543e46e8d2495dd5cfc"
+    },
+    {
+      "方法": "real_start_next_round",
+      "模块": "battle_logic\\driver.py",
+      "来源": "61bdc59f4143264da1461aac0490571a0aa20288301b1543e46e8d2495dd5cfc"
+    },
+    {
+      "方法": "real_change_auto_state",
+      "模块": "battle_logic\\driver.py",
+      "来源": "61bdc59f4143264da1461aac0490571a0aa20288301b1543e46e8d2495dd5cfc"
+    },
+    {
+      "方法": "notify_short_time_eid_list",
+      "模块": "battle_logic\\player_input.py",
+      "来源": "da04b765a4aaaba2601caeca11a72fed13951bbbdf0692409d4e3f74d5c07625"
+    },
+    {
+      "方法": "real_do_command",
+      "模块": "battle_logic\\player_input.py",
+      "来源": "da04b765a4aaaba2601caeca11a72fed13951bbbdf0692409d4e3f74d5c07625"
+    },
+    {
+      "方法": "master_input",
+      "模块": "battle_logic\\player_input.py",
+      "来源": "da04b765a4aaaba2601caeca11a72fed13951bbbdf0692409d4e3f74d5c07625"
+    },
+    {
+      "方法": "set_focus_target",
+      "模块": "battle_logic\\player_input.py",
+      "来源": "da04b765a4aaaba2601caeca11a72fed13951bbbdf0692409d4e3f74d5c07625"
+    },
+    {
+      "方法": "on_set_auto_battle_habit",
+      "模块": "battle_logic\\player_input.py",
+      "来源": "da04b765a4aaaba2601caeca11a72fed13951bbbdf0692409d4e3f74d5c07625"
+    },
+    {
+      "方法": "set_battle_speed",
+      "模块": "battle_logic\\player_input.py",
+      "来源": "da04b765a4aaaba2601caeca11a72fed13951bbbdf0692409d4e3f74d5c07625"
+    },
+    {
+      "方法": "change_series_buff",
+      "模块": "battle_logic\\player_input.py",
+      "来源": "da04b765a4aaaba2601caeca11a72fed13951bbbdf0692409d4e3f74d5c07625"
+    }
+  ],
+  "custom_type_sources": [
+    {
+      "类型": "achv.achv",
+      "模块": "custom_types\\achv.py",
+      "来源SHA256": "09df4ab4312c582f0ea75390a82160f3a520f72a1c5aa27331ad574527dc5693"
+    },
+    {
+      "类型": "achv.achv_dict",
+      "模块": "custom_types\\achv.py",
+      "来源SHA256": "09df4ab4312c582f0ea75390a82160f3a520f72a1c5aa27331ad574527dc5693"
+    },
+    {
+      "类型": "activity_task.activity_task",
+      "模块": "custom_types\\activity_task.py",
+      "来源SHA256": "b5c272b676f54d4fffd3e817156f1caf3c7b1f3d515681d75f7d6add600ea215"
+    },
+    {
+      "类型": "activity_task.activity_task_dict",
+      "模块": "custom_types\\activity_task.py",
+      "来源SHA256": "b5c272b676f54d4fffd3e817156f1caf3c7b1f3d515681d75f7d6add600ea215"
+    },
+    {
+      "类型": "archive.comment_info",
+      "模块": "custom_types\\archive.py",
+      "来源SHA256": "76af60fd614cb5f01ffd0c9a88e3a415eebf880186eb8e85410f8bd8fb9d3970"
+    },
+    {
+      "类型": "archive.comment_rank_info",
+      "模块": "custom_types\\archive.py",
+      "来源SHA256": "76af60fd614cb5f01ffd0c9a88e3a415eebf880186eb8e85410f8bd8fb9d3970"
+    },
+    {
+      "类型": "archive.comment_rank_list",
+      "模块": "custom_types\\archive.py",
+      "来源SHA256": "76af60fd614cb5f01ffd0c9a88e3a415eebf880186eb8e85410f8bd8fb9d3970"
+    },
+    {
+      "类型": "archive.card_remark",
+      "模块": "custom_types\\archive.py",
+      "来源SHA256": "76af60fd614cb5f01ffd0c9a88e3a415eebf880186eb8e85410f8bd8fb9d3970"
+    },
+    {
+      "类型": "archive.avatar_remark",
+      "模块": "custom_types\\archive.py",
+      "来源SHA256": "76af60fd614cb5f01ffd0c9a88e3a415eebf880186eb8e85410f8bd8fb9d3970"
+    },
+    {
+      "类型": "archive.comment_list",
+      "模块": "custom_types\\archive.py",
+      "来源SHA256": "76af60fd614cb5f01ffd0c9a88e3a415eebf880186eb8e85410f8bd8fb9d3970"
+    },
+    {
+      "类型": "archive.avatar_remark_dict",
+      "模块": "custom_types\\archive.py",
+      "来源SHA256": "76af60fd614cb5f01ffd0c9a88e3a415eebf880186eb8e85410f8bd8fb9d3970"
+    },
+    {
+      "类型": "assist.assist_info",
+      "模块": "custom_types\\assist.py",
+      "来源SHA256": "3d9aa5bb6a431d923f542b9be0e41fe22038ef40bdf66c1d152fc9638120408b"
+    },
+    {
+      "类型": "assist.assist_dict",
+      "模块": "custom_types\\assist.py",
+      "来源SHA256": "3d9aa5bb6a431d923f542b9be0e41fe22038ef40bdf66c1d152fc9638120408b"
+    },
+    {
+      "类型": "assist.assist_list",
+      "模块": "custom_types\\assist.py",
+      "来源SHA256": "3d9aa5bb6a431d923f542b9be0e41fe22038ef40bdf66c1d152fc9638120408b"
+    },
+    {
+      "类型": "assist.assist_times_dict",
+      "模块": "custom_types\\assist.py",
+      "来源SHA256": "3d9aa5bb6a431d923f542b9be0e41fe22038ef40bdf66c1d152fc9638120408b"
+    },
+    {
+      "类型": "assist.assist_habit",
+      "模块": "custom_types\\assist.py",
+      "来源SHA256": "3d9aa5bb6a431d923f542b9be0e41fe22038ef40bdf66c1d152fc9638120408b"
+    },
+    {
+      "类型": "avatar_back_task.avatar_back_task",
+      "模块": "custom_types\\avatar_back_task.py",
+      "来源SHA256": "a22fb9e470655c6a9dbffbc6a5bc566981e50f04e4c15850413bc5529e1eb452"
+    },
+    {
+      "类型": "avatar_back_task.avatar_back_task_dict",
+      "模块": "custom_types\\avatar_back_task.py",
+      "来源SHA256": "a22fb9e470655c6a9dbffbc6a5bc566981e50f04e4c15850413bc5529e1eb452"
+    },
+    {
+      "类型": "avatar_info.avatar_info",
+      "模块": "custom_types\\avatar_info.py",
+      "来源SHA256": "6ec482788dfc627ae6fc97f1517096c0cdcc8698204b469ba260f45f0ec2b15c"
+    },
+    {
+      "类型": "avatar_info.avatar_info_dict",
+      "模块": "custom_types\\avatar_info.py",
+      "来源SHA256": "6ec482788dfc627ae6fc97f1517096c0cdcc8698204b469ba260f45f0ec2b15c"
+    },
+    {
+      "类型": "avatar_info.avatar_info_list",
+      "模块": "custom_types\\avatar_info.py",
+      "来源SHA256": "6ec482788dfc627ae6fc97f1517096c0cdcc8698204b469ba260f45f0ec2b15c"
+    },
+    {
+      "类型": "ban_info.ban_info",
+      "模块": "custom_types\\ban_info.py",
+      "来源SHA256": "4ef64ee138052c2bae26345db3a605951bd7871d1163983489777c75037051d8"
+    },
+    {
+      "类型": "ban_info.ban_id_dict",
+      "模块": "custom_types\\ban_info.py",
+      "来源SHA256": "4ef64ee138052c2bae26345db3a605951bd7871d1163983489777c75037051d8"
+    },
+    {
+      "类型": "ban_info.ban_str_dict",
+      "模块": "custom_types\\ban_info.py",
+      "来源SHA256": "4ef64ee138052c2bae26345db3a605951bd7871d1163983489777c75037051d8"
+    },
+    {
+      "类型": "base_types.type_base",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.Int",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.Long",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.Callback",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.Float",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.Str",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.BinData",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.ObjId",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.List",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.ObjIdList",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.Tuple",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.Dict",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.Bool",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "base_types.Time",
+      "模块": "custom_types\\base_types.py",
+      "来源SHA256": "7b86f8b55acd47c85da600d156f274de1aa42ed04ad3784af1d04f2acafdb680"
+    },
+    {
+      "类型": "battle_cards.battle_cards",
+      "模块": "custom_types\\battle_cards.py",
+      "来源SHA256": "af17869f92eaccdad3817d784db19df0edf0ef726973a6fe52d7f0267e6605fb"
+    },
+    {
+      "类型": "battle_cards.battle_cards_dict",
+      "模块": "custom_types\\battle_cards.py",
+      "来源SHA256": "af17869f92eaccdad3817d784db19df0edf0ef726973a6fe52d7f0267e6605fb"
+    },
+    {
+      "类型": "battle_cards.preset_battle_cards",
+      "模块": "custom_types\\battle_cards.py",
+      "来源SHA256": "af17869f92eaccdad3817d784db19df0edf0ef726973a6fe52d7f0267e6605fb"
+    },
+    {
+      "类型": "battle_cards.preset_battle_cards_dict",
+      "模块": "custom_types\\battle_cards.py",
+      "来源SHA256": "af17869f92eaccdad3817d784db19df0edf0ef726973a6fe52d7f0267e6605fb"
+    },
+    {
+      "类型": "battle_pass.battle_pass",
+      "模块": "custom_types\\battle_pass.py",
+      "来源SHA256": "0ecb9941218c74539215f48472d89583fff598595f1b9eeba982c31021f1bb4d"
+    },
+    {
+      "类型": "battle_pass.battle_pass_dict",
+      "模块": "custom_types\\battle_pass.py",
+      "来源SHA256": "0ecb9941218c74539215f48472d89583fff598595f1b9eeba982c31021f1bb4d"
+    },
+    {
+      "类型": "battle_task_info.task_info",
+      "模块": "custom_types\\battle_task_info.py",
+      "来源SHA256": "8c430efe8ed59afec8399032f9de9ce8c760fb63768cb134407672b82cd87aa7"
+    },
+    {
+      "类型": "battle_task_info.battle_tasks",
+      "模块": "custom_types\\battle_task_info.py",
+      "来源SHA256": "8c430efe8ed59afec8399032f9de9ce8c760fb63768cb134407672b82cd87aa7"
+    },
+    {
+      "类型": "binary_indexed_tree.binary_indexed_tree",
+      "模块": "custom_types\\binary_indexed_tree.py",
+      "来源SHA256": "e6e2cec32a08252f47d3ef4cec9b16b7e2df7449300e8f8662341777d273a218"
+    },
+    {
+      "类型": "binary_indexed_tree.binary_indexed_tree_list",
+      "模块": "custom_types\\binary_indexed_tree.py",
+      "来源SHA256": "e6e2cec32a08252f47d3ef4cec9b16b7e2df7449300e8f8662341777d273a218"
+    },
+    {
+      "类型": "bonus.bonus",
+      "模块": "custom_types\\bonus.py",
+      "来源SHA256": "c0dd3c9a8fda7992de869dfa696ff828da6a46305775b367d52f7d61a547f5a2"
+    },
+    {
+      "类型": "bounty_task.bounty_task",
+      "模块": "custom_types\\bounty_task.py",
+      "来源SHA256": "f593a25f14d992dfacd7e320fa88bbf6036da5a98d5f60a4063d3c1076cfb31a"
+    },
+    {
+      "类型": "bounty_task.bounty_task_dict",
+      "模块": "custom_types\\bounty_task.py",
+      "来源SHA256": "f593a25f14d992dfacd7e320fa88bbf6036da5a98d5f60a4063d3c1076cfb31a"
+    },
+    {
+      "类型": "box.box",
+      "模块": "custom_types\\box.py",
+      "来源SHA256": "b39b9209461aefec42c9d2bd0bbece585ddb494ffa8ab8e1e884f5363be3e28f"
+    },
+    {
+      "类型": "box.boxList",
+      "模块": "custom_types\\box.py",
+      "来源SHA256": "b39b9209461aefec42c9d2bd0bbece585ddb494ffa8ab8e1e884f5363be3e28f"
+    },
+    {
+      "类型": "card.card_habit",
+      "模块": "custom_types\\card.py",
+      "来源SHA256": "3739bc7faf7002f1ceefb0008c2cbffd484b23cb9dc033909a3fa8e2de4502b3"
+    },
+    {
+      "类型": "card.card",
+      "模块": "custom_types\\card.py",
+      "来源SHA256": "3739bc7faf7002f1ceefb0008c2cbffd484b23cb9dc033909a3fa8e2de4502b3"
+    },
+    {
+      "类型": "card.card_mgr",
+      "模块": "custom_types\\card.py",
+      "来源SHA256": "3739bc7faf7002f1ceefb0008c2cbffd484b23cb9dc033909a3fa8e2de4502b3"
+    },
+    {
+      "类型": "card.card_list",
+      "模块": "custom_types\\card.py",
+      "来源SHA256": "3739bc7faf7002f1ceefb0008c2cbffd484b23cb9dc033909a3fa8e2de4502b3"
+    },
+    {
+      "类型": "card_common.card_common",
+      "模块": "custom_types\\card_common.py",
+      "来源SHA256": "41ccd7f61a1b77e2b967d5d62a12ad166c24b7bce5f64456b2c8efa81085bfab"
+    },
+    {
+      "类型": "card_common.card_common_mgr",
+      "模块": "custom_types\\card_common.py",
+      "来源SHA256": "41ccd7f61a1b77e2b967d5d62a12ad166c24b7bce5f64456b2c8efa81085bfab"
+    },
+    {
+      "类型": "card_house_sites.card_house_site",
+      "模块": "custom_types\\card_house_sites.py",
+      "来源SHA256": "ee1429c3ec822d6de95f29de23dc3fba9026eec9249c761688f377c7eec4de24"
+    },
+    {
+      "类型": "card_house_sites.card_house_sites",
+      "模块": "custom_types\\card_house_sites.py",
+      "来源SHA256": "ee1429c3ec822d6de95f29de23dc3fba9026eec9249c761688f377c7eec4de24"
+    },
+    {
+      "类型": "chat.chat",
+      "模块": "custom_types\\chat.py",
+      "来源SHA256": "379780026227d77ae3fec532e7d6def8f1a72a36e58d246760ec064d3a773cf2"
+    },
+    {
+      "类型": "chat.chat_mgr",
+      "模块": "custom_types\\chat.py",
+      "来源SHA256": "379780026227d77ae3fec532e7d6def8f1a72a36e58d246760ec064d3a773cf2"
+    },
+    {
+      "类型": "check_in_records.check_in_record",
+      "模块": "custom_types\\check_in_records.py",
+      "来源SHA256": "cd7e973ae7dbbdf01e136b7eb90d047c8e7b7179a2c65e53837533ee587ac8d3"
+    },
+    {
+      "类型": "check_in_records.check_in_records",
+      "模块": "custom_types\\check_in_records.py",
+      "来源SHA256": "cd7e973ae7dbbdf01e136b7eb90d047c8e7b7179a2c65e53837533ee587ac8d3"
+    },
+    {
+      "类型": "coin_statistics_info.coin_statistics_info",
+      "模块": "custom_types\\coin_statistics_info.py",
+      "来源SHA256": "dc99ab4793fa88768b951165758bfc02325f66fdc8e79aebb851a4fe83b66add"
+    },
+    {
+      "类型": "commodity_detail.commodity_detail",
+      "模块": "custom_types\\commodity_detail.py",
+      "来源SHA256": "34d8967f0014104051f8e28605519f6bbebcecdf56e6455753e85629d10ac738"
+    },
+    {
+      "类型": "commodity_detail.commodity_detail_info",
+      "模块": "custom_types\\commodity_detail.py",
+      "来源SHA256": "34d8967f0014104051f8e28605519f6bbebcecdf56e6455753e85629d10ac738"
+    },
+    {
+      "类型": "commodity_detail.gift_box_detail",
+      "模块": "custom_types\\commodity_detail.py",
+      "来源SHA256": "34d8967f0014104051f8e28605519f6bbebcecdf56e6455753e85629d10ac738"
+    },
+    {
+      "类型": "commodity_detail.gift_box_info",
+      "模块": "custom_types\\commodity_detail.py",
+      "来源SHA256": "34d8967f0014104051f8e28605519f6bbebcecdf56e6455753e85629d10ac738"
+    },
+    {
+      "类型": "common_rank_list_info.rank_list_item",
+      "模块": "custom_types\\common_rank_list_info.py",
+      "来源SHA256": "9fce9a9458ac80862b220ec2ed90b175272164888b95d4e5efba786a94d8ddb1"
+    },
+    {
+      "类型": "common_rank_list_info.rank_list_container",
+      "模块": "custom_types\\common_rank_list_info.py",
+      "来源SHA256": "9fce9a9458ac80862b220ec2ed90b175272164888b95d4e5efba786a94d8ddb1"
+    },
+    {
+      "类型": "common_rank_list_info.common_rank_list",
+      "模块": "custom_types\\common_rank_list_info.py",
+      "来源SHA256": "9fce9a9458ac80862b220ec2ed90b175272164888b95d4e5efba786a94d8ddb1"
+    },
+    {
+      "类型": "common_rank_list_info.common_rank_list_info",
+      "模块": "custom_types\\common_rank_list_info.py",
+      "来源SHA256": "9fce9a9458ac80862b220ec2ed90b175272164888b95d4e5efba786a94d8ddb1"
+    },
+    {
+      "类型": "consign_task.consign_task_info",
+      "模块": "custom_types\\consign_task.py",
+      "来源SHA256": "c3835fad7b7fe64207d5364c21c3005c400183c340a982ac338046c8b24b2ac3"
+    },
+    {
+      "类型": "consign_task.consign_task_dict",
+      "模块": "custom_types\\consign_task.py",
+      "来源SHA256": "c3835fad7b7fe64207d5364c21c3005c400183c340a982ac338046c8b24b2ac3"
+    },
+    {
+      "类型": "crossword.crossword_riddle_info",
+      "模块": "custom_types\\crossword.py",
+      "来源SHA256": "ffcd36a440dff593412896aea773448023d12436ff3dc3f96f8597ff39a255ec"
+    },
+    {
+      "类型": "crossword.crossword_riddle_dict",
+      "模块": "custom_types\\crossword.py",
+      "来源SHA256": "ffcd36a440dff593412896aea773448023d12436ff3dc3f96f8597ff39a255ec"
+    },
+    {
+      "类型": "crossword.crossword_friend_send_info",
+      "模块": "custom_types\\crossword.py",
+      "来源SHA256": "ffcd36a440dff593412896aea773448023d12436ff3dc3f96f8597ff39a255ec"
+    },
+    {
+      "类型": "crossword.crossword_friend_send_history",
+      "模块": "custom_types\\crossword.py",
+      "来源SHA256": "ffcd36a440dff593412896aea773448023d12436ff3dc3f96f8597ff39a255ec"
+    },
+    {
+      "类型": "crossword.crossword_info",
+      "模块": "custom_types\\crossword.py",
+      "来源SHA256": "ffcd36a440dff593412896aea773448023d12436ff3dc3f96f8597ff39a255ec"
+    },
+    {
+      "类型": "cthulhu.cthulhu_item",
+      "模块": "custom_types\\cthulhu.py",
+      "来源SHA256": "eedbbca5c7f2ba01db98af5f57e686d662058f9e1117977364803df1051ac4e0"
+    },
+    {
+      "类型": "cthulhu.cthulhu_item_infos",
+      "模块": "custom_types\\cthulhu.py",
+      "来源SHA256": "eedbbca5c7f2ba01db98af5f57e686d662058f9e1117977364803df1051ac4e0"
+    },
+    {
+      "类型": "cthulhu.cthulhu_item_libs",
+      "模块": "custom_types\\cthulhu.py",
+      "来源SHA256": "eedbbca5c7f2ba01db98af5f57e686d662058f9e1117977364803df1051ac4e0"
+    },
+    {
+      "类型": "cthulhu.cthulhu_grid",
+      "模块": "custom_types\\cthulhu.py",
+      "来源SHA256": "eedbbca5c7f2ba01db98af5f57e686d662058f9e1117977364803df1051ac4e0"
+    },
+    {
+      "类型": "cthulhu.cthulhu_grid_infos",
+      "模块": "custom_types\\cthulhu.py",
+      "来源SHA256": "eedbbca5c7f2ba01db98af5f57e686d662058f9e1117977364803df1051ac4e0"
+    },
+    {
+      "类型": "cthulhu.cthulhu_map",
+      "模块": "custom_types\\cthulhu.py",
+      "来源SHA256": "eedbbca5c7f2ba01db98af5f57e686d662058f9e1117977364803df1051ac4e0"
+    },
+    {
+      "类型": "cthulhu.cthulhu_infos",
+      "模块": "custom_types\\cthulhu.py",
+      "来源SHA256": "eedbbca5c7f2ba01db98af5f57e686d662058f9e1117977364803df1051ac4e0"
+    },
+    {
+      "类型": "custom_text.custom_text",
+      "模块": "custom_types\\custom_text.py",
+      "来源SHA256": "890e0feb5c275809e44692d0d47e95ca05189d6f6ca2170a96714df2e7954703"
+    },
+    {
+      "类型": "custom_type.type_meta",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.CustomType",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.CustomList",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.CustomTuple",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.CustomDeque",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.CustomDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.CustomAttr",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.CustomMetaAttr",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.IntTuple",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.IntList",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.ObjectIdList",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.TupleList",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.BinDataList",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.FloatList",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.StrList",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Int2IntDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Int2StrDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Int2ListDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Int2IntIntDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Int2BoolDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Int2TupleDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Int2ObjIdDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Int2ObjIdListDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Str2DictDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Tuple2TupleDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Tuple2IntDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Tuple2BoolDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Str2IntDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Str2BoolDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Str2StrDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Str2IntIntDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Str2IntListDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.ObjId2BoolDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.ObjId2IntDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.ObjId2StrDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.ObjId2IntListDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.ObjId2FloatDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.ObjId2ObjIdDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.ObjId2DictDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Str2ObjIdIntDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Str2TupleListDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "custom_type.Str2ObjIdDict",
+      "模块": "custom_types\\custom_type.py",
+      "来源SHA256": "631405b02a7b3df54cb130cb59cb66ad68344b97346e62a61e7539231870ca88"
+    },
+    {
+      "类型": "daily_task.daily_task",
+      "模块": "custom_types\\daily_task.py",
+      "来源SHA256": "e537d0059ab464db632e1ab2dea68c6667ff33f484602b0743456ef04fafcb63"
+    },
+    {
+      "类型": "daily_task.daily_task_dict",
+      "模块": "custom_types\\daily_task.py",
+      "来源SHA256": "e537d0059ab464db632e1ab2dea68c6667ff33f484602b0743456ef04fafcb63"
+    },
+    {
+      "类型": "danmaku.danmaku_queue",
+      "模块": "custom_types\\danmaku.py",
+      "来源SHA256": "a4cedbbd8dc720ca817cb17109bb8120a394a7c91d1065247a57cf29cdb37fa4"
+    },
+    {
+      "类型": "danmaku.danmaku_pool_info",
+      "模块": "custom_types\\danmaku.py",
+      "来源SHA256": "a4cedbbd8dc720ca817cb17109bb8120a394a7c91d1065247a57cf29cdb37fa4"
+    },
+    {
+      "类型": "danmaku.danmaku_pool_dict",
+      "模块": "custom_types\\danmaku.py",
+      "来源SHA256": "a4cedbbd8dc720ca817cb17109bb8120a394a7c91d1065247a57cf29cdb37fa4"
+    },
+    {
+      "类型": "defence_records.defence_record",
+      "模块": "custom_types\\defence_records.py",
+      "来源SHA256": "bbb51bbaafca59e2f6b8b3bfbedda1bc72e425f3d5a636eb63d742bf19a57f2a"
+    },
+    {
+      "类型": "defence_records.defence_records",
+      "模块": "custom_types\\defence_records.py",
+      "来源SHA256": "bbb51bbaafca59e2f6b8b3bfbedda1bc72e425f3d5a636eb63d742bf19a57f2a"
+    },
+    {
+      "类型": "dictionary_game_info.dictionary_game_info",
+      "模块": "custom_types\\dictionary_game_info.py",
+      "来源SHA256": "9c848cd6cd485ea47f886a022ace3030bea3a92b7676d9e22cc7aa1db2f533fc"
+    },
+    {
+      "类型": "dormitory_energy.dormitory_energy",
+      "模块": "custom_types\\dormitory_energy.py",
+      "来源SHA256": "63ab741a365da20d5e714c227c51cfd6b990d24b3b4221d1c69201e5453a0878"
+    },
+    {
+      "类型": "dragonboat.dragonboat_info",
+      "模块": "custom_types\\dragonboat.py",
+      "来源SHA256": "e6864b8f24678b063e231144f1fa97ec7544495150b7724fae994a128d291d5f"
+    },
+    {
+      "类型": "dungeon.dungeon",
+      "模块": "custom_types\\dungeon.py",
+      "来源SHA256": "99dd68bbcd6510de1d9b82eb798a6650f2257068bdcca3044317325a6614a67c"
+    },
+    {
+      "类型": "dungeon.dungeon_mgr",
+      "模块": "custom_types\\dungeon.py",
+      "来源SHA256": "99dd68bbcd6510de1d9b82eb798a6650f2257068bdcca3044317325a6614a67c"
+    },
+    {
+      "类型": "dungeon.dungeontype",
+      "模块": "custom_types\\dungeon.py",
+      "来源SHA256": "99dd68bbcd6510de1d9b82eb798a6650f2257068bdcca3044317325a6614a67c"
+    },
+    {
+      "类型": "dungeon.dungeon_type_mgr",
+      "模块": "custom_types\\dungeon.py",
+      "来源SHA256": "99dd68bbcd6510de1d9b82eb798a6650f2257068bdcca3044317325a6614a67c"
+    },
+    {
+      "类型": "exam.exam_task_info",
+      "模块": "custom_types\\exam.py",
+      "来源SHA256": "c92653ed58429ffbbc386cdda14e4a28b95a380db5099ab64f684f3884c639d3"
+    },
+    {
+      "类型": "exam.exam_task_dict",
+      "模块": "custom_types\\exam.py",
+      "来源SHA256": "c92653ed58429ffbbc386cdda14e4a28b95a380db5099ab64f684f3884c639d3"
+    },
+    {
+      "类型": "exam.exam_dungeon_info",
+      "模块": "custom_types\\exam.py",
+      "来源SHA256": "c92653ed58429ffbbc386cdda14e4a28b95a380db5099ab64f684f3884c639d3"
+    },
+    {
+      "类型": "exam.exam_dungeon_dict",
+      "模块": "custom_types\\exam.py",
+      "来源SHA256": "c92653ed58429ffbbc386cdda14e4a28b95a380db5099ab64f684f3884c639d3"
+    },
+    {
+      "类型": "exam.choose_info",
+      "模块": "custom_types\\exam.py",
+      "来源SHA256": "c92653ed58429ffbbc386cdda14e4a28b95a380db5099ab64f684f3884c639d3"
+    },
+    {
+      "类型": "exam.exam_choose_info",
+      "模块": "custom_types\\exam.py",
+      "来源SHA256": "c92653ed58429ffbbc386cdda14e4a28b95a380db5099ab64f684f3884c639d3"
+    },
+    {
+      "类型": "exam.exam_game_info",
+      "模块": "custom_types\\exam.py",
+      "来源SHA256": "c92653ed58429ffbbc386cdda14e4a28b95a380db5099ab64f684f3884c639d3"
+    },
+    {
+      "类型": "extra_info.extra_info",
+      "模块": "custom_types\\extra_info.py",
+      "来源SHA256": "82be29d2928578b78b46bf73c58435b3afe5e726cee67b89b94eb0b6c14cc26e"
+    },
+    {
+      "类型": "extra_info.extra_info_mgr",
+      "模块": "custom_types\\extra_info.py",
+      "来源SHA256": "82be29d2928578b78b46bf73c58435b3afe5e726cee67b89b94eb0b6c14cc26e"
+    },
+    {
+      "类型": "facility_info.facility",
+      "模块": "custom_types\\facility_info.py",
+      "来源SHA256": "687e02bd5d9a71ba1a34f7b46f17a331745f497b21b87e777352815f0504f218"
+    },
+    {
+      "类型": "facility_info.facility_info",
+      "模块": "custom_types\\facility_info.py",
+      "来源SHA256": "687e02bd5d9a71ba1a34f7b46f17a331745f497b21b87e777352815f0504f218"
+    },
+    {
+      "类型": "frage_stone.frage_stone",
+      "模块": "custom_types\\frage_stone.py",
+      "来源SHA256": "b704789347e20f635402ba9a7353f4395ee703a46c7e81c7ae407e9190b3c28b"
+    },
+    {
+      "类型": "free_stage.free_stage",
+      "模块": "custom_types\\free_stage.py",
+      "来源SHA256": "5f11ca1b459a131a097981b2d477c2b63a48a293f2ce8238c5915ed9dec9db44"
+    },
+    {
+      "类型": "free_stage.free_stage_info",
+      "模块": "custom_types\\free_stage.py",
+      "来源SHA256": "5f11ca1b459a131a097981b2d477c2b63a48a293f2ce8238c5915ed9dec9db44"
+    },
+    {
+      "类型": "friend.friend",
+      "模块": "custom_types\\friend.py",
+      "来源SHA256": "d3aa2a21278aa269f97348e4510acf16c866a82a5c7f0dc0a50f4df41f008681"
+    },
+    {
+      "类型": "friend.friend_request",
+      "模块": "custom_types\\friend.py",
+      "来源SHA256": "d3aa2a21278aa269f97348e4510acf16c866a82a5c7f0dc0a50f4df41f008681"
+    },
+    {
+      "类型": "friend.friend_dict",
+      "模块": "custom_types\\friend.py",
+      "来源SHA256": "d3aa2a21278aa269f97348e4510acf16c866a82a5c7f0dc0a50f4df41f008681"
+    },
+    {
+      "类型": "friend.friend_request_dict",
+      "模块": "custom_types\\friend.py",
+      "来源SHA256": "d3aa2a21278aa269f97348e4510acf16c866a82a5c7f0dc0a50f4df41f008681"
+    },
+    {
+      "类型": "friend_miku_fragment_info.friend_miku_fragment",
+      "模块": "custom_types\\friend_miku_fragment_info.py",
+      "来源SHA256": "cefc3b0960b77b2a7e6acab86165ba15c68799b8aaa7859cefae0d46d786fe23"
+    },
+    {
+      "类型": "friend_miku_fragment_info.friend_miku_fragment_list",
+      "模块": "custom_types\\friend_miku_fragment_info.py",
+      "来源SHA256": "cefc3b0960b77b2a7e6acab86165ba15c68799b8aaa7859cefae0d46d786fe23"
+    },
+    {
+      "类型": "friend_miku_fragment_info.friend_miku_fragments_info",
+      "模块": "custom_types\\friend_miku_fragment_info.py",
+      "来源SHA256": "cefc3b0960b77b2a7e6acab86165ba15c68799b8aaa7859cefae0d46d786fe23"
+    },
+    {
+      "类型": "friend_random_card_info.friend_random_card_info",
+      "模块": "custom_types\\friend_random_card_info.py",
+      "来源SHA256": "2946be3716e8ab88a400be32a533dbd11f3bb60a72e6fd45dbd23e7810a6eaeb"
+    },
+    {
+      "类型": "friend_random_card_info.friend_random_card_list",
+      "模块": "custom_types\\friend_random_card_info.py",
+      "来源SHA256": "2946be3716e8ab88a400be32a533dbd11f3bb60a72e6fd45dbd23e7810a6eaeb"
+    },
+    {
+      "类型": "friend_random_card_info.friend_random_cards_info",
+      "模块": "custom_types\\friend_random_card_info.py",
+      "来源SHA256": "2946be3716e8ab88a400be32a533dbd11f3bb60a72e6fd45dbd23e7810a6eaeb"
+    },
+    {
+      "类型": "guide_task.guide_task",
+      "模块": "custom_types\\guide_task.py",
+      "来源SHA256": "52fd1a8570c1cee517c628df3be8eb854f4d6eaa6a94e2e0bc3cc4c3d78d2f11"
+    },
+    {
+      "类型": "guide_task.guide_task_dict",
+      "模块": "custom_types\\guide_task.py",
+      "来源SHA256": "52fd1a8570c1cee517c628df3be8eb854f4d6eaa6a94e2e0bc3cc4c3d78d2f11"
+    },
+    {
+      "类型": "head_boxes.head_boxes",
+      "模块": "custom_types\\head_boxes.py",
+      "来源SHA256": "f55fd7c98226e5a1c6fe7fd43a3a1e1e0c892e0b01fe73b3e0d46f0cecacc9d3"
+    },
+    {
+      "类型": "images.image",
+      "模块": "custom_types\\images.py",
+      "来源SHA256": "fed5ec0028d11dc25324dd968a0b706a44d9be4d1aaf650c8d5c9e9a9e604613"
+    },
+    {
+      "类型": "images.images",
+      "模块": "custom_types\\images.py",
+      "来源SHA256": "fed5ec0028d11dc25324dd968a0b706a44d9be4d1aaf650c8d5c9e9a9e604613"
+    },
+    {
+      "类型": "intimacy_record.intimacy_record",
+      "模块": "custom_types\\intimacy_record.py",
+      "来源SHA256": "b226ef423ddb59e8b08c7909db7b0185a7142412eff2ca71787d631a7ba33672"
+    },
+    {
+      "类型": "league.league_trial_exchange_apply_info",
+      "模块": "custom_types\\league.py",
+      "来源SHA256": "076b4ded60892be790a7f2936f53ff4c713ae658eb02707e519f443dd01deb6e"
+    },
+    {
+      "类型": "league.league_trial_exchange_apply_infos",
+      "模块": "custom_types\\league.py",
+      "来源SHA256": "076b4ded60892be790a7f2936f53ff4c713ae658eb02707e519f443dd01deb6e"
+    },
+    {
+      "类型": "league.league_pvp_match_info",
+      "模块": "custom_types\\league.py",
+      "来源SHA256": "076b4ded60892be790a7f2936f53ff4c713ae658eb02707e519f443dd01deb6e"
+    },
+    {
+      "类型": "league.league_pvp_result",
+      "模块": "custom_types\\league.py",
+      "来源SHA256": "076b4ded60892be790a7f2936f53ff4c713ae658eb02707e519f443dd01deb6e"
+    },
+    {
+      "类型": "league.league_pvp_report",
+      "模块": "custom_types\\league.py",
+      "来源SHA256": "076b4ded60892be790a7f2936f53ff4c713ae658eb02707e519f443dd01deb6e"
+    },
+    {
+      "类型": "league.league",
+      "模块": "custom_types\\league.py",
+      "来源SHA256": "076b4ded60892be790a7f2936f53ff4c713ae658eb02707e519f443dd01deb6e"
+    },
+    {
+      "类型": "league.league_info",
+      "模块": "custom_types\\league.py",
+      "来源SHA256": "076b4ded60892be790a7f2936f53ff4c713ae658eb02707e519f443dd01deb6e"
+    },
+    {
+      "类型": "league.league_apply_queue",
+      "模块": "custom_types\\league.py",
+      "来源SHA256": "076b4ded60892be790a7f2936f53ff4c713ae658eb02707e519f443dd01deb6e"
+    },
+    {
+      "类型": "league_activity_weekly_info.league_activity_weekly_info",
+      "模块": "custom_types\\league_activity_weekly_info.py",
+      "来源SHA256": "4d04299f567e5a85449be905e5b0567459e54feb786a78c8d2d788028d5cbeed"
+    },
+    {
+      "类型": "league_card.league_card",
+      "模块": "custom_types\\league_card.py",
+      "来源SHA256": "9d8a86a79373597f0c1b6d106ce87969242fc8330bfa04608a5bf0c364f41fd9"
+    },
+    {
+      "类型": "league_daily_task.league_daily_task",
+      "模块": "custom_types\\league_daily_task.py",
+      "来源SHA256": "c4c692e9151eb651ccbb766c87f5d19f881c846d75c67693f507cfadfe2218f9"
+    },
+    {
+      "类型": "league_daily_task.league_daily_task_dict",
+      "模块": "custom_types\\league_daily_task.py",
+      "来源SHA256": "c4c692e9151eb651ccbb766c87f5d19f881c846d75c67693f507cfadfe2218f9"
+    },
+    {
+      "类型": "league_event_info.league_event",
+      "模块": "custom_types\\league_event_info.py",
+      "来源SHA256": "23cfffdfcb5a05997bb1144151aa5b5547ce713ccefbc035dfac10c17e6d5243"
+    },
+    {
+      "类型": "league_event_info.league_event_info",
+      "模块": "custom_types\\league_event_info.py",
+      "来源SHA256": "23cfffdfcb5a05997bb1144151aa5b5547ce713ccefbc035dfac10c17e6d5243"
+    },
+    {
+      "类型": "league_explore_state_info.league_explore_state",
+      "模块": "custom_types\\league_explore_state_info.py",
+      "来源SHA256": "67b2094c22c7350e40e730bf6745daeecd02a8b0b090a73615eb90a34f8bd7da"
+    },
+    {
+      "类型": "league_explore_state_info.league_explore_state_info",
+      "模块": "custom_types\\league_explore_state_info.py",
+      "来源SHA256": "67b2094c22c7350e40e730bf6745daeecd02a8b0b090a73615eb90a34f8bd7da"
+    },
+    {
+      "类型": "league_invited_info.league_invite_detail",
+      "模块": "custom_types\\league_invited_info.py",
+      "来源SHA256": "efdc34a6791875d4f4bdc8516fe42f9d087e9f44df6cb75ab932520645f422d4"
+    },
+    {
+      "类型": "league_invited_info.league_invited_info",
+      "模块": "custom_types\\league_invited_info.py",
+      "来源SHA256": "efdc34a6791875d4f4bdc8516fe42f9d087e9f44df6cb75ab932520645f422d4"
+    },
+    {
+      "类型": "league_member_info.league_member",
+      "模块": "custom_types\\league_member_info.py",
+      "来源SHA256": "c7aa78dc492746e0a15c5efbf5681e84ddbc9f825542b22a319772d0c259f4ce"
+    },
+    {
+      "类型": "league_member_info.league_member_info",
+      "模块": "custom_types\\league_member_info.py",
+      "来源SHA256": "c7aa78dc492746e0a15c5efbf5681e84ddbc9f825542b22a319772d0c259f4ce"
+    },
+    {
+      "类型": "league_pvp_boss_infos.guess_result_card_info",
+      "模块": "custom_types\\league_pvp_boss_infos.py",
+      "来源SHA256": "b5db1d0d7ff71da91fcc8dbbc5ff662ffe90d9f2e22b527c55086988065ea0eb"
+    },
+    {
+      "类型": "league_pvp_boss_infos.guess_result_card_list",
+      "模块": "custom_types\\league_pvp_boss_infos.py",
+      "来源SHA256": "b5db1d0d7ff71da91fcc8dbbc5ff662ffe90d9f2e22b527c55086988065ea0eb"
+    },
+    {
+      "类型": "league_pvp_boss_infos.guess_pvp_result",
+      "模块": "custom_types\\league_pvp_boss_infos.py",
+      "来源SHA256": "b5db1d0d7ff71da91fcc8dbbc5ff662ffe90d9f2e22b527c55086988065ea0eb"
+    },
+    {
+      "类型": "league_pvp_boss_infos.guess_pvp_auto_result",
+      "模块": "custom_types\\league_pvp_boss_infos.py",
+      "来源SHA256": "b5db1d0d7ff71da91fcc8dbbc5ff662ffe90d9f2e22b527c55086988065ea0eb"
+    },
+    {
+      "类型": "league_pvp_boss_infos.league_pvp_boss_infos",
+      "模块": "custom_types\\league_pvp_boss_infos.py",
+      "来源SHA256": "b5db1d0d7ff71da91fcc8dbbc5ff662ffe90d9f2e22b527c55086988065ea0eb"
+    },
+    {
+      "类型": "league_pvp_boss_infos.league_pvp_bosses",
+      "模块": "custom_types\\league_pvp_boss_infos.py",
+      "来源SHA256": "b5db1d0d7ff71da91fcc8dbbc5ff662ffe90d9f2e22b527c55086988065ea0eb"
+    },
+    {
+      "类型": "league_pvp_boss_infos.pvp_boss_bonus_info",
+      "模块": "custom_types\\league_pvp_boss_infos.py",
+      "来源SHA256": "b5db1d0d7ff71da91fcc8dbbc5ff662ffe90d9f2e22b527c55086988065ea0eb"
+    },
+    {
+      "类型": "league_pvp_boss_infos.league_pvp_boss_bonus",
+      "模块": "custom_types\\league_pvp_boss_infos.py",
+      "来源SHA256": "b5db1d0d7ff71da91fcc8dbbc5ff662ffe90d9f2e22b527c55086988065ea0eb"
+    },
+    {
+      "类型": "league_pvp_boss_infos.league_pvp_boss_bonus_dict",
+      "模块": "custom_types\\league_pvp_boss_infos.py",
+      "来源SHA256": "b5db1d0d7ff71da91fcc8dbbc5ff662ffe90d9f2e22b527c55086988065ea0eb"
+    },
+    {
+      "类型": "league_pvp_boss_infos.new_league_challenge_info",
+      "模块": "custom_types\\league_pvp_boss_infos.py",
+      "来源SHA256": "b5db1d0d7ff71da91fcc8dbbc5ff662ffe90d9f2e22b527c55086988065ea0eb"
+    },
+    {
+      "类型": "league_pvp_personal_info.league_pvp_personal_achv",
+      "模块": "custom_types\\league_pvp_personal_info.py",
+      "来源SHA256": "32aebf5ad17c69aed7556d8fa34b96d13bef7560437878a211ee1bf2fadfb016"
+    },
+    {
+      "类型": "league_pvp_personal_info.league_pvp_personal_achv_dict",
+      "模块": "custom_types\\league_pvp_personal_info.py",
+      "来源SHA256": "32aebf5ad17c69aed7556d8fa34b96d13bef7560437878a211ee1bf2fadfb016"
+    },
+    {
+      "类型": "league_pvp_personal_info.league_pvp_personal_shop_dict",
+      "模块": "custom_types\\league_pvp_personal_info.py",
+      "来源SHA256": "32aebf5ad17c69aed7556d8fa34b96d13bef7560437878a211ee1bf2fadfb016"
+    },
+    {
+      "类型": "league_pvp_personal_info.league_pvp_personal_real_score",
+      "模块": "custom_types\\league_pvp_personal_info.py",
+      "来源SHA256": "32aebf5ad17c69aed7556d8fa34b96d13bef7560437878a211ee1bf2fadfb016"
+    },
+    {
+      "类型": "league_pvp_personal_info.league_pvp_personal_score_info",
+      "模块": "custom_types\\league_pvp_personal_info.py",
+      "来源SHA256": "32aebf5ad17c69aed7556d8fa34b96d13bef7560437878a211ee1bf2fadfb016"
+    },
+    {
+      "类型": "league_pvp_personal_info.league_pvp_personal_score_dict",
+      "模块": "custom_types\\league_pvp_personal_info.py",
+      "来源SHA256": "32aebf5ad17c69aed7556d8fa34b96d13bef7560437878a211ee1bf2fadfb016"
+    },
+    {
+      "类型": "league_task.league_task",
+      "模块": "custom_types\\league_task.py",
+      "来源SHA256": "499bf1614484b6e1028e799f699cde033f96f588f04db5cbd030b4ee63e95ac4"
+    },
+    {
+      "类型": "league_task.league_task_dict",
+      "模块": "custom_types\\league_task.py",
+      "来源SHA256": "499bf1614484b6e1028e799f699cde033f96f588f04db5cbd030b4ee63e95ac4"
+    },
+    {
+      "类型": "league_trial_state_info.league_trial_state",
+      "模块": "custom_types\\league_trial_state_info.py",
+      "来源SHA256": "250f9e778a8492a062ca5932e606717b0d1b042e97aaadee60676ad2dcb12e3d"
+    },
+    {
+      "类型": "league_trial_state_info.league_trial_state_info",
+      "模块": "custom_types\\league_trial_state_info.py",
+      "来源SHA256": "250f9e778a8492a062ca5932e606717b0d1b042e97aaadee60676ad2dcb12e3d"
+    },
+    {
+      "类型": "main_task.main_task",
+      "模块": "custom_types\\main_task.py",
+      "来源SHA256": "88a0586878e7ef3025ee7b6479cc083a9ae54916baed1fb082ca077c002e009d"
+    },
+    {
+      "类型": "main_task.main_task_dict",
+      "模块": "custom_types\\main_task.py",
+      "来源SHA256": "88a0586878e7ef3025ee7b6479cc083a9ae54916baed1fb082ca077c002e009d"
+    },
+    {
+      "类型": "match_index.match_node",
+      "模块": "custom_types\\match_index.py",
+      "来源SHA256": "943a8678e768d5d2995860e31deebe550a372a603e9d11a32ddf8bd3d8b80baa"
+    },
+    {
+      "类型": "match_index.match_nodes",
+      "模块": "custom_types\\match_index.py",
+      "来源SHA256": "943a8678e768d5d2995860e31deebe550a372a603e9d11a32ddf8bd3d8b80baa"
+    },
+    {
+      "类型": "match_index.match_index",
+      "模块": "custom_types\\match_index.py",
+      "来源SHA256": "943a8678e768d5d2995860e31deebe550a372a603e9d11a32ddf8bd3d8b80baa"
+    },
+    {
+      "类型": "material.material",
+      "模块": "custom_types\\material.py",
+      "来源SHA256": "cdba30d6338f1a7b3f407ac53a1c56f1dec185ce949968352c0ccc407b09aa46"
+    },
+    {
+      "类型": "material.material_mgr",
+      "模块": "custom_types\\material.py",
+      "来源SHA256": "cdba30d6338f1a7b3f407ac53a1c56f1dec185ce949968352c0ccc407b09aa46"
+    },
+    {
+      "类型": "material_consume_dict.material_consume_info",
+      "模块": "custom_types\\material_consume_dict.py",
+      "来源SHA256": "241f1f44c92a0439f316f94bc843cf3e3b17e15a7ed9fe9c2d57361fe40940b4"
+    },
+    {
+      "类型": "material_consume_dict.material_consume_dict",
+      "模块": "custom_types\\material_consume_dict.py",
+      "来源SHA256": "241f1f44c92a0439f316f94bc843cf3e3b17e15a7ed9fe9c2d57361fe40940b4"
+    },
+    {
+      "类型": "message.message",
+      "模块": "custom_types\\message.py",
+      "来源SHA256": "e52e068c7c8398b400d5ed86304a4707f9e06895b649c712529dffca627907ee"
+    },
+    {
+      "类型": "message.messages",
+      "模块": "custom_types\\message.py",
+      "来源SHA256": "e52e068c7c8398b400d5ed86304a4707f9e06895b649c712529dffca627907ee"
+    },
+    {
+      "类型": "message.LeagueMessageBoard",
+      "模块": "custom_types\\message.py",
+      "来源SHA256": "e52e068c7c8398b400d5ed86304a4707f9e06895b649c712529dffca627907ee"
+    },
+    {
+      "类型": "mid_age_game_info.formula",
+      "模块": "custom_types\\mid_age_game_info.py",
+      "来源SHA256": "eeb25cb733bdd62a8fe77742759f0dbc89a3b26b4ffcb1acfa7fbda6b49d0840"
+    },
+    {
+      "类型": "mid_age_game_info.formula_dict",
+      "模块": "custom_types\\mid_age_game_info.py",
+      "来源SHA256": "eeb25cb733bdd62a8fe77742759f0dbc89a3b26b4ffcb1acfa7fbda6b49d0840"
+    },
+    {
+      "类型": "mid_age_game_info.mid_age_item_drop",
+      "模块": "custom_types\\mid_age_game_info.py",
+      "来源SHA256": "eeb25cb733bdd62a8fe77742759f0dbc89a3b26b4ffcb1acfa7fbda6b49d0840"
+    },
+    {
+      "类型": "mid_age_game_info.mid_age_drop_queue",
+      "模块": "custom_types\\mid_age_game_info.py",
+      "来源SHA256": "eeb25cb733bdd62a8fe77742759f0dbc89a3b26b4ffcb1acfa7fbda6b49d0840"
+    },
+    {
+      "类型": "mid_age_game_info.mid_age_drop_info",
+      "模块": "custom_types\\mid_age_game_info.py",
+      "来源SHA256": "eeb25cb733bdd62a8fe77742759f0dbc89a3b26b4ffcb1acfa7fbda6b49d0840"
+    },
+    {
+      "类型": "mid_age_game_info.mid_age_item",
+      "模块": "custom_types\\mid_age_game_info.py",
+      "来源SHA256": "eeb25cb733bdd62a8fe77742759f0dbc89a3b26b4ffcb1acfa7fbda6b49d0840"
+    },
+    {
+      "类型": "mid_age_game_info.mid_age_item_info",
+      "模块": "custom_types\\mid_age_game_info.py",
+      "来源SHA256": "eeb25cb733bdd62a8fe77742759f0dbc89a3b26b4ffcb1acfa7fbda6b49d0840"
+    },
+    {
+      "类型": "mid_age_game_info.avatar_back_info",
+      "模块": "custom_types\\mid_age_game_info.py",
+      "来源SHA256": "eeb25cb733bdd62a8fe77742759f0dbc89a3b26b4ffcb1acfa7fbda6b49d0840"
+    },
+    {
+      "类型": "mid_age_game_info.rune_forge",
+      "模块": "custom_types\\mid_age_game_info.py",
+      "来源SHA256": "eeb25cb733bdd62a8fe77742759f0dbc89a3b26b4ffcb1acfa7fbda6b49d0840"
+    },
+    {
+      "类型": "mid_age_game_info.mid_age_game_info",
+      "模块": "custom_types\\mid_age_game_info.py",
+      "来源SHA256": "eeb25cb733bdd62a8fe77742759f0dbc89a3b26b4ffcb1acfa7fbda6b49d0840"
+    },
+    {
+      "类型": "mid_age_game_info.mid_age_two_info",
+      "模块": "custom_types\\mid_age_game_info.py",
+      "来源SHA256": "eeb25cb733bdd62a8fe77742759f0dbc89a3b26b4ffcb1acfa7fbda6b49d0840"
+    },
+    {
+      "类型": "miku_info.miku_node",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.miku_node_info",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.miiku_story_item",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.miiku_story_info",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.miku_treasure_state",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.handbook_item",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.handbook_items_list",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.handbook_items_dict",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.handbook",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.miku_achv",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.miku_achv_dict",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.miku_map",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.miku_map_info",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "miku_info.miku_game_info",
+      "模块": "custom_types\\miku_info.py",
+      "来源SHA256": "3f907995da2f928bdf4b7990d8da843ebc35025cc0f0f38277f37c9f86a1e615"
+    },
+    {
+      "类型": "monster_nian_info.north_wind_footprint_info",
+      "模块": "custom_types\\monster_nian_info.py",
+      "来源SHA256": "327f6f25538b6f88acca7273ebc70b6ef356a742f677a3172f18d5191922d187"
+    },
+    {
+      "类型": "monster_nian_info.monster_nian_dungeon_info",
+      "模块": "custom_types\\monster_nian_info.py",
+      "来源SHA256": "327f6f25538b6f88acca7273ebc70b6ef356a742f677a3172f18d5191922d187"
+    },
+    {
+      "类型": "monster_nian_info.monster_nian_dungeon_dict",
+      "模块": "custom_types\\monster_nian_info.py",
+      "来源SHA256": "327f6f25538b6f88acca7273ebc70b6ef356a742f677a3172f18d5191922d187"
+    },
+    {
+      "类型": "mountain_game_info.magic_circle",
+      "模块": "custom_types\\mountain_game_info.py",
+      "来源SHA256": "11d9230489c7dcea1c79deb6999a60382a5278856dd97e26d32c16b7cc4b432d"
+    },
+    {
+      "类型": "mountain_game_info.magic_circle_dict",
+      "模块": "custom_types\\mountain_game_info.py",
+      "来源SHA256": "11d9230489c7dcea1c79deb6999a60382a5278856dd97e26d32c16b7cc4b432d"
+    },
+    {
+      "类型": "mountain_game_info.mountain_dungeon_info",
+      "模块": "custom_types\\mountain_game_info.py",
+      "来源SHA256": "11d9230489c7dcea1c79deb6999a60382a5278856dd97e26d32c16b7cc4b432d"
+    },
+    {
+      "类型": "mountain_game_info.mountain_dungeon_dict",
+      "模块": "custom_types\\mountain_game_info.py",
+      "来源SHA256": "11d9230489c7dcea1c79deb6999a60382a5278856dd97e26d32c16b7cc4b432d"
+    },
+    {
+      "类型": "mountain_game_info.mountain_game_info",
+      "模块": "custom_types\\mountain_game_info.py",
+      "来源SHA256": "11d9230489c7dcea1c79deb6999a60382a5278856dd97e26d32c16b7cc4b432d"
+    },
+    {
+      "类型": "new_task.new_task",
+      "模块": "custom_types\\new_task.py",
+      "来源SHA256": "d14693e51b386e14e647882a830732adb8b948c2268a60646dbe1dab0600e523"
+    },
+    {
+      "类型": "new_task.new_task_dict",
+      "模块": "custom_types\\new_task.py",
+      "来源SHA256": "d14693e51b386e14e647882a830732adb8b948c2268a60646dbe1dab0600e523"
+    },
+    {
+      "类型": "pass_team.avatar_pass_team",
+      "模块": "custom_types\\pass_team.py",
+      "来源SHA256": "9e1eb46ff2a3c07e2fc93775dffa762407eaab2cc214a7856bef5dfbd58f181e"
+    },
+    {
+      "类型": "pass_team.pass_team_rank",
+      "模块": "custom_types\\pass_team.py",
+      "来源SHA256": "9e1eb46ff2a3c07e2fc93775dffa762407eaab2cc214a7856bef5dfbd58f181e"
+    },
+    {
+      "类型": "pass_team.level_pass_team_rank",
+      "模块": "custom_types\\pass_team.py",
+      "来源SHA256": "9e1eb46ff2a3c07e2fc93775dffa762407eaab2cc214a7856bef5dfbd58f181e"
+    },
+    {
+      "类型": "pass_team.dungeon_pass_team_rank",
+      "模块": "custom_types\\pass_team.py",
+      "来源SHA256": "9e1eb46ff2a3c07e2fc93775dffa762407eaab2cc214a7856bef5dfbd58f181e"
+    },
+    {
+      "类型": "payment_gift.payment_gift",
+      "模块": "custom_types\\payment_gift.py",
+      "来源SHA256": "508f2f18f754347e5286fa2cbd1cf31dfb6abfd2e142e621ac185d030a08278c"
+    },
+    {
+      "类型": "payment_gift.payment_gift_info",
+      "模块": "custom_types\\payment_gift.py",
+      "来源SHA256": "508f2f18f754347e5286fa2cbd1cf31dfb6abfd2e142e621ac185d030a08278c"
+    },
+    {
+      "类型": "random_cards_record.promise_card_record",
+      "模块": "custom_types\\random_cards_record.py",
+      "来源SHA256": "92c383cdb701e770422a66dcaab29f6421b3a1a13df8e1e25b061c9d32537592"
+    },
+    {
+      "类型": "random_cards_record.random_card_record",
+      "模块": "custom_types\\random_cards_record.py",
+      "来源SHA256": "92c383cdb701e770422a66dcaab29f6421b3a1a13df8e1e25b061c9d32537592"
+    },
+    {
+      "类型": "random_cards_record.random_cards_record",
+      "模块": "custom_types\\random_cards_record.py",
+      "来源SHA256": "92c383cdb701e770422a66dcaab29f6421b3a1a13df8e1e25b061c9d32537592"
+    },
+    {
+      "类型": "random_cards_record.promise_cards_record",
+      "模块": "custom_types\\random_cards_record.py",
+      "来源SHA256": "92c383cdb701e770422a66dcaab29f6421b3a1a13df8e1e25b061c9d32537592"
+    },
+    {
+      "类型": "rank_detail_info.rank_detail",
+      "模块": "custom_types\\rank_detail_info.py",
+      "来源SHA256": "968b96ccf614302fccdcbb4dc0343303f6f015ec444a771a235ee895e6f13003"
+    },
+    {
+      "类型": "rank_detail_info.rank_detail_info",
+      "模块": "custom_types\\rank_detail_info.py",
+      "来源SHA256": "968b96ccf614302fccdcbb4dc0343303f6f015ec444a771a235ee895e6f13003"
+    },
+    {
+      "类型": "rank_list_score.rank_list_score",
+      "模块": "custom_types\\rank_list_score.py",
+      "来源SHA256": "dc2e0069982a6282965be38781cf88597091e00aa57aefdb645180b7c9d6f2dc"
+    },
+    {
+      "类型": "rank_list_score.rank_list_score_dict",
+      "模块": "custom_types\\rank_list_score.py",
+      "来源SHA256": "dc2e0069982a6282965be38781cf88597091e00aa57aefdb645180b7c9d6f2dc"
+    },
+    {
+      "类型": "raw_mail.raw_mail",
+      "模块": "custom_types\\raw_mail.py",
+      "来源SHA256": "3d50a9f624ed9c526fda669cbd5e55e02ed88bf98db1182d523c74008c1b4303"
+    },
+    {
+      "类型": "recommend_gift.recommend_gift",
+      "模块": "custom_types\\recommend_gift.py",
+      "来源SHA256": "8f3faf09c12d5e535259ef66f7ad5c1bce089db2dcd2af339a36117f6d893928"
+    },
+    {
+      "类型": "recommend_gift.recommend_gift_dict",
+      "模块": "custom_types\\recommend_gift.py",
+      "来源SHA256": "8f3faf09c12d5e535259ef66f7ad5c1bce089db2dcd2af339a36117f6d893928"
+    },
+    {
+      "类型": "report_info.report_info",
+      "模块": "custom_types\\report_info.py",
+      "来源SHA256": "8c30436c5fefc152f7bcb8f60b47be16f6f23dafb5d2eac413dabb027be3658e"
+    },
+    {
+      "类型": "report_info.report_record",
+      "模块": "custom_types\\report_info.py",
+      "来源SHA256": "8c30436c5fefc152f7bcb8f60b47be16f6f23dafb5d2eac413dabb027be3658e"
+    },
+    {
+      "类型": "report_info.report_record_mgr",
+      "模块": "custom_types\\report_info.py",
+      "来源SHA256": "8c30436c5fefc152f7bcb8f60b47be16f6f23dafb5d2eac413dabb027be3658e"
+    },
+    {
+      "类型": "restroom.dormitory_card_dict",
+      "模块": "custom_types\\restroom.py",
+      "来源SHA256": "ec03bf8ef4f945db7c3fa3016d31e89ba1e60a7a5343993766b3514690464c61"
+    },
+    {
+      "类型": "restroom.restroom",
+      "模块": "custom_types\\restroom.py",
+      "来源SHA256": "ec03bf8ef4f945db7c3fa3016d31e89ba1e60a7a5343993766b3514690464c61"
+    },
+    {
+      "类型": "restroom.restroom_card",
+      "模块": "custom_types\\restroom.py",
+      "来源SHA256": "ec03bf8ef4f945db7c3fa3016d31e89ba1e60a7a5343993766b3514690464c61"
+    },
+    {
+      "类型": "restroom.restroom_card_info",
+      "模块": "custom_types\\restroom.py",
+      "来源SHA256": "ec03bf8ef4f945db7c3fa3016d31e89ba1e60a7a5343993766b3514690464c61"
+    },
+    {
+      "类型": "restroom.restroom_info",
+      "模块": "custom_types\\restroom.py",
+      "来源SHA256": "ec03bf8ef4f945db7c3fa3016d31e89ba1e60a7a5343993766b3514690464c61"
+    },
+    {
+      "类型": "restroom.house_daily_random_reward_dict",
+      "模块": "custom_types\\restroom.py",
+      "来源SHA256": "ec03bf8ef4f945db7c3fa3016d31e89ba1e60a7a5343993766b3514690464c61"
+    },
+    {
+      "类型": "restroom.house_total_info",
+      "模块": "custom_types\\restroom.py",
+      "来源SHA256": "ec03bf8ef4f945db7c3fa3016d31e89ba1e60a7a5343993766b3514690464c61"
+    },
+    {
+      "类型": "rune.rune",
+      "模块": "custom_types\\rune.py",
+      "来源SHA256": "23f4ac85b8de39cdda9679037bad99eae3e04a75addc5e21ab52e9981d27a4b9"
+    },
+    {
+      "类型": "rune.runes_template",
+      "模块": "custom_types\\rune.py",
+      "来源SHA256": "23f4ac85b8de39cdda9679037bad99eae3e04a75addc5e21ab52e9981d27a4b9"
+    },
+    {
+      "类型": "rune.runes_templates",
+      "模块": "custom_types\\rune.py",
+      "来源SHA256": "23f4ac85b8de39cdda9679037bad99eae3e04a75addc5e21ab52e9981d27a4b9"
+    },
+    {
+      "类型": "rune.embed_runes",
+      "模块": "custom_types\\rune.py",
+      "来源SHA256": "23f4ac85b8de39cdda9679037bad99eae3e04a75addc5e21ab52e9981d27a4b9"
+    },
+    {
+      "类型": "rune.rune_mgr",
+      "模块": "custom_types\\rune.py",
+      "来源SHA256": "23f4ac85b8de39cdda9679037bad99eae3e04a75addc5e21ab52e9981d27a4b9"
+    },
+    {
+      "类型": "rune.rune_lock_setting",
+      "模块": "custom_types\\rune.py",
+      "来源SHA256": "23f4ac85b8de39cdda9679037bad99eae3e04a75addc5e21ab52e9981d27a4b9"
+    },
+    {
+      "类型": "rune.rune_lock_setting_dict",
+      "模块": "custom_types\\rune.py",
+      "来源SHA256": "23f4ac85b8de39cdda9679037bad99eae3e04a75addc5e21ab52e9981d27a4b9"
+    },
+    {
+      "类型": "rune_stone.rune_stone",
+      "模块": "custom_types\\rune_stone.py",
+      "来源SHA256": "2175dee4a286800ec0589673332ab14eba37faced3e50b5e72b139e1b1bb94d0"
+    },
+    {
+      "类型": "secret_tower.secret_tower",
+      "模块": "custom_types\\secret_tower.py",
+      "来源SHA256": "86819ff96dff8bbc31aa91464f73d58254db6353d52e3122c312e0f3227a48d7"
+    },
+    {
+      "类型": "secret_tower.secret_tower_dict",
+      "模块": "custom_types\\secret_tower.py",
+      "来源SHA256": "86819ff96dff8bbc31aa91464f73d58254db6353d52e3122c312e0f3227a48d7"
+    },
+    {
+      "类型": "short_mail.short_mail",
+      "模块": "custom_types\\short_mail.py",
+      "来源SHA256": "e26bfaa5fa8e0076386b6e5c983c8e6f2a5b4c1c5fbf20984e72d6bcbf5b1731"
+    },
+    {
+      "类型": "short_mail.short_mail_info",
+      "模块": "custom_types\\short_mail.py",
+      "来源SHA256": "e26bfaa5fa8e0076386b6e5c983c8e6f2a5b4c1c5fbf20984e72d6bcbf5b1731"
+    },
+    {
+      "类型": "signin_info.signin_info",
+      "模块": "custom_types\\signin_info.py",
+      "来源SHA256": "c3631f5963cb2b8cbed1256fcff30a59e3173151db349778196ff05292060764"
+    },
+    {
+      "类型": "simple_rank_list.simple_rank_list",
+      "模块": "custom_types\\simple_rank_list.py",
+      "来源SHA256": "1a2973f1858efd309ac1b5c566718044718d2579c3e4d9d8f5071b913e397196"
+    },
+    {
+      "类型": "skill.skill",
+      "模块": "custom_types\\skill.py",
+      "来源SHA256": "c528b8bcd93ebf0730e2d5ccab063fd7eba29e5c0e586697c801f7852fe04c2b"
+    },
+    {
+      "类型": "skill.skill_mgr",
+      "模块": "custom_types\\skill.py",
+      "来源SHA256": "c528b8bcd93ebf0730e2d5ccab063fd7eba29e5c0e586697c801f7852fe04c2b"
+    },
+    {
+      "类型": "stage_site.stage_site",
+      "模块": "custom_types\\stage_site.py",
+      "来源SHA256": "628dbfb9d9c64f18eadcd89498d443300cb5d30206a894570a3e5a96018eb03d"
+    },
+    {
+      "类型": "stage_site.stage_site_info",
+      "模块": "custom_types\\stage_site.py",
+      "来源SHA256": "628dbfb9d9c64f18eadcd89498d443300cb5d30206a894570a3e5a96018eb03d"
+    },
+    {
+      "类型": "stress_test_statistics.stress_test_statistics",
+      "模块": "custom_types\\stress_test_statistics.py",
+      "来源SHA256": "8e40832a728964cffa29ac86642c09e32783b8a0a1d85dd64d58848a7ea867e6"
+    },
+    {
+      "类型": "summer_game_info.summer_map",
+      "模块": "custom_types\\summer_game_info.py",
+      "来源SHA256": "0641c98c9e2f60496b68acf75615e6edc7074ddef2da340166387d034b16fa41"
+    },
+    {
+      "类型": "summer_game_info.summer_map_infos",
+      "模块": "custom_types\\summer_game_info.py",
+      "来源SHA256": "0641c98c9e2f60496b68acf75615e6edc7074ddef2da340166387d034b16fa41"
+    },
+    {
+      "类型": "summer_game_info.summer_game_info",
+      "模块": "custom_types\\summer_game_info.py",
+      "来源SHA256": "0641c98c9e2f60496b68acf75615e6edc7074ddef2da340166387d034b16fa41"
+    },
+    {
+      "类型": "talent_node.talent_node",
+      "模块": "custom_types\\talent_node.py",
+      "来源SHA256": "452150e262046940b79642a1704e0fc04fea7a8b8f8ddae4fec68d8dc6fc82b8"
+    },
+    {
+      "类型": "talent_node.talent_branch",
+      "模块": "custom_types\\talent_node.py",
+      "来源SHA256": "452150e262046940b79642a1704e0fc04fea7a8b8f8ddae4fec68d8dc6fc82b8"
+    },
+    {
+      "类型": "talent_node.talent_tree",
+      "模块": "custom_types\\talent_node.py",
+      "来源SHA256": "452150e262046940b79642a1704e0fc04fea7a8b8f8ddae4fec68d8dc6fc82b8"
+    },
+    {
+      "类型": "task_tower_info.floor_info",
+      "模块": "custom_types\\task_tower_info.py",
+      "来源SHA256": "ac31b5c770161ff1abe985aa3d48aebdc9a4dad03a620bcc9380f70b35562c2c"
+    },
+    {
+      "类型": "task_tower_info.floor_infos",
+      "模块": "custom_types\\task_tower_info.py",
+      "来源SHA256": "ac31b5c770161ff1abe985aa3d48aebdc9a4dad03a620bcc9380f70b35562c2c"
+    },
+    {
+      "类型": "task_tower_info.tower_info",
+      "模块": "custom_types\\task_tower_info.py",
+      "来源SHA256": "ac31b5c770161ff1abe985aa3d48aebdc9a4dad03a620bcc9380f70b35562c2c"
+    },
+    {
+      "类型": "task_tower_info.tower_infos",
+      "模块": "custom_types\\task_tower_info.py",
+      "来源SHA256": "ac31b5c770161ff1abe985aa3d48aebdc9a4dad03a620bcc9380f70b35562c2c"
+    },
+    {
+      "类型": "task_tower_info.task_tower_info",
+      "模块": "custom_types\\task_tower_info.py",
+      "来源SHA256": "ac31b5c770161ff1abe985aa3d48aebdc9a4dad03a620bcc9380f70b35562c2c"
+    },
+    {
+      "类型": "time_auto_attr.time_auto_attr",
+      "模块": "custom_types\\time_auto_attr.py",
+      "来源SHA256": "946df1f85f9d15539458ac7b56317478524e67b224b2b8936d9e2ffd4a7a5b34"
+    },
+    {
+      "类型": "wangyan_game_info.wangyan_map",
+      "模块": "custom_types\\wangyan_game_info.py",
+      "来源SHA256": "725e61062218275ef6f78981de638c14736d5083212a35e4daea5dfb8a39ee83"
+    },
+    {
+      "类型": "wangyan_game_info.wangyan_map_infos",
+      "模块": "custom_types\\wangyan_game_info.py",
+      "来源SHA256": "725e61062218275ef6f78981de638c14736d5083212a35e4daea5dfb8a39ee83"
+    },
+    {
+      "类型": "wangyan_game_info.wangyan_game_info",
+      "模块": "custom_types\\wangyan_game_info.py",
+      "来源SHA256": "725e61062218275ef6f78981de638c14736d5083212a35e4daea5dfb8a39ee83"
+    },
+    {
+      "类型": "yuanxiao_game_info.yuanxiao_game_info",
+      "模块": "custom_types\\yuanxiao_game_info.py",
+      "来源SHA256": "6db6d888b5b233db72b632c114490ab2d0ab9f4f7abcf44958fe45bfa6c1ee05"
+    }
+  ],
+  "拒绝方法": [
+    "gm_do_trigger_action：不开放GM脚本动作给玩家录像"
+  ]
+}

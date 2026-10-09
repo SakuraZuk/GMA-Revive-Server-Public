@@ -1,0 +1,8 @@
+{
+  "house_likes_daily_limit": 99,
+  "来源": {
+    "原生表": "out/client_catalogs/tables/house_visit.json",
+    "原生方法": "out/dis/remaining-collection-social.asm",
+    "说明": "原生日上限99与去重属性类型；UTC+8及每天每角色一次为本服日界策略"
+  }
+}

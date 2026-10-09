@@ -1,0 +1,30 @@
+{
+  "android": {
+    "version": "1.0.128",
+    "base_version": "1.0.8",
+    "0patchpath": "http://192.0.2.20:8083/patch_pub.android_1.0.128a588",
+    "branch": "20211018",
+    "discrete_file_num": 0,
+    "not_force_update_ingame": 1,
+    "restart_tag": 0,
+    "subpackagenpk": [],
+    "npk": {
+      "char2": "163010608 58aab0c7a7eb9700f554712dc7e04ce7 163.0106MB None",
+      "char3": "243885456 d1b1cb2ba526cd8ef7a6191e0622ecbe 243.8855MB None",
+      "char4": "161712464 575cf4f3b07926ea30368ffc79eb93f0 161.7125MB None",
+      "char6": "24624116 c5a99e2f15a9928500ad96004a902134 24.6241MB None",
+      "effect": "181986220 f135d1387346f55b15ebb0d7aaa2a403 181.9862MB None",
+      "scenewd1": "430399632 6ece29f33d373c0d5b38335e4f70cfab 430.3996MB None",
+      "uiicon": "147766476 9db001b4954334d51fd9429b042b614a 147.7665MB None",
+      "wwisech": "232290528 9b4e9a558903a5c8b91fd5ba92316756 232.2905MB None",
+      "wwisejp": "203335512 d958b14dd8938e65ae95388b8d6edc1a 203.3355MB None",
+      "res": "295353368 9990190477f395ab876d3b6648125fef 295.3534MB None",
+      "char1": "223184068 f29bf7cd86d00465f329651984941d52 223.1841MB None",
+      "ui": "476473756 eb9c7ac89291157ebd1998c6e95805e3 476.4738MB None",
+      "wwise": "156210456 d477deb0b35c58cc8d54dd3f60498989 156.2105MB None",
+      "scene": "110723040 4d9af6363fd2cc9d811f2a4a41dcd46b 110.7230MB None",
+      "scenewd2": "272852892 179e9787b0e58596824d6f8dcda19328 272.8529MB None",
+      "script": "65484 0dd6e606a1a8cdacbda00d85ef59f49f 0.0655MB None"
+    }
+  }
+}

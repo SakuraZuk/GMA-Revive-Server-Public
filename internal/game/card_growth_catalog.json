@@ -1,0 +1,1027 @@
+{
+  "cards": {
+    "4": {
+      "rarity": 4,
+      "forbid": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        8,
+        9
+      ]
+    },
+    "90": {
+      "rarity": 3,
+      "forbid": [
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "91": {
+      "rarity": 3,
+      "forbid": [
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "92": {
+      "rarity": 3,
+      "forbid": [
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "117": {
+      "rarity": 1,
+      "forbid": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ]
+    },
+    "118": {
+      "rarity": 1,
+      "forbid": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ]
+    },
+    "119": {
+      "rarity": 1,
+      "forbid": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ]
+    },
+    "120": {
+      "rarity": 1,
+      "forbid": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ]
+    },
+    "121": {
+      "rarity": 1,
+      "forbid": [
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ]
+    },
+    "1101": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "1102": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "1201": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "1202": {
+      "rarity": 2,
+      "forbid": []
+    },
+    "1203": {
+      "rarity": 2,
+      "forbid": []
+    },
+    "1204": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "1205": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "1301": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "1302": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "1303": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "1304": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "1401": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "1501": {
+      "rarity": 2,
+      "forbid": []
+    },
+    "1502": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "1601": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2101": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "2102": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "2103": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2201": {
+      "rarity": 2,
+      "forbid": []
+    },
+    "2202": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2203": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2204": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2205": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2206": {
+      "rarity": 5,
+      "forbid": []
+    },
+    "2207": {
+      "rarity": 5,
+      "forbid": []
+    },
+    "2208": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2301": {
+      "rarity": 2,
+      "forbid": []
+    },
+    "2302": {
+      "rarity": 2,
+      "forbid": []
+    },
+    "2303": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2401": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2402": {
+      "rarity": 2,
+      "forbid": []
+    },
+    "2403": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2404": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2405": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2406": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2407": {
+      "rarity": 5,
+      "forbid": []
+    },
+    "2501": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "2502": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2503": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "2504": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "2505": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "3101": {
+      "rarity": 2,
+      "forbid": []
+    },
+    "3102": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "3201": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "3202": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "3203": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "3301": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "3401": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "3402": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "3403": {
+      "rarity": 2,
+      "forbid": []
+    },
+    "3404": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "3405": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "3406": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "3407": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "3408": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "3409": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "3410": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "3411": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "3412": {
+      "rarity": 5,
+      "forbid": []
+    },
+    "3501": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "3502": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "3504": {
+      "rarity": 2,
+      "forbid": []
+    },
+    "4101": {
+      "rarity": 2,
+      "forbid": []
+    },
+    "4102": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "4201": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "4202": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "4401": {
+      "rarity": 3,
+      "forbid": [
+        5,
+        6
+      ]
+    },
+    "4402": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "4403": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "4404": {
+      "rarity": 2,
+      "forbid": []
+    },
+    "4405": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "4406": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "4407": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "4408": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "4409": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "4410": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "4411": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "4501": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "4502": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "4503": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "4601": {
+      "rarity": 4,
+      "forbid": []
+    },
+    "4602": {
+      "rarity": 3,
+      "forbid": []
+    },
+    "5101": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5102": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5112": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5201": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5211": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5222": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5301": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5302": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5311": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5401": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5402": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5403": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5411": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5501": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5502": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5511": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5601": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    },
+    "5602": {
+      "rarity": 1,
+      "forbid": [
+        3,
+        4,
+        7
+      ]
+    }
+  },
+  "rarities": {
+    "1": {
+      "_id": 1,
+      "name": "散佚",
+      "fragment_count": 20,
+      "decompose_material": [
+        [
+          100,
+          3
+        ]
+      ],
+      "card_numbers": 12,
+      "enhance_sort": [
+        [
+          11,
+          12
+        ],
+        [
+          13,
+          14
+        ],
+        [
+          21,
+          22
+        ],
+        [
+          23,
+          24
+        ],
+        [
+          31,
+          32
+        ],
+        [
+          33,
+          34
+        ],
+        [
+          41,
+          42
+        ],
+        [
+          43,
+          44
+        ]
+      ],
+      "common_enhance_card": [
+        4,
+        1
+      ],
+      "league_card_select_cost": [
+        11,
+        200
+      ],
+      "consume_materials": [
+        12,
+        1000
+      ],
+      "rank": 1,
+      "same_card_materials": [
+        null,
+        null
+      ]
+    },
+    "2": {
+      "_id": 2,
+      "name": "平装",
+      "fragment_count": 30,
+      "decompose_material": [
+        [
+          100,
+          3
+        ]
+      ],
+      "card_numbers": 12,
+      "enhance_sort": [
+        [
+          11,
+          12
+        ],
+        [
+          13,
+          14
+        ],
+        [
+          21,
+          22
+        ],
+        [
+          23,
+          24
+        ],
+        [
+          31,
+          32
+        ],
+        [
+          33,
+          34
+        ],
+        [
+          41,
+          42
+        ],
+        [
+          43,
+          44
+        ]
+      ],
+      "common_enhance_card": [
+        4,
+        1
+      ],
+      "league_card_select_cost": [
+        11,
+        400
+      ],
+      "consume_materials": [
+        12,
+        1000
+      ],
+      "rank": 2,
+      "same_card_materials": [
+        null,
+        null
+      ]
+    },
+    "3": {
+      "_id": 3,
+      "name": "精装",
+      "fragment_count": 40,
+      "decompose_material": [
+        [
+          100,
+          5
+        ]
+      ],
+      "card_numbers": 24,
+      "enhance_sort": [
+        [
+          11,
+          12
+        ],
+        [
+          13,
+          14
+        ],
+        [
+          21,
+          22
+        ],
+        [
+          23,
+          24
+        ],
+        [
+          31,
+          32
+        ],
+        [
+          33,
+          34
+        ],
+        [
+          41,
+          42
+        ],
+        [
+          43,
+          44
+        ]
+      ],
+      "common_enhance_card": [
+        4,
+        1
+      ],
+      "league_card_select_cost": [
+        11,
+        800
+      ],
+      "consume_materials": [
+        12,
+        10000
+      ],
+      "rank": 3,
+      "same_card_materials": [
+        20004,
+        1
+      ]
+    },
+    "4": {
+      "_id": 4,
+      "name": "典藏",
+      "fragment_count": 50,
+      "decompose_material": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "card_numbers": 30,
+      "enhance_sort": [
+        [
+          11,
+          12
+        ],
+        [
+          13,
+          14
+        ],
+        [
+          21,
+          22
+        ],
+        [
+          23,
+          24
+        ],
+        [
+          31,
+          32
+        ],
+        [
+          33,
+          34
+        ],
+        [
+          41,
+          42
+        ],
+        [
+          43,
+          44
+        ]
+      ],
+      "common_enhance_card": [
+        4,
+        1
+      ],
+      "league_card_select_cost": [
+        11,
+        1600
+      ],
+      "consume_materials": [
+        12,
+        50000
+      ],
+      "rank": 4,
+      "same_card_materials": [
+        20004,
+        20
+      ]
+    },
+    "5": {
+      "_id": 5,
+      "name": "异版",
+      "fragment_count": 60,
+      "decompose_material": [
+        [
+          100,
+          10
+        ],
+        [
+          101,
+          10
+        ]
+      ],
+      "card_numbers": 4,
+      "enhance_sort": [
+        [
+          11,
+          12
+        ],
+        [
+          13,
+          14
+        ],
+        [
+          21,
+          22
+        ],
+        [
+          23,
+          24
+        ],
+        [
+          31,
+          32
+        ],
+        [
+          33,
+          34
+        ],
+        [
+          41,
+          42
+        ],
+        [
+          43,
+          44
+        ]
+      ],
+      "common_enhance_card": [
+        4,
+        1
+      ],
+      "league_card_select_cost": [
+        11,
+        1600
+      ],
+      "consume_materials": [
+        12,
+        50000
+      ],
+      "rank": 5,
+      "same_card_materials": [
+        20004,
+        20
+      ]
+    }
+  },
+  "enhancements": {
+    "11": {
+      "_id": 11,
+      "attr_name": "atk",
+      "enhance_value": 0.1,
+      "enhance_skill": null,
+      "book_pos": null
+    },
+    "12": {
+      "_id": 12,
+      "attr_name": null,
+      "enhance_value": null,
+      "enhance_skill": 1,
+      "book_pos": 1
+    },
+    "13": {
+      "_id": 13,
+      "attr_name": "defence",
+      "enhance_value": 0.1,
+      "enhance_skill": null,
+      "book_pos": null
+    },
+    "14": {
+      "_id": 14,
+      "attr_name": "hp",
+      "enhance_value": 0.1,
+      "enhance_skill": null,
+      "book_pos": null
+    },
+    "21": {
+      "_id": 21,
+      "attr_name": "atk",
+      "enhance_value": 0.07,
+      "enhance_skill": null,
+      "book_pos": null
+    },
+    "22": {
+      "_id": 22,
+      "attr_name": null,
+      "enhance_value": null,
+      "enhance_skill": 1,
+      "book_pos": 2
+    },
+    "23": {
+      "_id": 23,
+      "attr_name": "defence",
+      "enhance_value": 0.07,
+      "enhance_skill": null,
+      "book_pos": null
+    },
+    "24": {
+      "_id": 24,
+      "attr_name": "hp",
+      "enhance_value": 0.07,
+      "enhance_skill": null,
+      "book_pos": null
+    },
+    "31": {
+      "_id": 31,
+      "attr_name": "atk",
+      "enhance_value": 0.05,
+      "enhance_skill": null,
+      "book_pos": null
+    },
+    "32": {
+      "_id": 32,
+      "attr_name": null,
+      "enhance_value": null,
+      "enhance_skill": 1,
+      "book_pos": 3
+    },
+    "33": {
+      "_id": 33,
+      "attr_name": "defence",
+      "enhance_value": 0.05,
+      "enhance_skill": null,
+      "book_pos": null
+    },
+    "34": {
+      "_id": 34,
+      "attr_name": "hp",
+      "enhance_value": 0.05,
+      "enhance_skill": null,
+      "book_pos": null
+    },
+    "41": {
+      "_id": 41,
+      "attr_name": "atk",
+      "enhance_value": 0.03,
+      "enhance_skill": null,
+      "book_pos": null
+    },
+    "42": {
+      "_id": 42,
+      "attr_name": "defence",
+      "enhance_value": 0.03,
+      "enhance_skill": null,
+      "book_pos": null
+    },
+    "43": {
+      "_id": 43,
+      "attr_name": "hp",
+      "enhance_value": 0.03,
+      "enhance_skill": null,
+      "book_pos": null
+    },
+    "44": {
+      "_id": 44,
+      "attr_name": null,
+      "enhance_value": null,
+      "enhance_skill": 1,
+      "book_pos": 4
+    }
+  },
+  "来源": {
+    "cards": {
+      "路径": "out/client_catalogs/tables/cards.json",
+      "SHA256": "b8f88a6e812ba1192dbfa08a993da1a703901b6adfa26207135391d5f13f1fd0"
+    },
+    "cards_rarity": {
+      "路径": "out/client_catalogs/tables/cards_rarity.json",
+      "SHA256": "d206eab9746ec61126623319f18871ba7496c03c878905d3b06927a592ffa462"
+    },
+    "cards_enhance": {
+      "路径": "out/client_catalogs/tables/cards_enhance.json",
+      "SHA256": "47fa525a172fc596ea214b3ece1ec9ff7dbaf8a3bf18b72e39b09d862530ebe4"
+    }
+  }
+}
