@@ -306,7 +306,14 @@ func (s *Service) summerRPC(ctx context.Context, c *Connection, method string, a
 			}
 		}
 		if dungeon > 0 {
-			return s.enterDungeon(ctx, c, []json.RawMessage{args[0], json.RawMessage(strconv.Itoa(dungeon)), args[2]})
+			out, err := s.enterDungeon(ctx, c, []json.RawMessage{args[0], json.RawMessage(strconv.Itoa(dungeon)), args[2]})
+			if err != nil {
+				return []Push{Callback(cb, []any{activityErrorCode(err), nil})}, nil
+			}
+			if len(c.pendingDungeonArgs) != 0 && string(c.pendingDungeonArgs[0]) == string(args[0]) {
+				c.pendingDungeonBoxCallback = true
+			}
+			return summerDungeonCallback(out, cb), nil
 		}
 	}
 	box := emptyActivityBox()
@@ -571,4 +578,16 @@ func (s *Service) summerRPC(ctx context.Context, c *Connection, method string, a
 		reply = []any{RetSuccess, box}
 	}
 	return append(out, Callback(cb, reply)), nil
+}
+
+// 90B7C06A的summer_game_enter_node._callback总是需要(ret,box)，战斗入场不发奖励盒。
+func summerDungeonCallback(out []Push, cb int) []Push {
+	for i := range out {
+		if out[i].Method == "call_client_callback" && len(out[i].Args) == 2 && out[i].Args[0] == cb {
+			if values, ok := out[i].Args[1].([]any); ok && len(values) == 1 {
+				out[i].Args[1] = append(values, nil)
+			}
+		}
+	}
+	return out
 }

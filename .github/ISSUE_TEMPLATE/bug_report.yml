@@ -1,0 +1,42 @@
+name: 问题反馈
+description: 提交可复现的客户端或服务端异常，请先脱敏。
+title: "[问题] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢提交问题。请勿粘贴账号口令、访问令牌、私钥、实际服务器地址、电脑绝对路径或玩家存档。外部依赖测试的SKIP不等同于验证通过。
+  - type: input
+    id: version
+    attributes:
+      label: 源码提交与运行期版本
+      description: 填写提交号、热修版本；无法取得时注明未知。
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: 客户端与运行环境
+      description: 填写客户端版本、系统或模拟器版本，不填写机器名及个人路径。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 描述入口、操作顺序、出现频率及是否重登仍可复现。
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 预期结果与实际结果
+      description: 区分画面卡住、客户端异常、业务拒绝和服务端超时。
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 已脱敏的最小错误片段
+      description: 仅提供定位所需内容，不提交完整日志、数据库、真实玩家标识或存档。
+      render: text

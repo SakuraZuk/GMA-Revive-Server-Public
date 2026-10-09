@@ -9,7 +9,7 @@ import (
 )
 
 func TestRepeatedActivityEntryPreservesPreparingBattle(t *testing.T) {
-	for _, id := range []int{4101, 4102} {
+	for _, id := range []int{4101, 4102, 4202, 4302, 4402, 4502} {
 		t.Run(fmt.Sprint(id), func(t *testing.T) {
 			ctx := context.Background()
 			accounts := NewFixtureAccounts(nil)

@@ -203,6 +203,28 @@ func (g *gate) handleEntityMessage(svc *game.Service, conn *game.Connection, pay
 	if err != nil {
 		avatar, _ := conn.SelectedAvatar()
 		g.logf("entity_message %s 业务失败 uid=%d oid=%x: %v", method, avatar.UID, g.avatarID, err)
+		// 后续反推只记录类型、长度及合法标识形态，不保存聊天内容、账号或授权值。
+		if method == "refuse_challenge" || method == "set_focus_target" || method == "set_dungeon_bonus_double" {
+			shapes := []string{}
+			for _, raw := range args {
+				var value any
+				if json.Unmarshal(raw, &value) != nil {
+					shapes = append(shapes, "无效JSON")
+					continue
+				}
+				switch v := value.(type) {
+				case string:
+					shapes = append(shapes, fmt.Sprintf("文本长度%d", len(v)))
+				case float64:
+					shapes = append(shapes, fmt.Sprintf("数值%g", v))
+				case bool:
+					shapes = append(shapes, fmt.Sprintf("布尔%t", v))
+				default:
+					shapes = append(shapes, fmt.Sprintf("类型%T", value))
+				}
+			}
+			g.logf("业务参数形态 method=%s 参数=%v", method, shapes)
+		}
 		// 只记录不含鉴权信息的故障定位参数，避免完整登录参数进入日志。
 		if method == "enter_dungeon" || method == "random_cards" || method == "guide_task_finished" || method == "finished_guide" || method == "query_rank_list" {
 			raw, _ := json.Marshal(args)

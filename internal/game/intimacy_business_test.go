@@ -11,6 +11,8 @@ import (
 )
 
 func TestIntimacyChapterNativeRPCPersistenceAndNoReplay(t *testing.T) {
+	// 该用例手工设置单卡好感度，不使用生产全英雄新角色配置。
+	t.Setenv("HS_NEW_AVATAR_ALL_HEROES", "0")
 	ctx := context.Background()
 	accounts := NewFixtureAccounts(nil)
 	s := New(accounts, nil)

@@ -15,7 +15,7 @@ remote='/opt/hs-server/data/verification/native-'+stamp+'-solo'
 local=root/'out/bin/native-solo-linux';local.mkdir(parents=True,exist_ok=True)
 env=os.environ.copy();env.update(GOOS='linux',GOARCH='amd64',CGO_ENABLED='0')
 for package,name in [('./internal/nativeengine','nativeengine.test'),('./internal/game','game-native.test')]:
- subprocess.run([r__import__('os').environ.get('HS_GO', 'go'),'test','-c','-o',str(local/name),package],cwd=root,env=env,check=True)
+ subprocess.run([__import__('os').environ.get('HS_GO', 'go'),'test','-c','-o',str(local/name),package],cwd=root,env=env,check=True)
 archive=root/'out/native-pvp-engine-linux-resources.tar.gz'
 client=connect()
 try:

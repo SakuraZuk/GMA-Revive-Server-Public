@@ -18,6 +18,8 @@ func TestLegacyZeroDressProjectsNativeDefaultWithoutChangingAssets(t *testing.T)
 }
 
 func TestCaptainNativeArgumentsPersistenceAndLegacyLogin(t *testing.T) {
+	// 本用例仅构造一张旧装帧卡；全英雄初始化由独立用例验证。
+	t.Setenv("HS_NEW_AVATAR_ALL_HEROES", "0")
 	ctx := context.Background()
 	accounts := NewFixtureAccounts(nil)
 	s := New(accounts, nil)

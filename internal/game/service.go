@@ -308,14 +308,16 @@ type Connection struct {
 	humanPresenceID          string
 	nextHumanPresenceRefresh int64
 	nativeRecordLists        map[int][]string
-	lastDailyCheckDay        string
-	nextDailyRetry           int64
-	nextPvpAwardRetry        int64
-	nextLoginFinishRetry     int64
-	diagnosticWindow         int64
-	diagnosticCount          int
-	telemetryWindow          int64
-	telemetryCount           int
+	// 夏日节点借用副本入口，但原生回调仍是ret、box两参。
+	pendingDungeonBoxCallback bool
+	lastDailyCheckDay         string
+	nextDailyRetry            int64
+	nextPvpAwardRetry         int64
+	nextLoginFinishRetry      int64
+	diagnosticWindow          int64
+	diagnosticCount           int
+	telemetryWindow           int64
+	telemetryCount            int
 }
 
 func NewConnection() *Connection {
@@ -555,7 +557,7 @@ func (s *Service) Handle(ctx context.Context, c *Connection, method string, args
 	case "battle_fighting":
 		return s.battleFighting(ctx, c, args)
 	case "exit_battle", "leave_battle", "quit_battle":
-		return s.humanExitBattle(ctx, c, args)
+		return s.exitBattleRPC(ctx, c, args)
 	case "do_command":
 		return s.doCommand(ctx, c, args)
 	case "battle_guide_end":
@@ -620,6 +622,10 @@ func (s *Service) Handle(ctx context.Context, c *Connection, method string, args
 		return s.handleGachaContract(ctx, c, args)
 	case "decompose_cards":
 		return s.decomposeCardsRPC(ctx, c, args)
+	case "consume_power_material":
+		return s.consumePowerMaterialRPC(ctx, c, args)
+	case "lock_card", "unlock_card":
+		return s.cardLockRPC(ctx, c, method, args)
 	case "card_enhance", "up_level_card", "upgrade_card":
 		return s.cardGrowthRPC(ctx, c, method, args)
 	case "consume_ring", "update_level_one":

@@ -17,7 +17,7 @@ if sys.argv[1] == 'backup':
     (target / 'manifest.json').write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding='utf-8')
     print(json.dumps(rows, ensure_ascii=False))
 elif sys.argv[1] == 'test':
-    cmd = [r__import__('os').environ.get('HS_GO', 'go'), 'test', './internal/game/dbstore', '-run', 'TestPostgresActivity', '-count=1', '-v']
+    cmd = [__import__('os').environ.get('HS_GO', 'go'), 'test', './internal/game/dbstore', '-run', 'TestPostgresActivity', '-count=1', '-v']
     log = root / 'out/activity-pg-fixture-compile.log'
     if log.exists():
         shutil.copy2(log, target / ('test-' + str(time.time_ns()) + '.log'))

@@ -163,7 +163,7 @@ func (s *Service) enterDungeon(ctx context.Context, c *Connection, args []json.R
 			}
 			session = *p.Battle
 			// 教学及4101/4102实证同连接重复入场；学会守护专用重新布阵保持原样。
-			deduplicate := id == 10001 || id == 10002 || id >= 501 && id <= 510 || id == 4101 || id == 4102
+			deduplicate := id == 10001 || id == 10002 || id >= 501 && id <= 510 || definition.Type == 9
 			if deduplicate && c.ordinaryPrepareUUID == session.UUID {
 				duplicatePrepare = true
 				return nil

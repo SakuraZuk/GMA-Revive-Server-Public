@@ -127,7 +127,7 @@ def main(startup_only=False, runtime_only=False):
     for version, script in list(startup.items()):
         startup[version] = compose_startup(bridge)
     runtime = catalog.setdefault("runtime", {})
-    runtime["index"] = max(int(runtime.get("index", 0)), 2026100911)
+    runtime["index"] = max(int(runtime.get("index", 0)), 2026100914)
     runtime["script"] = compose_runtime(bridge)
     CATALOG.write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print("已合并战斗桥：版本=%s runtime.index=%s" % (sorted(startup), runtime["index"]))

@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.stdout.reconfigure(encoding='utf-8')
-GO=r__import__('os').environ.get('HS_GO', 'go')
+GO=__import__('os').environ.get('HS_GO', 'go')
 commands=[
     ('真人和录像源码', [GO,'test','./internal/game','-run','^(TestHumanPvp|TestNativeRecord|TestSocial)','-count=1','-v']),
     ('最新PG编译与本机边界', [GO,'test','./internal/game/dbstore','-run','^(TestPostgresHuman|TestPostgresNativeRecord)','-count=1','-v']),

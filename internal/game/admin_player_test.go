@@ -133,6 +133,8 @@ func TestPlayerAdminRecommendationReceiptAndRejectedOffer(t *testing.T) {
 }
 
 func TestPlayerAdminProfileCardAndPrivateQuery(t *testing.T) {
+	// 本用例手工构造单卡库存，不继承生产新角色全英雄开关。
+	t.Setenv("HS_NEW_AVATAR_ALL_HEROES", "0")
 	a := NewFixtureAccounts(nil)
 	s := New(a, nil)
 	_, av := newBattleConnection(t, context.Background(), a, s)

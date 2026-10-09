@@ -3,7 +3,7 @@ from pathlib import Path
 import datetime,hashlib,json,os,shlex,shutil,subprocess,sys
 from build_completion import source_hashes
 ROOT=Path(__file__).resolve().parents[2]
-GO=Path(r__import__('os').environ.get('HS_GO', 'go'))
+GO=Path(__import__('os').environ.get('HS_GO', 'go'))
 sys.stdout.reconfigure(encoding='utf-8')
 
 def main():
@@ -13,8 +13,10 @@ def main():
         backup=ROOT/'out/backups'/('remaining-checks-'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S'))
         backup.mkdir(parents=True,exist_ok=False)
         for path in available:shutil.copy2(path,backup/(path.name+'.bak'))
-    files=[str(p) for base in ('internal','cmd') for p in (ROOT/base).rglob('*.go')]
-    subprocess.run([str(GO.with_name('gofmt.exe')),'-w']+files,cwd=ROOT,check=True)
+    files=[str(p.relative_to(ROOT)) for base in ('internal','cmd') for p in (ROOT/base).rglob('*.go')]
+    # 私有发布目录较长，Windows整仓绝对路径参数会超过CreateProcess上限。
+    for offset in range(0, len(files), 40):
+        subprocess.run([str(GO.with_name('gofmt.exe')),'-w']+files[offset:offset+40],cwd=ROOT,check=True)
     before=source_hashes();start=datetime.datetime.now().isoformat()
     formal=os.environ.copy();formal.pop('HS_TEST_DATABASE_URL',None)
     for line in (ROOT/'deploy/data/gameplay-rules.env').read_text(encoding='utf-8-sig').splitlines():

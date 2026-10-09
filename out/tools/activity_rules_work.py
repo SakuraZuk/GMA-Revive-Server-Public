@@ -72,7 +72,7 @@ elif sys.argv[1] in ('test', 'testall', 'testpg'):
         shutil.copy2(log, history / ('test-' + str(time.time_ns()) + '.log'))
     package = './internal/game/dbstore' if mode == 'testpg' else './internal/game'
     pattern = 'TestPostgresActivity' if mode == 'testpg' else ('TestActivity' if mode == 'testall' else 'TestActivityRules')
-    cmd = [r__import__('os').environ.get('HS_GO', 'go'), 'test', package, '-run', pattern, '-count=1', '-v']
+    cmd = [__import__('os').environ.get('HS_GO', 'go'), 'test', package, '-run', pattern, '-count=1', '-v']
     started = time.time()
     result = subprocess.run(cmd, cwd=root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     log.write_bytes(result.stdout)

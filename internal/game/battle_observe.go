@@ -25,7 +25,7 @@ var battleBridgeScript string
 var dungeonCatalogData []byte
 
 const (
-	bridgeHotfixIndex   = 2026100911
+	bridgeHotfixIndex   = 2026100914
 	bridgeProtocol      = 1
 	battleEventCommand  = "__battle_event__"
 	battleEventMaxJSON  = 512000
@@ -327,6 +327,12 @@ func (s *Service) absorbBattleEvent(ctx context.Context, c *Connection, rawArgs 
 				return pushes, nil
 			}
 			c.pendingDungeonArgs = nil
+			if c.pendingDungeonBoxCallback {
+				if cb, ok := callbackArg(pending); ok {
+					next = summerDungeonCallback(next, cb)
+				}
+				c.pendingDungeonBoxCallback = false
+			}
 			pushes = append(pushes, next...)
 		}
 		return pushes, nil

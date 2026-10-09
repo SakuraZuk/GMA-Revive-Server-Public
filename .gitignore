@@ -3,6 +3,7 @@
 !/.gitignore
 !/.gitattributes
 !/README.md
+!/.github/
 !/SERVER.md
 !/go.mod
 !/go.sum

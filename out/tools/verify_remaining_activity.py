@@ -3,7 +3,7 @@ from pathlib import Path
 import datetime,hashlib,json,subprocess,sys
 root=Path(__file__).resolve().parents[2]
 sys.stdout.reconfigure(encoding='utf-8')
-command=[r__import__('os').environ.get('HS_GO', 'go'),'test','./internal/game','-run','TestRemainingActivity|TestActivityMikuActualRPCBattleReceiptAndLeave','-count=1','-v']
+command=[__import__('os').environ.get('HS_GO', 'go'),'test','./internal/game','-run','TestRemainingActivity|TestActivityMikuActualRPCBattleReceiptAndLeave','-count=1','-v']
 started=datetime.datetime.now().isoformat()
 result=subprocess.run(command,cwd=root,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
 log=root/'out/remaining-activity-go-verification.log';log.write_bytes(result.stdout)

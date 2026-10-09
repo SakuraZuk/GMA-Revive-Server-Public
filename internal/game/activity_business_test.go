@@ -88,9 +88,19 @@ func TestActivitySummerActualBattleSettlementAndRecovery(t *testing.T) {
 		t.Fatal(err)
 	}
 	before := c.SelectedAvatarUnsafe().Progress
-	pushes, e := service.Handle(ctx, c, "enter_dungeon", []json.RawMessage{json.RawMessage("9"), json.RawMessage("21110001"), json.RawMessage("{}")})
+	pushes, e := service.Handle(ctx, c, "summer_game_enter_node", rawArgs(9, 10203, map[string]any{}))
 	if e != nil {
 		t.Fatal(e)
+	}
+	callbackFound := false
+	for _, v := range pushes {
+		if v.Method == "call_client_callback" && v.Args[0] == int64(9) {
+			values := v.Args[1].([]any)
+			callbackFound = len(values) == 2 && values[0] == int64(RetSuccess) && values[1] == nil
+		}
+	}
+	if !callbackFound {
+		t.Fatal("夏日原生战斗入口没有ret、box两参回调", pushes)
 	}
 	b := c.SelectedAvatarUnsafe().Progress.Battle
 	if b == nil || b.ActivityContext == nil || b.ActivityContext.NodeID != 10203 {

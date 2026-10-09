@@ -305,8 +305,8 @@ func (s *Service) setDungeonSkipEditState(ctx context.Context, c *Connection, ar
 	if json.Unmarshal(args[0], &callbackID) != nil || callbackID <= 0 {
 		return nil, errors.New("副本跳过编辑回调编号无效")
 	}
-	if json.Unmarshal(args[1], &dungeonID) != nil || json.Unmarshal(args[2], &locked) != nil || dungeonID <= 0 {
-		return nil, errors.New("副本跳过编辑参数类型无效")
+	if json.Unmarshal(args[1], &dungeonID) != nil || !nativeBinarySwitch(args[2], &locked) || dungeonID <= 0 {
+		return []Push{Callback(callbackID, []any{false})}, nil
 	}
 	if _, known := dungeonCatalog[dungeonID]; !known {
 		return []Push{Callback(callbackID, []any{false})}, nil

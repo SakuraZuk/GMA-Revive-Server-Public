@@ -19,7 +19,7 @@ elif sys.argv[1] == 'test':
     log = root / 'out/activity-facility-ssr-test.log'
     if log.exists():
         shutil.copy2(log, target / ('test-' + str(time.time_ns()) + '.log'))
-    cmd = [r__import__('os').environ.get('HS_GO', 'go'), 'test', './internal/game', '-run', 'TestActivityHouse', '-count=1', '-v']
+    cmd = [__import__('os').environ.get('HS_GO', 'go'), 'test', './internal/game', '-run', 'TestActivityHouse', '-count=1', '-v']
     start = time.time()
     result = subprocess.run(cmd, cwd=root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     log.write_bytes(result.stdout)

@@ -29,3 +29,4 @@ def _install_hs_activity_buffs():
 
     set_effect_type._hs_activity_buff_revision = 1
     cls.set_effect_type = set_effect_type
+

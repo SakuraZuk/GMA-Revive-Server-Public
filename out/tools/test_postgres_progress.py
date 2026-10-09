@@ -15,7 +15,7 @@ from urllib.parse import urlsplit, urlunsplit
 from server_ops import connect
 
 ROOT = Path(__file__).resolve().parents[2]
-GO = Path(r__import__('os').environ.get('HS_GO', 'go'))
+GO = Path(__import__('os').environ.get('HS_GO', 'go'))
 sys.stdout.reconfigure(encoding="utf-8")
 
 

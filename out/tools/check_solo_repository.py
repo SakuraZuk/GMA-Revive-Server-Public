@@ -3,7 +3,7 @@ from pathlib import Path
 import datetime,json,subprocess,sys
 root=Path(__file__).resolve().parents[2]
 sys.stdout.reconfigure(encoding='utf-8')
-commands=[[r__import__('os').environ.get('HS_GO', 'go'),'test','./...','-count=1'],[r__import__('os').environ.get('HS_GO', 'go'),'vet','./...'],[sys.executable,'out/tools/verify_battle_bridge_hotfix.py']]
+commands=[[__import__('os').environ.get('HS_GO', 'go'),'test','./...','-count=1'],[__import__('os').environ.get('HS_GO', 'go'),'vet','./...'],[sys.executable,'out/tools/verify_battle_bridge_hotfix.py']]
 rows=[]
 for index,command in enumerate(commands):
  started=datetime.datetime.now().isoformat()
