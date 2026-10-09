@@ -5,7 +5,7 @@
 
 | # | 证据 | 来源 | 结论 | 置信度 |
 |---|------|------|------|--------|
-| E01 | 包名 com.netease.hsqsl、签名 H62_KEYS、目录 netease/h62 | APK META-INF + files 目录 | 游戏为幻书启示录，项目代号 h62 | 高（用户确认+文件证据） |
+| E01 | 包名 com.netease.hsqsl、签名 H62_KEYS、目录 netease/h62 | APK META-INF + files 目录 | 游戏为幻书启世录，项目代号 h62 | 高（用户确认+文件证据） |
 | E02 | log.txt: NeoXRoot / FileLoader npk / python.dll 模块 | files/netease/h62/log.txt | 引擎为网易 NeoX，业务逻辑 Python，资源 NXPK 打包 | 高 |
 | E03 | log.txt: patch_hotfix_data_url=h62.update.netease.com/pl/patch_hotfix_data_pub + check network 循环 | log.txt 尾部 | 启动卡死点=热修检查，官方热更服务器不可达 | 高 |
 | E04 | log.txt: app_base_version 1.0.8 / patch_version 1.0.128 / engine_version 211635 | log.txt | 客户端版本三元组 | 高 |
