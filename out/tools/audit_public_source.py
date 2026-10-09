@@ -3,12 +3,14 @@
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8")
     names = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).decode("utf-8").split("\0")
     private_values = []
     try:

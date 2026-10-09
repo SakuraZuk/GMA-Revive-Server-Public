@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tarfile
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +20,7 @@ def git(args, cwd=ROOT, capture=True):
 
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8")
     subprocess.run([__import__('sys').executable, str(ROOT / "out/tools/audit_public_source.py")],
                    cwd=ROOT, check=True)
     if git(["status", "--porcelain"]).strip():
