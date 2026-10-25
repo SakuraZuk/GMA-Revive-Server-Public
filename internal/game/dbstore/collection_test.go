@@ -10,6 +10,91 @@ import (
 	"time"
 )
 
+func TestPostgresCollectionSystemRoomsLayoutColdPersistence(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	now := time.Unix(1800000000, 0)
+	info := game.ClientInfo{Account: "收藏房间", Password: "pw", Hostnum: 1}
+	svc, c, av := repairPlayer(t, store, info, &now)
+	defer svc.Detach(c)
+	_, err := store.UpdateProgress(ctx, av.OID, func(p *game.Progress) error {
+		// 对应线上旧档：系统已开放，但房间存档尚未建立，也没有809/810钥匙。
+		p.UnlockSystems["house_dormitory1"] = 1
+		p.UnlockSystems["house_dormitory2"] = 2
+		p.UnlockSystems["house_dormitory3"] = 0
+		p.Collection = &game.CollectionState{Version: 1, Furniture: map[int]int64{11001: 2}}
+		delete(p.Materials, 809)
+		delete(p.Materials, 810)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 真实冷登录必须完整到on_refresh_login，但不能在Avatar初始属性阶段迁移空房间；
+	// 2026-10-11误在quick_login中补房导致客户端在UID出现前中断。
+	svc.Detach(c)
+	svc = pgActivityService(t, store, func() time.Time { return now })
+	c = pgActivityLogin(t, svc, info)
+	loginState, err := New(store.pool).QuickLogin(ctx, info)
+	loginRooms := loginState.Avatars[0].Progress.Collection.Rooms
+	_, loginRoom1 := loginRooms[1]
+	_, loginRoom2 := loginRooms[2]
+	if err != nil || loginRoom1 || loginRoom2 {
+		t.Fatal("冷登录提前迁移收藏室第一或第二房间", err)
+	}
+	setup := func(room int) int {
+		t.Helper()
+		out, err := svc.Handle(ctx, c, "setup_furniture", pgSocialArgs(room, 0, 11001, 0, []int{10, 10}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		reply, _ := pgNativeReply(t, out, "on_update_restroom_grid_info")
+		return reply.Args[0].(int)
+	}
+	for _, room := range []int{1, 2} {
+		if code := setup(room); code != game.RetSuccess {
+			t.Fatal("已开放房间摆放被拒绝", room, code)
+		}
+	}
+	read := func() game.Progress {
+		t.Helper()
+		cold, err := New(store.pool).QuickLogin(ctx, info)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return cold.Avatars[0].Progress
+	}
+	p := read()
+	_, room1 := p.Collection.Rooms[1]
+	_, room2 := p.Collection.Rooms[2]
+	if !room1 || !room2 || len(p.Collection.Placements) != 2 || p.Collection.Furniture[11001] != 2 || p.Materials[809].Total != 0 || p.Materials[810].Total != 0 {
+		t.Fatal("冷重登房间/布局未持久或伪造房间钥匙")
+	}
+	var revision int64
+	var state string
+	if err := store.pool.QueryRow(ctx, `SELECT revision,state::text FROM avatar_progress WHERE avatar_oid=$1`, av.OID).Scan(&revision, &state); err != nil {
+		t.Fatal(err)
+	}
+	if code := setup(3); code == game.RetSuccess {
+		t.Fatal("未开放房间允许摆放")
+	}
+	var afterRevision int64
+	var afterState string
+	if err := store.pool.QueryRow(ctx, `SELECT revision,state::text FROM avatar_progress WHERE avatar_oid=$1`, av.OID).Scan(&afterRevision, &afterState); err != nil {
+		t.Fatal(err)
+	}
+	if revision != afterRevision || state != afterState {
+		t.Fatal("被拒绝的布局仍修改实库存档")
+	}
+	if _, err := svc.Handle(ctx, c, "player_enter_house", nil); err != nil {
+		t.Fatal(err)
+	}
+	after := read()
+	if !reflect.DeepEqual(p.Collection.Rooms, after.Collection.Rooms) || !reflect.DeepEqual(p.Collection.Placements, after.Collection.Placements) || !reflect.DeepEqual(p.Collection.Furniture, after.Collection.Furniture) {
+		t.Fatal("再次进入重置了房间、布局或库存")
+	}
+}
+
 // 原生业务响应按方法定位，合法的附加属性推送不一定在响应之前。
 func pgNativeReply(t *testing.T, out []game.Push, method string) (game.Push, int) {
 	t.Helper()

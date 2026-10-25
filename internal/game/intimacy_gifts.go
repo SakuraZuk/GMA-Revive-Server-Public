@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"maps"
 	"math/big"
 	"sort"
@@ -224,6 +225,7 @@ func (s *Service) intimacyGiftRPC(ctx context.Context, c *Connection, method str
 			if !exists {
 				return nil, fmt.Errorf("送礼错误码缺失：%s", reject.name)
 			}
+			log.Printf("送礼业务拒绝 uid=%d method=%s card=%d code=%d reason=%s", c.SelectedAvatarUnsafe().UID, method, cardID, code, reject)
 			box["runes"] = map[string]any{}
 			return []Push{Callback(callback, []any{code, box})}, nil
 		}
@@ -235,6 +237,8 @@ func (s *Service) intimacyGiftRPC(ctx context.Context, c *Connection, method str
 	if specialChoice != 0 {
 		pushes = append(pushes, push("Avatar", "client_prop_changed", []any{"special_gift_card_2_count", specialGiftCounts(p, s.Now())}))
 	}
+	// 提交完成与客户端演出完成分开取证；不输出完整库存或请求材料字典。
+	log.Printf("送礼事务已提交 uid=%d method=%s card=%d gift_types=%d returned_runes=%d", c.SelectedAvatarUnsafe().UID, method, cardID, len(gifts), len(granted))
 	return append(pushes, Callback(callback, []any{0, box})), nil
 }
 

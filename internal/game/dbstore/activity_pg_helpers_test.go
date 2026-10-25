@@ -57,13 +57,19 @@ func pgActivityLogin(t *testing.T, svc *game.Service, info game.ClientInfo) *gam
 		case "on_refresh_login":
 			refreshes++
 		case "start_server_battle_ok":
+			if avatar.Progress.Battle != nil {
+				if _, exploring := avatar.Progress.Battle.Extra["server_free_stage_node"]; exploring && item.Args[0] != 1 {
+					t.Fatal("真实探索冷登录恢复误入同步PVP模式", item.Args)
+				}
+			}
 			starts++
 		case "battle_result":
 			results++
 		}
 	}
 	// 新进程没有旧battle实体：完成态进入大厅，资产和收据已经持久。
-	// 未完成态仍优先重建battle，不能先启动下一条引导。
+	// 未完成态先重建battle，再唯一登录收尾解除遮罩；客户端revision10
+	// 识别本次start_server_battle_ok，不重复请求恢复或启动下一引导。
 	if avatar.Progress.Battle == nil {
 		if refreshes != 1 || starts != 0 || results != 0 {
 			t.Fatal("无战斗登录必须唯一正常收尾", pushes)
@@ -72,7 +78,11 @@ func pgActivityLogin(t *testing.T, svc *game.Service, info game.ClientInfo) *gam
 		if results != 0 || refreshes != 1 || starts != 0 {
 			t.Fatal("完成态冷登录必须进入大厅，不向空实体补旧结果", pushes)
 		}
-	} else if starts != 1 || refreshes != 0 || results != 0 {
+	} else if avatar.Progress.Battle.RewardPlanFrozen {
+		if starts != 0 || results != 0 || refreshes != 1 || !c.SelectedAvatarUnsafe().Progress.Battle.Finished {
+			t.Fatal("冻结结果冷登录未兑现并进入主城")
+		}
+	} else if starts != 1 || refreshes != 1 || results != 0 || pushes[len(pushes)-1].Method != "on_refresh_login" {
 		t.Fatal("未完成态冷登录必须先恢复战斗", pushes)
 	}
 	t.Cleanup(func() { svc.Detach(c) })

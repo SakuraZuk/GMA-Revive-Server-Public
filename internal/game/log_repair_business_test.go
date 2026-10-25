@@ -54,11 +54,11 @@ func TestLogRepairNativeIntegerSwitchCardLockAndOrdinaryExitIdempotency(t *testi
 	c, _ := newBattleConnection(t, ctx, a, s)
 	for _, value := range []any{0, 1, false, true, 2, "1", nil} {
 		out, err := s.Handle(ctx, c, "change_dungeon_skip_edit_state", rawArgs(20, 4202, value))
-		if err != nil || len(out) != 1 {
+		if err != nil || len(out) == 0 || out[len(out)-1].Method != "call_client_callback" {
 			t.Fatal("跳过开关回调未释放", value, err, out)
 		}
 		want := value == 0 || value == 1 || value == false || value == true
-		if out[0].Args[1].([]any)[0] != want {
+		if out[len(out)-1].Args[1].([]any)[0] != want {
 			t.Fatal("跳过开关接受了非原生值", value, out)
 		}
 	}

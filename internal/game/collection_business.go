@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"hs-server/internal/mobileproto"
+	"log"
 	"math"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -208,8 +210,11 @@ func ensureCollection(p *Progress, now time.Time) error {
 	if st.DailyClaims == nil {
 		st.DailyClaims = map[int]string{}
 	}
+	// 登录初始属性阶段不能把系统解锁直接扩成房间所有权：客户端会在Avatar
+	// 创建后、发送set_reconnect_auth_msg前中断，形成没有UID的登录卡死。
+	// 房间1/2的旧档迁移延后到收藏室真实上行；房间3保留既有剩余玩法政策。
 	if remainingPolicyEnabled() {
-		if _, unlocked := p.UnlockSystems["house_dormitory3"]; unlocked {
+		if p.UnlockSystems["house_dormitory3"] > 0 {
 			if _, owned := st.Rooms[3]; !owned {
 				st.Rooms[3] = newCollectionRoom(3, now)
 			}
@@ -221,6 +226,20 @@ func ensureCollection(p *Progress, now time.Time) error {
 		return err
 	}
 	return collectionRefreshEnergy(p, now)
+}
+
+// ensureCollectionSystemRooms只在玩家已经完成登录并发起收藏室业务时迁移旧档。
+// 原版gui_utils.is_area_opened按room_system_name读取unlock_systems；这里只补建
+// 已开放且缺失的房间，不伪造809/810钥匙，也不重置既有住客、能量或布局。
+func ensureCollectionSystemRooms(p *Progress, now time.Time) {
+	for id, room := range androidCollection.Rooms {
+		if p.UnlockSystems[room.System] <= 0 {
+			continue
+		}
+		if _, owned := p.Collection.Rooms[id]; !owned {
+			p.Collection.Rooms[id] = newCollectionRoom(id, now)
+		}
+	}
 }
 func collectionFurnitureCount(p Progress, id int) int64 {
 	if p.Collection == nil {
@@ -345,6 +364,21 @@ func collectionPushes(p Progress, now time.Time, ownership bool) []Push {
 			continue
 		}
 		out = append(out, push("Avatar", "client_prop_changed", []any{field, props[field]}))
+	}
+	return out
+}
+
+// 领取只同步真实变化。原版房间与设施属性setter会立即访问收藏界面，
+// 不应为一次领奖重放未变化的房间、家具布局和访问配置。
+// 保留原属性顺序；奖励带来新家具或住客状态变化时仍同步对应属性。
+func collectionRewardPushes(before, after Progress, now time.Time) []Push {
+	previous := collectionProperties(before, now)
+	out := []Push{}
+	for _, item := range collectionPushes(after, now, false) {
+		change := item.Args[0].([]any)
+		if !reflect.DeepEqual(previous[change[0].(string)], change[1]) {
+			out = append(out, item)
+		}
 	}
 	return out
 }
@@ -618,6 +652,7 @@ func (s *Service) collectionRPC(ctx context.Context, c *Connection, method strin
 		if e := ensureCollection(p, now); e != nil {
 			return e
 		}
+		ensureCollectionSystemRooms(p, now)
 		st := p.Collection
 		integer := func(index int) (int, error) {
 			var value int
@@ -886,6 +921,8 @@ func (s *Service) collectionRPC(ctx context.Context, c *Connection, method strin
 		if !known {
 			return nil, fmt.Errorf("收藏室错误码不存在：%s", refusal.Name)
 		}
+		// 原生UI只显示业务码；记录拒绝分支，不记录布局全文或账号凭据。
+		log.Printf("收藏室业务拒绝 uid=%d method=%s code=%d reason=%s", c.SelectedAvatarUnsafe().UID, method, code, refusal)
 		box = map[string]any{"__custom_type": "box.box", "materials": map[int]int64{}}
 	}
 	out := []Push{}

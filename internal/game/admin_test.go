@@ -31,8 +31,8 @@ func TestAdminRuneGrantAuthConcurrentIdempotencyAndAudit(t *testing.T) {
 	if got := call("127.0.0.1:12345", "", body); got.Code != http.StatusUnauthorized {
 		t.Fatal("没有令牌仍可管理发放")
 	}
-	if got := call("192.0.2.1:12345", "Bearer "+token, body); got.Code != http.StatusForbidden {
-		t.Fatal("非回环仍可管理发放")
+	if got := call("192.0.2.1:12345", "", body); got.Code != http.StatusUnauthorized {
+		t.Fatal("公网来源没有令牌仍可管理发放", got.Code)
 	}
 	if got := call("127.0.0.1:12345", "Bearer "+token, append(append([]byte{}, body...), []byte("{}")...)); got.Code != http.StatusBadRequest {
 		t.Fatal("多余 JSON 被接受")

@@ -1,9 +1,11 @@
 package hotfix
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
+	"log"
 	"net"
 	"net/http/httptest"
 	"os"
@@ -11,6 +13,38 @@ import (
 	"strings"
 	"testing"
 )
+
+func TestFallbackDoesNotLogUntrustedRequestBody(t *testing.T) {
+	var c Catalog
+	dir := t.TempDir()
+	path := filepath.Join(dir, "hotfix.json")
+	if err := load(t, &c, path, Release{StartupScripts: map[string]string{"1.0.128": "pass\n"}, Runtime: Runtime{Index: 1, Script: "pass\n"}}); err != nil {
+		t.Fatal(err)
+	}
+	manifest := []byte(`{"android":{"version":"1.0.128","base_version":"1.0.8","npk":{},"0patchpath":"https://192.0.2.20/resources/"}}`)
+	for name, body := range map[string][]byte{"patch_list_pub_android.txt": manifest, "notice.xml": []byte("<root/>")} {
+		if err := os.WriteFile(filepath.Join(dir, name), body, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Mkdir(filepath.Join(dir, "resources"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	handler, err := Handler(&c, dir, "127.0.0.1:9000", "127.0.0.1", "r18sex.net", "192.0.2.10")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var logs bytes.Buffer
+	previous := log.Writer()
+	log.SetOutput(&logs)
+	t.Cleanup(func() { log.SetOutput(previous) })
+	const secret = "PRIVATE-KEY-SCANNER-PAYLOAD"
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, httptest.NewRequest("POST", "/index.php", strings.NewReader(secret)))
+	if w.Code != 200 || strings.Contains(logs.String(), secret) || !strings.Contains(logs.String(), "内容不记录") {
+		t.Fatalf("公网兜底日志泄露请求正文或未记录脱敏摘要：code=%d log=%q", w.Code, logs.String())
+	}
+}
 
 func load(t *testing.T, c *Catalog, path string, r Release) error {
 	t.Helper()

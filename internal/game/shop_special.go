@@ -237,7 +237,7 @@ func grantNativeBonusAssets(p *Progress, id int, amount int64, level int, now ti
 		return errors.New("商店奖励嵌套或批量过大")
 	}
 	b, known := androidShop.Bonuses[id]
-	if !known || b.Lucky != 0 || (len(b.Inner) > 0 && string(b.Inner) != "null") {
+	if !known || b.Lucky != 0 && p.battleBaseBonusID != id || (len(b.Inner) > 0 && string(b.Inner) != "null") {
 		return errors.New("商店奖励包含未取证动态规则")
 	}
 	if alternate := resolveShopBonus(id, now.Unix()); alternate != id {

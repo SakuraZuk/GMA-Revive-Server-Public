@@ -100,6 +100,34 @@ func TestRemainingConsignDayNightRefreshAndExactPointRecovery(t *testing.T) {
 	}
 }
 
+// 现网2026-10-14堆栈：服务端拒绝refresh后回非零task_id，原生refresh闭包以task_id
+// 真值判成败，客户端打开不存在任务的详情页并KeyError；拒绝前必须重同步任务列表。
+func TestRemainingConsignRejectResyncTasksAndZeroCallbackID(t *testing.T) {
+	s, c, _ := remainingFixture(t)
+	out := remainingRPC(t, s, c, "refresh_consign_task_one", 9, 999999)
+	syncIndex, cbIndex := -1, -1
+	for i, item := range out {
+		if item.Method == "client_prop_changed" && len(item.Args) == 1 {
+			if pair, ok := item.Args[0].([]any); ok && len(pair) == 2 && pair[0] == "consign_tasks" {
+				syncIndex = i
+			}
+		}
+		if item.Method == "call_client_callback" {
+			cbIndex = i
+		}
+	}
+	if syncIndex < 0 || cbIndex < 0 || syncIndex > cbIndex {
+		t.Fatal("拒绝回包缺少先行consign_tasks重同步或回调", out)
+	}
+	args := out[cbIndex].Args[1].([]any)
+	if args[0] == RetSuccess || args[1] != 0 {
+		t.Fatal("刷新拒绝回调必须是(错误码,0)", args)
+	}
+	if len(c.SelectedAvatarUnsafe().Progress.RemainingGameplay.Consign.Tasks) != 6 {
+		t.Fatal("拒绝回滚后任务集合数量变化")
+	}
+}
+
 func TestRemainingTaskTowerForeignTasksRollbackAndExplorationDoubleCost(t *testing.T) {
 	s, c, _ := remainingFixture(t)
 	remainingRPC(t, s, c, "enter_task_tower", 10, 101, 1, map[string]any{})
@@ -143,10 +171,22 @@ func TestRemainingTaskTowerForeignTasksRollbackAndExplorationDoubleCost(t *testi
 	if !reflect.DeepEqual(c.SelectedAvatarUnsafe().Progress.RemainingGameplay.AutoList, []int{node}) {
 		t.Fatal("原生节点路径没有保存")
 	}
-	remainingRPC(t, s, c, "enter_stage_site", node, 0)
+	entry := remainingRPC(t, s, c, "enter_stage_site", node, 0)
+	if load := remainingFindPush(entry, "start_server_battle_ok"); load == nil || load.Args[0] != 1 {
+		t.Fatal("探索活动类型被误作同步PVP战斗模式", entry)
+	}
 	b = c.SelectedAvatarUnsafe().Progress.Battle
 	if b == nil || b.PaidPower != int64(dungeonCatalog[did].Power*2) || c.SelectedAvatarUnsafe().Progress.Power.Value != power-dungeonCatalog[did].Power*2 || remainingDungeonRewardAmount(b, true) != 2 {
 		t.Fatal("探索双倍没有使用实际冻结倍率", b)
+	}
+	beforeReload, _ := json.Marshal(c.SelectedAvatarUnsafe().Progress)
+	reopened := s.reopenOrdinaryBattlePushes(c, b)
+	if load := remainingFindPush(reopened, "start_server_battle_ok"); load == nil || load.Args[0] != 1 || load.Args[1] != did {
+		t.Fatal("探索恢复仍误入PVP模式", reopened)
+	}
+	afterReload, _ := json.Marshal(c.SelectedAvatarUnsafe().Progress)
+	if string(beforeReload) != string(afterReload) {
+		t.Fatal("恢复模式修补改变扣费或节点授权")
 	}
 	remainingFinishBattle(t, s, c, nil, false)
 	p = c.SelectedAvatarUnsafe().Progress
@@ -421,8 +461,18 @@ func TestRemainingConsignNativeFullLifecyclePhaseFreezeAndTwoAchievements(t *tes
 		}
 		*now = time.Unix(task.FinishTime, 0)
 		out = remainingRPC(t, s, c, "commit_consign_task", id)
-		if remainingFindPush(out, "commit_consign_task_success") == nil {
+		result := remainingFindPush(out, "commit_consign_task_success")
+		if result == nil {
 			t.Fatal("真实委托结算失败", out[len(out)-1])
+		}
+		returned, ok := result.Args[1].([]any)
+		if !ok || len(returned) != 1 {
+			t.Fatal("委托完成必须返回原生卡牌UUID列表", result.Args[1])
+		}
+		mgr := cardMgrProperties(c.SelectedAvatarUnsafe().Progress.Cards)
+		uuid, ok := returned[0].(ObjectID)
+		if !ok || mgr[string(uuid)] == nil || mgr[string(uuid)].(map[string]any)["card_id"] != 4401 {
+			t.Fatal("委托语音索引不属于实际拥有的卡牌", returned)
 		}
 		if !remainingHasProp(out, "achves") || !remainingHasProp(out, "achv_value") {
 			t.Fatal("实际委托完成没有当场同步成就和积分")

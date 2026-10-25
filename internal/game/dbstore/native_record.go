@@ -18,6 +18,9 @@ func (s *Store) UpdateNativeRecord(ctx context.Context, oid []byte, uuid string,
 		return game.NativeBattleRecord{}, err
 	}
 	defer rollback(tx)
+	if _, err = tx.Exec(ctx, `SET LOCAL lock_timeout = '1s'`); err != nil {
+		return game.NativeBattleRecord{}, err
+	}
 	av, err := loadSocialAvatar(ctx, tx, oid)
 	if err != nil {
 		return game.NativeBattleRecord{}, err

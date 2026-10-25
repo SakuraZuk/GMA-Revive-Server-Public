@@ -49,7 +49,8 @@ func TestPostgresLogRepairPowerLockIntegerSwitchExitColdPersistence(t *testing.T
 		t.Fatal("幻书解锁未实库持久")
 	}
 	pgRemainingRPC(t, s, c, "change_dungeon_skip_edit_state", 5, 4202, 1)
-	if !read().DungeonSkipEditState[4202] {
+	// Android活动类型9的skip_edit_key=9、副本4202的key=1。
+	if !read().DungeonSkipEditState[900000001] {
 		t.Fatal("原生整数开关未持久")
 	}
 	for repeat := 0; repeat < 3; repeat++ {

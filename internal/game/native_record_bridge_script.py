@@ -13,8 +13,8 @@ def _install_revival_native_record_bridge():
     import version
     from battle_logic import client_battle
     shadow = client_battle.shadow_battle
-    if getattr(shadow, '_revival_bridge_version', 0) not in (12, 13, 14, 15):
-        raise RuntimeError('原生录像采集需要兼容战斗桥版本12至15')
+    if getattr(shadow, '_revival_bridge_version', 0) not in (12, 13, 14, 15, 16):
+        raise RuntimeError('原生录像采集需要兼容战斗桥版本12至16')
     if getattr(shadow, '_revival_native_record_bridge', 0) == 1:
         return
     def function(method):

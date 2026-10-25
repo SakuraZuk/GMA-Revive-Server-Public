@@ -88,11 +88,16 @@ func (a *FixtureAccounts) AsyncPvpRank(ctx context.Context, oid []byte, host int
 }
 
 type SocialSearch struct {
-	OIDs     []string
-	UID      int64
-	Hostnum  int
-	Nickname string
-	Limit    int
+	AssistSummaryOnly bool // 候选预读只返回指定助战卡及其契印，不能写回完整进度。
+	FriendSummaryOnly bool // 推荐名单仅读取公开资料及好友/黑名单过滤字段。
+	// 助战候选只读取明确设置助战卡的角色；只读列表不得扩展行锁范围。
+	AssistOnly       bool
+	LeagueOwnersOnly bool
+	OIDs             []string
+	UID              int64
+	Hostnum          int
+	Nickname         string
+	Limit            int
 }
 
 func (a *FixtureAccounts) SocialAvatars(ctx context.Context, search SocialSearch) ([]Avatar, error) {
@@ -111,10 +116,21 @@ func fixtureSocialAvatars(records map[string]FixtureAccount, q SocialSearch) []A
 	result := []Avatar{}
 	for _, r := range records {
 		for _, av := range r.Avatars {
+			if q.AssistOnly && av.Progress.AssistCardUUID == "" {
+				continue
+			}
+			if q.LeagueOwnersOnly && len(av.Progress.OwnedLeagues) == 0 {
+				continue
+			}
 			if len(ids) > 0 && !ids[hexOf(av.OID)] || q.UID > 0 && q.UID != av.UID || q.Hostnum > 0 && q.Hostnum != av.Hostnum || q.Nickname != "" && q.Nickname != av.Info.Nickname {
 				continue
 			}
 			av.Progress = CloneProgress(av.Progress)
+			if q.FriendSummaryOnly {
+				av.Progress = FriendSummaryProgress(av.Progress)
+			} else if q.AssistSummaryOnly {
+				av.Progress = AssistSummaryProgress(av.Progress)
+			}
 			result = append(result, av)
 		}
 	}
@@ -127,6 +143,31 @@ func fixtureSocialAvatars(records map[string]FixtureAccount, q SocialSearch) []A
 		result = result[:limit]
 	}
 	return result
+}
+
+// 推荐列表的投影不可用于写回完整存档。
+func FriendSummaryProgress(p Progress) Progress {
+	return Progress{AvatarLevel: p.AvatarLevel, SelectedHeadID: p.SelectedHeadID,
+		SelectedHeadBoxID: p.SelectedHeadBoxID, CustomHeadCleared: p.CustomHeadCleared,
+		SyncPvpScore: p.SyncPvpScore, Social: SocialState{Friends: p.Social.Friends, Blacklist: p.Social.Blacklist}}
+}
+
+// 助战候选仅供随机预选；事务阶段仍读取并核验完整提供者存档。
+func AssistSummaryProgress(p Progress) Progress {
+	out := FriendSummaryProgress(p)
+	out.AssistCardUUID = p.AssistCardUUID
+	for _, card := range p.Cards {
+		if card.UUID == p.AssistCardUUID {
+			out.Cards = append(out.Cards, card)
+		}
+	}
+	out.Runes = map[string]Rune{}
+	for id, rune := range p.Runes {
+		if rune.CardUUID == p.AssistCardUUID && p.AssistCardUUID != "" {
+			out.Runes[id] = rune
+		}
+	}
+	return out
 }
 func (a *FixtureAccounts) UpdateSocial(ctx context.Context, ids []string, update func(map[string]*Avatar) error) ([]Avatar, error) {
 	if err := ctx.Err(); err != nil {

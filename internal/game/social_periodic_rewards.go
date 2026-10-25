@@ -23,14 +23,41 @@ var pvpAwardBuses sync.Map
 
 // refreshPvpAwards在日界/21点/周日21点/赛季边界串行一次全量事务；离线角色同样入存档。
 func (s *Service) refreshPvpAwards(ctx context.Context, c *Connection) error {
+	if c != nil && s.backgroundPeriodicStarted.Load() {
+		return nil
+	}
 	store, ok := s.Accounts.(SocialAccounts)
 	if !ok {
 		return nil
 	}
 	value, _ := pvpAwardBuses.LoadOrStore(s, &pvpAwardBus{})
 	bus := value.(*pvpAwardBus)
-	bus.mu.Lock()
+	// 玩家PVP请求只允许抢占空闲结算器；后台正在结算时直接沿用旧的
+	// 幂等状态，不让请求排队占住连接和数据库连接池。
+	if !bus.mu.TryLock() {
+		return nil
+	}
 	defer bus.mu.Unlock()
+	return s.refreshPvpAwardsLocked(ctx, c, store, bus)
+}
+
+// 后台时钟不能在另一个连接的全服周期事务之后排队占住自己的连接锁。
+// 忙时跳过这一轮，不推进周期键；后续时钟继续按原事务和原幂等收据重试。
+func (s *Service) tryRefreshPvpAwards(ctx context.Context, c *Connection) (bool, error) {
+	store, ok := s.Accounts.(SocialAccounts)
+	if !ok {
+		return true, nil
+	}
+	value, _ := pvpAwardBuses.LoadOrStore(s, &pvpAwardBus{})
+	bus := value.(*pvpAwardBus)
+	if !bus.mu.TryLock() {
+		return false, nil
+	}
+	defer bus.mu.Unlock()
+	return true, s.refreshPvpAwardsLocked(ctx, c, store, bus)
+}
+
+func (s *Service) refreshPvpAwardsLocked(ctx context.Context, c *Connection, store SocialAccounts, bus *pvpAwardBus) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -43,13 +70,17 @@ func (s *Service) refreshPvpAwards(ctx context.Context, c *Connection) error {
 	if bus.key == key {
 		return nil
 	}
-	rows, err := store.UpdateAllSocial(ctx, func(v map[string]*Avatar) error { return s.settlePvpCalendar(v, now, day, week) })
+	if !s.periodicSettlementMu.TryLock() {
+		return nil
+	}
+	defer s.periodicSettlementMu.Unlock()
+	rows, err := updatePeriodicSocial(ctx, store, func(v map[string]*Avatar) error { return s.settlePvpCalendar(v, now, day, week) })
 	if err != nil {
 		return err
 	}
 	bus.key = key
 	bus.lastTime = now.Unix()
-	acceptSocialRows(c, rows)
+	s.acceptPeriodicRows(c, rows)
 	return nil
 }
 func pvpAwardCutoffs(now time.Time) (string, string) {
@@ -172,35 +203,39 @@ func (s *Service) settlePvpCalendar(v map[string]*Avatar, now time.Time, day, we
 		if a.RewardDay > day || a.RewardWeek > week {
 			return errors.New("异步奖励周期时钟回拨")
 		}
-		if a.RewardDay == "" {
-			a.RewardDay = day
-		} else if a.RewardDay < day {
-			if asyncUnlocked(*p) && a.Score > 0 {
-				rule, err := asyncScoreFor(a.Score)
-				if err != nil {
-					return err
-				}
-				if err = s.issuePvpCalendarMail(p, rule.Bonus, "async-day:"+id+":"+day, a.Score, now); err != nil {
-					return err
-				}
-			}
-			a.RewardDay = day
-		}
-		if a.RewardWeek == "" {
-			a.RewardWeek = week
-		} else if a.RewardWeek < week {
-			if rank := asyncRanks[id]; rank > 0 {
-				bonus, err := pvpRankBonus("asyn_pvp_bonus_rule", rank)
-				if err != nil {
-					return err
-				}
-				if bonus > 0 {
-					if err = s.issuePvpCalendarMail(p, bonus, "async-week:"+id+":"+week, rank, now); err != nil {
+		// 零积分表示从未初始化竞技；空奖日期不逐日写全服，首次进入建立基线。
+		// 保留旧日期及回拨校验，不删除历史数据；非零积分沿用完整结算。
+		if a.Score != 0 {
+			if a.RewardDay == "" {
+				a.RewardDay = day
+			} else if a.RewardDay < day {
+				if asyncUnlocked(*p) && a.Score > 0 {
+					rule, err := asyncScoreFor(a.Score)
+					if err != nil {
+						return err
+					}
+					if err = s.issuePvpCalendarMail(p, rule.Bonus, "async-day:"+id+":"+day, a.Score, now); err != nil {
 						return err
 					}
 				}
+				a.RewardDay = day
 			}
-			a.RewardWeek = week
+			if a.RewardWeek == "" {
+				a.RewardWeek = week
+			} else if a.RewardWeek < week {
+				if rank := asyncRanks[id]; rank > 0 {
+					bonus, err := pvpRankBonus("asyn_pvp_bonus_rule", rank)
+					if err != nil {
+						return err
+					}
+					if bonus > 0 {
+						if err = s.issuePvpCalendarMail(p, bonus, "async-week:"+id+":"+week, rank, now); err != nil {
+							return err
+						}
+					}
+				}
+				a.RewardWeek = week
+			}
 		}
 		assist := &p.Social.Assist
 		today := socialDay(now)
@@ -222,8 +257,12 @@ func (s *Service) settlePvpCalendar(v map[string]*Avatar, now time.Time, day, we
 				}
 			}
 		}
-		if err := ensureFriendAssistDay(p, now); err != nil {
-			return err
+		// 无助战计数的角色没有跨日清理或发奖任务，不为日期空写全服存档。
+		// 实际进入助战或使用助战的路径仍在本角色事务内建立当天基线。
+		if len(assist.Active) != 0 || assist.Passive != 0 || assist.RewardTimes != 0 {
+			if err := ensureFriendAssistDay(p, now); err != nil {
+				return err
+			}
 		}
 	}
 	// 只为尚未本地跨期的完整当前赛季冻结排名；缺历史全服截止快照的旧期保持Rank=0且不伪造排名奖。

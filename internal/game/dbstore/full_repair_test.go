@@ -454,8 +454,49 @@ func TestPostgresSyncPVPBridgeSettlementPersistence(t *testing.T) {
 	p := c.SelectedAvatarUnsafe().Progress
 	uuid := p.Battle.UUID
 	player := hex.EncodeToString(av.OID)
+	readyEnvelope := fmt.Sprintf(`{"battle_uuid":%q,"sequence":1,"kind":"ready","data":{"version":1}}`, uuid)
+	out, err = svc.Handle(ctx, c, "do_command", []json.RawMessage{json.RawMessage(`"__battle_event__"`), json.RawMessage("[" + readyEnvelope + "]")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range out {
+		if item.Method == "notify_battle_fighting" {
+			t.Fatal("真实库同步PVP实体加载前提前放行", out)
+		}
+	}
+	out, err = svc.Handle(ctx, c, "load_entity_finish", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	readyNotices := 0
+	for _, item := range out {
+		if item.Method == "notify_battle_fighting" {
+			t.Fatal("真实库正式PVP不得进入旧布阵UI", out)
+		}
+		if item.Method == "sync_battle_method" && item.Args[0] == "battle_fighting" {
+			readyNotices++
+		}
+	}
+	if readyNotices != 1 {
+		t.Fatal("真实库同步PVP实际加载屏障没有自动开战", out)
+	}
+	lockedFighting := append([]string{}, p.SyncPvpMatch.OwnFighting...)
+	lockedSupport := append([]string{}, p.SyncPvpMatch.OwnSupport...)
+	malformedLayout := json.RawMessage(`{"fighting_cards":null,"support_cards":{"0":"legacy"}}`)
+	if _, err = svc.Handle(ctx, c, "battle_fighting", []json.RawMessage{malformedLayout}); err != nil {
+		t.Fatal("真实库同步PVP未使用锁定阵容兼容旧客户端", err)
+	}
+	started, err := New(s.pool).AdminPlayer(ctx, av.OID)
+	if err != nil || started.Progress.Battle.Layout == nil ||
+		!reflect.DeepEqual(started.Progress.Battle.Layout.Fighting, lockedFighting) ||
+		!reflect.DeepEqual(started.Progress.Battle.Layout.Support, lockedSupport) ||
+		!reflect.DeepEqual(started.Progress.Battle.Team, append(append([]string{}, lockedFighting...), lockedSupport...)) {
+		t.Fatal("真实库同步PVP开战阵容不是服务器锁定快照", err)
+	}
+	if repeat, repeatErr := svc.Handle(ctx, c, "battle_fighting", []json.RawMessage{json.RawMessage(`null`)}); repeatErr != nil || len(repeat) != 0 {
+		t.Fatal("真库重复battle_fighting不幂等", repeatErr, repeat)
+	}
 	envelopes := []string{
-		fmt.Sprintf(`{"battle_uuid":%q,"sequence":1,"kind":"ready","data":{"version":1}}`, uuid),
 		fmt.Sprintf(`{"battle_uuid":%q,"sequence":2,"kind":"started","data":{"units":[{"eid":"1","role":4401,"hex":[0,0,0],"kind":"ally","hp":100,"max_hp":100}]}}`, uuid),
 		fmt.Sprintf(`{"battle_uuid":%q,"sequence":3,"kind":"result","data":{"outcome":"win","player_eid":%q,"winner_eids":[%q]}}`, uuid, player, player),
 	}

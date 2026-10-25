@@ -43,7 +43,7 @@ func TestNewProgressInitialCards(t *testing.T) {
 	if !ok {
 		t.Fatal("card_common_mgr 键必须是 card_id 字符串", common)
 	}
-	if c4401["card_id"] != 4401 || c4401["card_vo"] != 0 || c4401["level"] != 1 || c4401["count"] != 1 {
+	if c4401["card_id"] != 4401 || c4401["card_vo"] != 2 || c4401["level"] != 1 || c4401["count"] != 1 {
 		t.Fatal("card_common 字段错误", c4401)
 	}
 }

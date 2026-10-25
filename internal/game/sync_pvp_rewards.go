@@ -133,7 +133,7 @@ func (s *Service) receiveSyncPvpWeekly(ctx context.Context, c *Connection, args 
 	}
 	raw, known := socialCatalog.Tables["sync_pvp_weekly_win_bonus"][intString(count)]
 	if !known || json.Unmarshal(raw, &row) != nil {
-		return []Push{Callback(cb, []any{nil, "周胜奖励档位不存在"})}, nil
+		return []Push{Callback(cb, []any{nil, []byte("周胜奖励档位不存在")})}, nil
 	}
 	var rewards map[int]int64
 	err := s.updateProgress(ctx, c, func(p *Progress) error {
@@ -155,7 +155,8 @@ func (s *Service) receiveSyncPvpWeekly(ctx context.Context, c *Connection, args 
 		return nil
 	})
 	if err != nil {
-		return []Push{Callback(cb, []any{nil, err.Error()})}, nil
+		// 原版server_callback失败分支用Python2 PRINT_ITEM，中文必须是UTF-8字节。
+		return []Push{Callback(cb, []any{nil, []byte(err.Error())})}, nil
 	}
 	p := c.SelectedAvatarUnsafe().Progress
 	return []Push{materialManagerPush(c), push("Avatar", "client_prop_changed", []any{"sync_weekly_win_bonus", syncWeeklyClaimProperties(p.SyncPvpMeta.WeeklyClaims)}), Callback(cb, []any{map[string]any{"__custom_type": "box.box", "materials": rewards}, ""})}, nil

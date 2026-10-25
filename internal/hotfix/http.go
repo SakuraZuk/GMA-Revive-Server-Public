@@ -119,10 +119,11 @@ func Handler(catalog *Catalog, dataDir, gameAddress, dnsIP, gameDomain, gameIP s
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		body := make([]byte, 16<<10)
-		n, _ := io.ReadFull(r.Body, body)
+		n, _ := io.Copy(io.Discard, io.LimitReader(r.Body, 16<<10))
 		if r.Method == "POST" && n > 0 {
-			log.Printf("兜底请求体 %s%s (%dB): %s", r.Host, r.URL.Path, n, string(body[:n]))
+			// 公网未知路径可能携带漏洞扫描脚本、私钥样本或玩家上报内容；
+			// 日志只保留路由和大小，绝不回显不可信正文。
+			log.Printf("兜底请求 %s%s 请求体=%dB（内容不记录）", r.Host, r.URL.Path, n)
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		_, _ = io.WriteString(w, "{}")

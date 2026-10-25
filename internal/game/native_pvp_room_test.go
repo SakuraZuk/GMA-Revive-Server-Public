@@ -74,6 +74,52 @@ func nativeRoomEvent(t *testing.T, s *Service, store SocialAccounts, c *Connecti
 	humanTestRefresh(t, store, c)
 }
 
+func TestNativePvpLocalFieldIdleDoesNotConsumePlaybackFIFO(t *testing.T) {
+	s := &Service{Now: time.Now}
+	id := "000000000000000000000001"
+	cp := nativeengine.Checkpoint{Generation: 1, StartedSequence: 2, LastSequence: 2}
+	command := []any{"use_skill", []any{160101, "target"}}
+	if err := cp.Track("fighter", command, ""); err != nil {
+		t.Fatal(err)
+	}
+	r := &HumanPvpRoom{Native: &NativePvpRoom{
+		InitialUnits: []nativeengine.UnitSnapshot{{"eid": "native-field", "kind": "field", "native_type": 4}},
+		Clients:      map[string]NativePvpClient{id: {Generation: 1, Mapping: map[string]string{"native-field": "field"}, Checkpoint: cp}},
+	}}
+	b := &BattleSession{BridgeReady: true, BridgeStarted: true, LastSequence: 2}
+	field := &battleEnvelope{Generation: 1, Sequence: 3, Kind: "command", Data: map[string]any{"eid": "field", "command": []any{"magic_field_idle", []any{nil}}}}
+	if err := s.nativeObservePlayback(context.Background(), r, b, id, field); err != nil {
+		t.Fatal("原生本地场地空转事件导致整个事件流永久跳号", err)
+	}
+	afterField := r.Native.Clients[id].Checkpoint
+	if b.LastSequence != 3 || afterField.Seen != 0 || afterField.Ready() {
+		t.Fatal("本地场地事件越过权威FIFO播放屏障")
+	}
+	for _, event := range []*battleEnvelope{
+		{Generation: 1, Sequence: 4, Kind: "command", Data: map[string]any{"eid": "fighter", "command": command}},
+		{Generation: 1, Sequence: 5, Kind: "input", Data: map[string]any{"eid": "fighter"}},
+	} {
+		if err := s.nativeObservePlayback(context.Background(), r, b, id, event); err != nil {
+			t.Fatal("场地事件后真实权威命令不能继续播放", err)
+		}
+	}
+	afterPlayback := r.Native.Clients[id].Checkpoint
+	if !afterPlayback.Ready() {
+		t.Fatal("真实命令及稍后输入边界没有解除播放屏障")
+	}
+	for _, data := range []map[string]any{
+		{"eid": "fighter", "command": []any{"magic_field_idle", []any{}}},
+		{"eid": "unmapped", "command": []any{"magic_field_idle", []any{}}},
+		{"eid": "field", "command": []any{"magic_field_idle", []any{1, 2}}},
+		{"eid": "field", "command": []any{"magic_field_idle", nil}},
+		{"eid": "field", "command": []any{"unproven_command", []any{}}},
+	} {
+		if nativeLocalFieldIdle(r, r.Native.Clients[id], data) {
+			t.Fatal("伪造或无证据命令绕过了权威播放屏障")
+		}
+	}
+}
+
 func TestNativePvpRoomActualAuthorityTimeoutDuelSettlesOnce(t *testing.T) {
 	python := os.Getenv("HS_NATIVE_PVP_TEST_PYTHON2")
 	if python == "" {
@@ -127,18 +173,7 @@ func TestNativePvpRoomActualAuthorityTimeoutDuelSettlesOnce(t *testing.T) {
 		t.Fatal("双方选卡后未持久启动原生权威")
 	}
 	for _, c := range cs {
-		if handled, _, e := s.humanCardsRPC(ctx, c, "pvp_load_complete", nil); !handled || e != nil {
-			t.Fatal(e)
-		}
-		for _, other := range cs {
-			humanTestRefresh(t, store, other)
-		}
-	}
-	for _, c := range cs {
-		room = c.SelectedAvatarUnsafe().Progress.Social.HumanRoom
-		id := hexOf(selectedOID(c))
-		layout := room.Players[id].Layout
-		if handled, _, e := s.humanBattleFighting(ctx, c, socialArgs(map[string]any{"fighting_cards": layout.Fighting, "support_cards": layout.Support})); !handled || e != nil {
+		if _, e := s.Handle(ctx, c, "load_entity_finish", nil); e != nil {
 			t.Fatal(e)
 		}
 		for _, other := range cs {
@@ -151,7 +186,17 @@ func TestNativePvpRoomActualAuthorityTimeoutDuelSettlesOnce(t *testing.T) {
 		generation := c.SelectedAvatarUnsafe().Progress.Social.HumanRoom.Native.Clients[id].Generation
 		seq[id]++
 		nativeRoomEvent(t, s, store, c, generation, seq[id], "ready", map[string]any{"version": 1, "bridge_revision": 31})
+		for _, other := range cs {
+			humanTestRefresh(t, store, other)
+		}
+	}
+	for _, c := range cs {
+		id := hexOf(selectedOID(c))
 		room = c.SelectedAvatarUnsafe().Progress.Social.HumanRoom
+		if room.Status != "fighting" || !room.Players[id].Ready || !room.Players[id].Loaded {
+			t.Fatal("原生真人实际加载和握手后没有自动共同开战", room.Status)
+		}
+		generation := room.Native.Clients[id].Generation
 		seq[id]++
 		nativeRoomEvent(t, s, store, c, generation, seq[id], "started", map[string]any{"units": nativeRoomTestUnits(t, room, id)})
 		for _, other := range cs {

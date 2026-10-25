@@ -5,9 +5,33 @@ import (
 	"context"
 	"errors"
 	"log"
-	"sync"
 	"time"
 )
+
+const humanPresenceLeaseSeconds = int64(20)
+
+// 真人在线租约必须小于20秒有效期，同时按连接标识稳定错峰。
+// 生产连接通常在服务重启后同秒恢复；固定5秒周期会令所有连接在同一秒写库。
+func humanPresenceRefreshDelay(token string) int64 {
+	var hash uint32
+	for i := 0; i < len(token); i++ {
+		hash = hash*33 + uint32(token[i])
+	}
+	return 10 + int64(hash%5)
+}
+
+func humanSnapshotPollDelay(p Progress, token string) int64 {
+	base := humanSnapshotPollInterval(p)
+	window := base / 5
+	if window < 1 {
+		window = 1
+	}
+	var hash uint32
+	for i := 0; i < len(token); i++ {
+		hash = hash*33 + uint32(token[i])
+	}
+	return base + int64(hash%uint32(window))
+}
 
 // HumanDelivery仅保存原生动作描述符；与房间镜像同事务提交，跨进程读取时恢复typed wire。
 // 投递不是第二份战斗权威，唯一UUID、seed、命令序号及结果仍由HumanPvpRoom决定。
@@ -299,12 +323,12 @@ func (s *Service) refreshHumanPresence(ctx context.Context, c *Connection) error
 	if c.humanPresenceID == "" {
 		c.humanPresenceID = newBattleUUID(s.Now())
 	}
-	if err := store.RefreshHumanPresence(ctx, selectedOID(c), c.humanPresenceID, now+20); err != nil {
+	if err := store.RefreshHumanPresence(ctx, selectedOID(c), c.humanPresenceID, now+humanPresenceLeaseSeconds); err != nil {
 		// 失败仍保留原租约期限，稍后重试，避免每100毫秒争抢数据库。
-		c.nextHumanPresenceRefresh = s.Now().Unix() + 1
+		c.nextHumanPresenceRefresh = s.Now().Unix() + 5
 		return err
 	}
-	c.nextHumanPresenceRefresh = now + 5
+	c.nextHumanPresenceRefresh = now + humanPresenceRefreshDelay(c.humanPresenceID)
 	_, err := s.humanOnlineIDs(ctx)
 	if err != nil {
 		return err
@@ -325,7 +349,6 @@ func (s *Service) removeHumanPresence(c *Connection) {
 }
 func (s *Service) humanOnlineIDs(ctx context.Context) (map[string]bool, error) {
 	ids := map[string]bool{}
-	remote := map[string]bool{}
 	s.onlineMu.Lock()
 	for id, connections := range s.online {
 		if len(connections) > 0 {
@@ -333,6 +356,25 @@ func (s *Service) humanOnlineIDs(ctx context.Context) (map[string]bool, error) {
 		}
 	}
 	s.onlineMu.Unlock()
+	mergeCached := func(snapshot humanOnlineSnapshot) bool {
+		if snapshot.Expires <= s.Now().Unix() {
+			return false
+		}
+		for id, online := range snapshot.IDs {
+			if online {
+				ids[id] = true
+			}
+		}
+		return true
+	}
+	// 多个连接会在同一秒刷新租约。跨进程在线表允许五秒缓存，避免每个
+	// 连接都执行一次全局 DELETE+SELECT，在连接池抖动后形成同步重试风暴。
+	s.humanOnlineRefreshMu.Lock()
+	defer s.humanOnlineRefreshMu.Unlock()
+	if mergeCached(s.humanOnlineSnapshot) {
+		return ids, nil
+	}
+	remote := map[string]bool{}
 	if store, ok := s.Accounts.(HumanPresenceAccounts); ok {
 		list, err := store.HumanOnlineIDs(ctx, s.Now().Unix())
 		if err != nil {
@@ -343,7 +385,7 @@ func (s *Service) humanOnlineIDs(ctx context.Context) (map[string]bool, error) {
 			remote[id] = true
 		}
 	}
-	humanOnlineSnapshots.Store(s, humanOnlineSnapshot{IDs: remote, Expires: s.Now().Unix() + 5})
+	s.humanOnlineSnapshot = humanOnlineSnapshot{IDs: remote, Expires: s.Now().Unix() + 5}
 	return ids, nil
 }
 
@@ -352,18 +394,15 @@ type humanOnlineSnapshot struct {
 	Expires int64
 }
 
-var humanOnlineSnapshots sync.Map
-
 func (s *Service) humanKnownOnline() map[string]bool {
 	ids := map[string]bool{}
-	if value, ok := humanOnlineSnapshots.Load(s); ok {
-		snapshot := value.(humanOnlineSnapshot)
-		if snapshot.Expires > s.Now().Unix() {
-			for id, online := range snapshot.IDs {
-				ids[id] = online
-			}
+	s.humanOnlineRefreshMu.Lock()
+	if s.humanOnlineSnapshot.Expires > s.Now().Unix() {
+		for id, online := range s.humanOnlineSnapshot.IDs {
+			ids[id] = online
 		}
 	}
+	s.humanOnlineRefreshMu.Unlock()
 	s.onlineMu.Lock()
 	for id, cs := range s.online {
 		if len(cs) > 0 {

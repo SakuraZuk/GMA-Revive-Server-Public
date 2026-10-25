@@ -145,7 +145,12 @@ func freezeNianHourRanking(v map[string]*Avatar, now time.Time) {
 		if cal.NianTotal != nil && cal.NianTotal.Hour >= hour {
 			continue
 		}
-		entry := entries[id]
+		entry, ranked := entries[id]
+		// 已有空榜快照且仍无参赛记录时，不仅为小时数变化改写整份存档。
+		// 有历史名次者离榜仍需清零；真实零伤害参赛也在entries中，不能跳过。
+		if old := cal.NianTotal; !ranked && old != nil && old.Rank == 0 && old.Score == 0 && old.Joined == 0 && old.SubRanks == [3]int{} && len(old.Cards) == 0 {
+			continue
+		}
 		entry.Hour = hour
 		cal.NianTotal = &entry
 	}

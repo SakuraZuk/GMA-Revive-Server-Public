@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"errors"
+	"log"
 	"math"
 	"time"
 )
@@ -215,6 +216,10 @@ func (s *Service) profileCosmeticRPC(ctx context.Context, c *Connection, method 
 		return nil
 	})
 	if err != nil {
+		var refusal *runeBusinessError
+		if errors.As(err, &refusal) {
+			log.Printf("头像业务拒绝 uid=%d method=%s resource=%d rule=%s reason=%s", c.SelectedAvatarUnsafe().UID, method, id, refusal.Name, refusal)
+		}
 		return growthCallbackError(callback, err)
 	}
 	props := profileCosmeticProperties(c.SelectedAvatarUnsafe(), s.Now())

@@ -4,11 +4,86 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"hs-server/internal/hotfix"
 	"hs-server/internal/mobileproto"
 	"reflect"
 	"testing"
 	"time"
 )
+
+func TestActivityHouseGhostReplyAllSlotsAndColdDuplicate(t *testing.T) {
+	ctx := context.Background()
+	a := NewFixtureAccounts(nil)
+	s := New(a, &hotfix.Catalog{})
+	c, _ := newBattleConnection(t, ctx, a, s)
+	pos := 0
+	for key := range androidActivities["card_house"] {
+		id := 0
+		_, _ = fmt.Sscan(key, &id)
+		if activityData("card_house", id).integer("site_type") == 7 {
+			pos = id
+			break
+		}
+	}
+	if pos == 0 {
+		t.Fatal("原表没有尖叫屋")
+	}
+	items := []int{18, 22, 1502}
+	for selected := 0; selected < 3; selected++ {
+		if err := s.updateProgress(ctx, c, func(p *Progress) error {
+			if err := ensureCollection(p, s.Now()); err != nil {
+				return err
+			}
+			p.Collection.Facilities[6] = CollectionFacility{ID: 6, Level: 1}
+			w := ensureHouseFrage(p)
+			w.Pos, w.Double = pos, 1
+			w.Sites = map[int]*HouseFrageSite{pos: {ID: pos, Game: append([]int{}, items...)}}
+			return nil
+		}); err != nil {
+			t.Fatal(err)
+		}
+		before := CloneProgress(c.SelectedAvatarUnsafe().Progress)
+		out, err := s.Handle(ctx, c, "open_game_site", rawArgs(71, selected))
+		if err != nil {
+			t.Fatal(err)
+		}
+		reply := out[len(out)-1].Args[1].([]any)
+		var mids []int
+		raw, _ := json.Marshal(reply[2])
+		if reply[0] != true || reply[1] != int64(selected) || json.Unmarshal(raw, &mids) != nil || !reflect.DeepEqual(mids, items) || reply[3] != int64(2) {
+			t.Fatal("原生三个幽灵位置无法索引完整材料列表", reply)
+		}
+		p := c.SelectedAvatarUnsafe().Progress
+		for i, mid := range items {
+			want := before.Materials[mid].Count
+			if i == selected {
+				want += 2
+			}
+			if p.Materials[mid].Count != want {
+				t.Fatal("未选动画候选入账", mid, p.Materials[mid].Count, want)
+			}
+		}
+		if p.Activities.House.Double != 0 {
+			t.Fatal("双倍次数没有消费")
+		}
+		cold := NewConnection()
+		if _, err := s.Handle(ctx, cold, "quick_login", rawArgs(ClientInfo{Account: "战斗测试", Password: "pw", Hostnum: 1})); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.BecomePlayer(cold); err != nil {
+			t.Fatal(err)
+		}
+		stored, _ := json.Marshal(cold.SelectedAvatarUnsafe().Progress)
+		out, err = s.Handle(ctx, cold, "open_game_site", rawArgs(72, selected))
+		if err != nil || out[len(out)-1].Args[1].([]any)[0] != false {
+			t.Fatal("冷重登重复选择成功", err, out)
+		}
+		after, _ := json.Marshal(cold.SelectedAvatarUnsafe().Progress)
+		if string(stored) != string(after) {
+			t.Fatal("重复选择改变存档或奖励")
+		}
+	}
+}
 
 func TestActivityHouseRPCPersistenceDailyAndMoveRollback(t *testing.T) {
 	ctx := context.Background()

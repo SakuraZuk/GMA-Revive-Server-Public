@@ -3,11 +3,13 @@ chcp 65001 >nul
 setlocal
 cd /d "%~dp0.."
 if not defined HS_GO set "HS_GO=go"
+if exist "%HS_GO%" goto go_ready
 where "%HS_GO%" >nul 2>nul
 if errorlevel 1 (
   echo 未找到 Go 工具链，请设置 HS_GO 为 go.exe 的绝对路径。
   exit /b 1
 )
+:go_ready
 for %%S in (sdkserver loginserver gameserver hotfixserver) do (
   set "GOOS=windows"
   "%HS_GO%" build -o out\bin\windows\%%S.exe .\cmd\%%S

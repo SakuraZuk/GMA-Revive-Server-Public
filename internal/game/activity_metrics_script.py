@@ -5,8 +5,8 @@ def _install_hs_activity_metrics():
     import types
     from battle_logic import client_battle
     shadow = client_battle.shadow_battle
-    if getattr(shadow, '_revival_bridge_version', 0) not in (12, 13, 14, 15):
-        raise ValueError('活动统计等待兼容战斗桥版本12至15')
+    if getattr(shadow, '_revival_bridge_version', 0) not in (12, 13, 14, 15, 16):
+        raise ValueError('活动统计等待兼容战斗桥版本12至16')
 
     def function(value):
         return getattr(value, 'im_func', getattr(value, '__func__', value))

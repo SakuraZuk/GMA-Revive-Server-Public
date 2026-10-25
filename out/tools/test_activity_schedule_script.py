@@ -93,10 +93,19 @@ window=data.activity_banner[203].begin_time
 exec(compile(code,'activity_schedule_script.py','exec'),{})
 assert data.activity_banner[203].begin_time==window
 labels=[];cancelled=[]
-item=ActivityItem();item.chapter_id=501;item.text_limit_time=N(set_string=labels.append)
-assert item.set_time_panel() is None and labels[-1]=='常驻开放'
+def native_set_string(value):
+    if not isinstance(value,bytes):
+        raise RuntimeError('cannot convert argument 1 to std::string')
+    labels.append(value)
+try:
+    native_set_string('常驻开放')
+    raise AssertionError('旧Unicode调用未复现绑定错误')
+except RuntimeError:
+    pass
+item=ActivityItem();item.chapter_id=501;item.text_limit_time=N(set_string=native_set_string)
+assert item.set_time_panel() is None and labels[-1].decode('utf-8')=='常驻开放'
 item.chapter_id=999;assert item.set_time_panel()=='原生倒计时'
-guide=BeginnerGuide();guide.title_time=N(set_string=labels.append);guide.count_down_handle=42;guide.cancel_callback=cancelled.append
+guide=BeginnerGuide();guide.title_time=N(set_string=native_set_string);guide.count_down_handle=42;guide.cancel_callback=cancelled.append
 assert guide.update_activity_count_down() is True and cancelled==[42] and guide.count_down_handle is None
 assert guide.update_activity_count_down() is True and cancelled==[42]
 beginner_module.activity_mission_id=999

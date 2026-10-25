@@ -167,24 +167,43 @@ type Progress struct {
 	FreeYuanbao      int64             `json:"free_yuanbao"`
 	PayCoin          int64             `json:"pay_coin"`
 	Materials        map[int]Material  `json:"material_mgr"`
-	MaterialRecords  map[int][]int     `json:"material_records"`
-	CheckInRecords   map[int]any       `json:"check_in_records"`
-	Power            Power             `json:"power"`
-	AvatarLevel      int               `json:"server_avatar_level,omitempty"`
-	AvatarExp        int64             `json:"exp"`
-	GlobalVO         int               `json:"global_vo"`
-	StoryVO          int               `json:"story_vo"`
-	CardVoices       map[int]int       `json:"server_card_voices,omitempty"`
-	ShowCards        []string          `json:"server_show_cards,omitempty"`
-	GirlRandomEnable *bool             `json:"girl_random_enable,omitempty"`
-	ExploreAutoAgent map[int]bool      `json:"activity_explore_agent,omitempty"`
+	// 仅结算事务内收集容量溢出；持久化由确定编号的邮件承担。
+	battleRewardOverflow  map[int]int64
+	battleRewardSession   *BattleSession
+	battleRewardCursor    int
+	battleBaseBonusID     int              // 仅装备本基础奖励解释器临时授权，禁止用于商店。
+	BattleOverflowMailbox map[int]Mail     `json:"server_battle_overflow_mailbox,omitempty"`
+	MaterialRecords       map[int][]int    `json:"material_records"`
+	CheckInRecords        map[int]any      `json:"check_in_records"`
+	Power                 Power            `json:"power"`
+	AvatarLevel           int              `json:"server_avatar_level,omitempty"`
+	AvatarExp             int64            `json:"exp"`
+	GlobalVO              int              `json:"global_vo"`
+	GlobalSetVO           int              `json:"global_set_vo,omitempty"`
+	StoryVO               int              `json:"story_vo"`
+	CardVoices            map[int]int      `json:"server_card_voices,omitempty"`
+	CardFavorites         map[int]bool     `json:"server_card_favorites,omitempty"`
+	GameScoreFlags        map[string][]int `json:"game_score_flag,omitempty"`
+	ShowCards             []string         `json:"server_show_cards,omitempty"`
+	GirlRandomEnable      *bool            `json:"girl_random_enable,omitempty"`
+	GirlRandomType        *int             `json:"girl_random_type,omitempty"`
+	ExploreAutoAgent      map[int]bool     `json:"activity_explore_agent,omitempty"`
+	// 原生卡牌自动战斗/助战习惯。键是本人卡UUID；值沿用客户端 common_const：
+	// SUPPORT_HABIT=1、BATTLE_HABIT=2，AI_BATTLE=100 表示自动。
+	AutoBattleHabits map[string]map[int]int `json:"auto_battle_habit,omitempty"`
+	// 原生 rune_mgr.rune_auto_decompose_stars：nil 表示未设置，空列表表示已关闭，1至4为可分解星级。
+	RuneAutoDecomposeStars *[]int `json:"rune_auto_decompose_stars,omitempty"`
+	// 原生 chat_mgr.chat_channel，范围 1 至 MAX_CHAT_CHANNEL=999。
+	ChatChannel int `json:"chat_channel,omitempty"`
 	// 玩家业务（P0-5）：拥有卡与 new_task 进度；形态见 custom_types/card.py 与
 	// custom_types/new_task.py 的 prop 定义（client save 通道）。
 	Cards                   []Card                        `json:"cards,omitempty"`
 	RandomCardsRecord       map[int]RandomCardRecord      `json:"random_cards_record,omitempty"`
 	PromiseCardsRecord      map[int]PromiseCardRecord     `json:"promise_cards_record,omitempty"`
 	AssistCardUUID          string                        `json:"assist_card_uuid,omitempty"`
-	DungeonSkipEditState    map[int]bool                  `json:"dungeon_skip_edit_state,omitempty"`
+	DungeonSkipEditState    map[int]bool                  `json:"dungeon_skip_edit_data,omitempty"`
+	ExploreSkipEdit         map[int]bool                  `json:"activity_explore_skip_edit,omitempty"`
+	DungeonBonusDouble      map[int]bool                  `json:"server_dungeon_bonus_double,omitempty"`
 	MailAdminReceipts       map[string]MailAdminReceipt   `json:"server_mail_admin_receipts,omitempty"`
 	PlayerAdminReceipts     map[string]PlayerAdminReceipt `json:"server_player_admin_receipts,omitempty"`
 	Social                  SocialState                   `json:"server_social,omitempty"`
@@ -192,6 +211,7 @@ type Progress struct {
 	Collection              *CollectionState              `json:"server_collection,omitempty"`
 	MailRevision            int64                         `json:"server_mail_revision,omitempty"`
 	ShortMailInfo           map[int]Mail                  `json:"short_mail_info,omitempty"`
+	RuneStone               *RuneStoneState               `json:"current_rune_stone,omitempty"`
 	Runes                   map[string]Rune               `json:"rune_mgr,omitempty"`
 	RuneTemplates           map[string]RuneTemplate       `json:"runes_templates,omitempty"`
 	RunePresetSchemaVersion int                           `json:"rune_preset_schema_version,omitempty"`
@@ -257,6 +277,7 @@ type Progress struct {
 // Card 对应客户端 card 类的 client save 字段子集（card_mgr 值结构）。
 // uuid 为 24 位十六进制（12 字节 ObjectId 的字符串形态，gworld.gen_object_id 等价）。
 type Card struct {
+	Habit             *CardHabit               `json:"habit_mgr,omitempty"`
 	UUID              string                   `json:"uuid"`
 	CardID            int                      `json:"card_id"`
 	Level             int                      `json:"level"`
@@ -273,6 +294,12 @@ type Card struct {
 	IsUpdateLevelOne  bool                     `json:"is_update_level_one"`
 	Skills            []CardSkill              `json:"skill_mgr,omitempty"`
 	TalentTree        map[int][]CardTalentNode `json:"talent_tree,omitempty"`
+}
+
+// 原生card.card_habit由每张卡携带，开战时读取并映射到战斗内部习惯表。
+type CardHabit struct {
+	Support bool `json:"support_habit"`
+	Battle  int  `json:"battle_habit"`
 }
 
 // RandomCardRecord and PromiseCardRecord persist draw counters and guarantee state.
@@ -450,8 +477,11 @@ func (av Avatar) InitialProperties(account string) map[string]any {
 	if props == nil {
 		props = map[string]any{}
 	}
+	props["current_rune_stone"] = runeStoneProperties(av.Progress.RuneStone)
 	props["signin_info"] = signinProperties(av.Progress, time.Now())
 	props["exp_pool"] = av.Progress.Materials[4].Count
+	props["global_set_vo"] = effectiveGlobalVoice(av.Progress)
+	props["random_cards_record"] = randomCardsRecordProperties(av.Progress)
 	delete(props, "server_played_storylines")
 	delete(props, "server_basic_rewards")
 	for key, value := range basicRewardProperties(av.Progress) {
@@ -480,6 +510,7 @@ func (av Avatar) InitialProperties(account string) map[string]any {
 	delete(props, "custom_head_cleared")
 	delete(props, "obtained_card_ids")
 	delete(props, "server_mail_revision")
+	delete(props, "server_battle_overflow_mailbox") // 暂存队列仅服务端保存，原生邮箱只投影已投递邮件。
 	delete(props, "server_mail_admin_receipts")
 	delete(props, "server_player_admin_receipts")
 	delete(props, "server_social")
@@ -488,6 +519,9 @@ func (av Avatar) InitialProperties(account string) map[string]any {
 	delete(props, "server_sync_pvp_meta")
 	delete(props, "server_async_pvp")
 	delete(props, "server_avatar_level")
+	for _, key := range []string{"server_card_voices", "server_card_favorites", "server_show_cards", "auto_battle_habit"} {
+		delete(props, key) // 通过原生card_common、card.habit_mgr和展示槽投影。
+	}
 	delete(props, "remaining_gameplay")
 	delete(props, "server_league_id")
 	delete(props, "server_last_leave_league")
@@ -534,11 +568,18 @@ func (av Avatar) InitialProperties(account string) map[string]any {
 	}
 	props["cards_count"] = countedCardCount(av.Progress)
 	props["show_cards"] = showCardsProperties(av.Progress)
+	if av.Progress.GameScoreFlags != nil {
+		props["game_score_flag"] = av.Progress.GameScoreFlags
+	}
 	if av.Progress.GirlRandomEnable != nil {
 		props["girl_random_enable"] = *av.Progress.GirlRandomEnable
+		props["girl_random_type"] = girlRandomMode(av.Progress)
 	}
 	if av.Progress.ExploreAutoAgent != nil {
 		props["activity_explore_agent"] = av.Progress.ExploreAutoAgent
+	}
+	if av.Progress.ChatChannel > 0 {
+		props["chat_channel"] = av.Progress.ChatChannel
 	}
 	gender := av.Gender
 	if gender == 0 {
@@ -566,11 +607,14 @@ func (av Avatar) InitialProperties(account string) map[string]any {
 	if len(av.Progress.Runes) > 0 {
 		props["rune_mgr"] = runeMgrProperties(av.Progress.Runes)
 	}
+	if av.Progress.RuneAutoDecomposeStars != nil {
+		props["rune_auto_decompose_stars"] = append([]int{}, (*av.Progress.RuneAutoDecomposeStars)...)
+	}
 	props["runes_templates"] = runeTemplateProperties(av.Progress)
 	for key, value := range presetProperties(av.Progress) {
 		props[key] = value
 	}
-	if len(av.Progress.ClearedDungeons) > 0 || av.Progress.Battle != nil {
+	if len(av.Progress.ClearedDungeons) > 0 || av.Progress.Battle != nil || len(av.Progress.DungeonBonusDouble) > 0 {
 		mgr := map[string]any{}
 		for _, id := range av.Progress.ClearedDungeons {
 			mgr[strconv.Itoa(id)] = map[string]any{"dungeon_id": id, "finished": 1}
@@ -580,6 +624,15 @@ func (av Avatar) InitialProperties(account string) map[string]any {
 			if _, cleared := mgr[key]; !cleared {
 				mgr[key] = map[string]any{"dungeon_id": b.DungeonID, "finished": 0}
 			}
+		}
+		for id, enabled := range av.Progress.DungeonBonusDouble {
+			key := strconv.Itoa(id)
+			row, exists := mgr[key].(map[string]any)
+			if !exists {
+				row = map[string]any{"dungeon_id": id, "finished": 0}
+				mgr[key] = row
+			}
+			row["double"] = enabled
 		}
 		props["dungeon_mgr"] = mgr
 	}

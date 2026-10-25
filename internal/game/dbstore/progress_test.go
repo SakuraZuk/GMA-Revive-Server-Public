@@ -295,6 +295,21 @@ func TestPostgresClientBattleLifecyclePersistence(t *testing.T) {
 	if !created.NicknameSet || created.Progress.GuideTasks[1000].Status != 2 || created.Progress.GuideTasks[1001].Status != 1 {
 		t.Fatal("新账号未按真实创建RPC进入教学阶段")
 	}
+	// 取名直接返回三项属性，不承诺额外的全量刷新。用真实管理提交建立刷新队列，
+	// 不依赖旧后台对空年兽/助战账本的日期写入偶然产生通知。
+	refreshBody, _ := json.Marshal(map[string]any{
+		"avatar_oid": hex.EncodeToString(av.OID), "receipt": "教学刷新验收",
+		"operator": "测试", "reason": "验证战斗Tick消费已提交资料通知",
+		"operation": "profile", "gender": 2,
+	})
+	token := strings.Repeat("t", 32)
+	request := httptest.NewRequest(http.MethodPost, "/admin/player/update", bytes.NewReader(refreshBody))
+	request.Header.Set("Authorization", "Bearer "+token)
+	response := httptest.NewRecorder()
+	game.AdminHandler(svc, token).ServeHTTP(response, request)
+	if response.Code != http.StatusCreated {
+		t.Fatal("教学前资料提交未成功", response.Code, response.Body.String())
+	}
 	if _, err = svc.Handle(ctx, c, "enter_dungeon", []json.RawMessage{json.RawMessage(`9`), json.RawMessage(`10001`), json.RawMessage(`{}`)}); err != nil {
 		t.Fatal(err)
 	}
@@ -326,7 +341,7 @@ func TestPostgresClientBattleLifecyclePersistence(t *testing.T) {
 		t.Fatal(err)
 	}
 	expected := committed.InitialProperties(info.Account)
-	// Tick会正常消费取名/社交事务提交后的刷新队列；只允许核对真实已提交属性，不能清队列避开断言。
+	// Tick必须消费管理事务提交后的刷新队列；逐项核对真实已提交属性，不能清队列避开断言。
 	requiredRefresh := map[string]bool{"nickname": false, "nickname_flag": false, "gender": false, "level": false, "power": false, "material_mgr": false, "card_mgr": false}
 	oldDrivers := map[string]bool{
 		"revival_tick": true, "revival_do_command": true, "on_battle_start": true,
@@ -374,7 +389,7 @@ func TestPostgresClientBattleLifecyclePersistence(t *testing.T) {
 	}
 	for field, seen := range requiredRefresh {
 		if !seen {
-			t.Fatal("取名提交后的合法属性刷新未送达", field)
+			t.Fatal("管理提交后的合法属性刷新未送达", field)
 		}
 	}
 	if !reflect.DeepEqual(beforeTick.Battle, game.CloneProgress(committed.Progress).Battle) {

@@ -7,6 +7,26 @@ import (
 	"testing"
 )
 
+func TestRuneStoneCallbackActualGateObjectIDKeys(t *testing.T) {
+	id := game.ObjectID("00112233445566778899aabb")
+	callback := game.Callback(93, []any{true, "", map[game.ObjectID]any{id: map[string]any{"star": 4, "suit": 1101}}})
+	converted, err := wireValue(callback.Args, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wire := mobileproto.EncodeMsgpackValue(nil, converted)
+	if bytes.Count(wire, []byte{0xc7, 12, 42}) != 1 {
+		t.Fatal("原石回调契印键不是原生ObjectId")
+	}
+	values := converted.([]any)[1].([]any)[2].(mobileproto.Map)
+	if len(values) != 1 {
+		t.Fatal("原石回调字典错误")
+	}
+	if _, ok := values[0].Key.(mobileproto.ObjectID); !ok {
+		t.Fatal("原石回调实例键变为字符串")
+	}
+}
+
 func TestGuideTipBinarySurvivesActualGateConversion(t *testing.T) {
 	message := []byte("引导任务不存在或未激活")
 	converted, err := wireValue([]any{false, message}, false)

@@ -76,6 +76,20 @@ func TestNativeJournalActualRollbackRetryAndColdReplay(t *testing.T) {
 	// 模拟JSONB冷读取；输入的已提交日志必须保持完整不变。
 	committed := journalClone(t, j)
 	before, _ := json.Marshal(committed)
+	// TCP断线取消当次时钟请求；取消不能提交半步，也不能使缓存权威永久失效。
+	disconnected, stop := context.WithCancel(ctx)
+	stop()
+	if candidate, reply, e := a.Advance(disconnected, committed, map[string]any{"operation": "timeout"}); !errors.Is(e, context.Canceled) || candidate != nil || reply != nil {
+		t.Fatal("断线取消仍返回可提交的权威推进", e)
+	}
+	unchanged, _ := json.Marshal(committed)
+	if !bytes.Equal(before, unchanged) {
+		t.Fatal("断线取消改写了已提交原生日志")
+	}
+	resumed, e := a.Restore(ctx, committed)
+	if e != nil || !bytes.Equal(waiting, resumed) {
+		t.Fatal("断线取消后不能恢复原输入窗口", e)
+	}
 	_, _, err = a.Advance(ctx, committed, map[string]any{"operation": "step", "command": map[string]any{"name": "move_to", "args": []any{"不存在的单位", []int{0, 0, 0}}}})
 	var rejected *Rejection
 	if !errors.As(err, &rejected) {

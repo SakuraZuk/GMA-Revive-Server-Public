@@ -39,7 +39,7 @@ func leagueData(table string, id int) activityRow {
 }
 
 // 学会主档固定保存在创建者的玩家行锁存档，退会不删除主档。
-// UpdateAllSocial同时处理主档、真实成员和申请者；事务失败全部回滚。
+// 学会专用事务同时处理主档、真实成员和申请者；事务失败全部回滚。
 type LeagueState struct {
 	ID            string                  `json:"id"`
 	UID           int64                   `json:"uid"`
@@ -93,6 +93,7 @@ func leagueMemberWire(av *Avatar, member LeagueMember) map[string]any {
 	return result
 }
 
+// 原生league_info的trial_score为Int，两个boss血量字段为字典；类型错误会中断推荐和入会回包加载。
 func leagueInfoWire(state *LeagueState, avatars map[string]*Avatar) map[string]any {
 	if state == nil {
 		return map[string]any{}
@@ -125,7 +126,7 @@ func leagueInfoWire(state *LeagueState, avatars map[string]*Avatar) map[string]a
 		president = av.Info.Nickname
 	}
 	cardData, _ := leagueGuardianWire(state, 0)
-	return map[string]any{"eid": ObjectID(state.ID), "uid": state.UID, "name": state.Name, "hostnum": state.Host, "level": state.Level, "members": members, "member_count": len(state.Members), "president_name": president, "public_notice": state.PublicNotice, "private_notice": state.PrivateNotice, "auto_agree_flag": state.AutoAgree, "apply_map": applications, "apply_list": applyList, "min_apply_level": 0, "min_apply_active": 0, "daily_active_point": 0, "total_active_point": 0, "league_card": cardData, "weekly_explore_states": map[int]any{}, "weekly_explore_win_times": map[int]int{}, "trial_states": map[int]any{}, "trial_score": map[string]int{}, "boss_challenge_id": 0, "boss_end_time": float64(0), "boss_die_flag": 0, "boss_challenge_dungeon_id": 0, "boss_challenge_hps": []int{}, "boss_max_hps": []int{}, "boss_challenge_damages": map[string]any{}, "events_log": []any{}, "message_board": []any{}, "last_change_league_card_time": float64(state.Created), "buff_begin_time": map[int]float64{}, "league_tasks": map[int]any{}, "task_score": 0, "new_league_challenge": map[string]any{}, "new_pvp_boss_info": map[string]any{}}
+	return map[string]any{"eid": ObjectID(state.ID), "uid": state.UID, "name": state.Name, "hostnum": state.Host, "level": state.Level, "members": members, "member_count": len(state.Members), "president_name": president, "public_notice": state.PublicNotice, "private_notice": state.PrivateNotice, "auto_agree_flag": state.AutoAgree, "apply_map": applications, "apply_list": applyList, "min_apply_level": 0, "min_apply_active": 0, "daily_active_point": 0, "total_active_point": 0, "league_card": cardData, "weekly_explore_states": map[int]any{}, "weekly_explore_win_times": map[int]int{}, "trial_states": map[int]any{}, "trial_score": 0, "boss_challenge_id": 0, "boss_end_time": float64(0), "boss_die_flag": 0, "boss_challenge_dungeon_id": 0, "boss_challenge_hps": map[int]int{}, "boss_max_hps": map[int]int{}, "boss_challenge_damages": map[string]any{}, "events_log": []any{}, "message_board": []any{}, "last_change_league_card_time": float64(state.Created), "buff_begin_time": map[int]float64{}, "league_tasks": map[int]any{}, "task_score": 0, "new_league_challenge": map[string]any{}, "new_pvp_boss_info": map[string]any{}}
 }
 
 func joinRealLeague(av *Avatar, state *LeagueState, now time.Time) error {
@@ -164,7 +165,8 @@ func (s *Service) leagueRPC(ctx context.Context, c *Connection, method string, a
 	}
 	selfID := hexOf(selectedOID(c))
 	var result []Push
-	rows, err := store.UpdateAllSocial(ctx, func(avatars map[string]*Avatar) error {
+	query := leagueTransaction(selfID, method, args)
+	rows, err := updateLeagueSocial(ctx, store, query, func(avatars map[string]*Avatar) error {
 		self := avatars[selfID]
 		if self == nil {
 			return errors.New("学会事务当前玩家不存在")
@@ -360,8 +362,8 @@ func (s *Service) leagueRPC(ctx context.Context, c *Connection, method string, a
 			result = []Push{push("Avatar", "on_appoint_league_member", RetSuccess, ObjectID(id))}
 		case "query_total_league_info":
 			var host int
-			if len(args) != 2 || json.Unmarshal(args[1], &host) != nil || host != self.Hostnum {
-				return errors.New("学会查询不能跨服")
+			if len(args) != 2 || json.Unmarshal(args[1], &host) != nil || host <= 0 {
+				return errors.New("学会查询服务器无效")
 			}
 			id, e := readID(0)
 			if e != nil {
@@ -371,6 +373,8 @@ func (s *Service) leagueRPC(ctx context.Context, c *Connection, method string, a
 			if target == nil {
 				return errors.New("查询学会不存在")
 			}
+			// 原生目录仍可能携带旧逻辑服编号；公开学会ID及其持久主档才是
+			// 权威归属。允许查询已存在的跨编号公开资料，不允许由参数造档。
 			result = []Push{push("Avatar", "on_query_total_league_info", leagueInfoWire(target, avatars))}
 		case "search_league":
 			var name string
@@ -395,6 +399,9 @@ func (s *Service) leagueRPC(ctx context.Context, c *Connection, method string, a
 			result = []Push{push("Avatar", "on_search_league", list)}
 		default:
 			return errors.New("学会接口尚未实现")
+		}
+		if query.ReadOnly {
+			return nil
 		}
 		for id, av := range avatars {
 			if id == selfID || state != nil && state.Members[id].Joined > 0 {

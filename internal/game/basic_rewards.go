@@ -63,6 +63,47 @@ type basicRewardRejection struct{ message string }
 func (e *basicRewardRejection) Error() string { return e.message }
 func rejectBasic(message string) error        { return &basicRewardRejection{message} }
 
+type sqlStateError interface{ SQLState() string }
+
+// 基础领奖按钮不会自动重放存储失败。玩家行恰好被短事务占用时，直接把
+// 55P03/死锁/可串行化冲突抛给传输层会让客户端收不到原生回调，表现为按钮卡住。
+// 这里只重试明确可重放的玩家单行事务；业务拒绝、请求超时和未知存储错误原样返回。
+func retryableBasicRewardStoreError(err error) bool {
+	var state sqlStateError
+	if !errors.As(err, &state) {
+		return false
+	}
+	switch state.SQLState() {
+	case "55P03", "40P01", "40001":
+		return true
+	default:
+		return false
+	}
+}
+
+// 现网2026-10-14起battle_fighting多次因55P03直接外抛，客户端收不到开战推送
+// 表现为进入战斗无反应。与基础领奖同规则：只重试明确可重放的短锁冲突，
+// 事务整体回滚后重开；业务拒绝、请求超时和未知存储错误原样返回。
+func retryShortLockConflict(ctx context.Context, fn func() ([]Push, error)) ([]Push, error) {
+	var pushes []Push
+	var err error
+	for attempt := 0; attempt < 3; attempt++ {
+		pushes, err = fn()
+		if err == nil || !retryableBasicRewardStoreError(err) || ctx.Err() != nil {
+			return pushes, err
+		}
+		delay := time.Duration(attempt+1) * 20 * time.Millisecond
+		timer := time.NewTimer(delay)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return nil, ctx.Err()
+		case <-timer.C:
+		}
+	}
+	return pushes, err
+}
+
 func basicWeek(now time.Time) string {
 	local := now.In(time.FixedZone("北京时间", 8*3600))
 	weekday := (int(local.Weekday()) + 6) % 7
@@ -224,12 +265,25 @@ func basicRewardProperties(p Progress) map[string]any {
 	b := p.BasicRewards
 	out["daily_tasks"] = activityWire(b.Daily)
 	out["daily_active"], out["weekly_active"] = b.DailyActive, b.WeeklyActive
-	out["daily_bonus_active"], out["weekly_bonus_active"] = activityWire(b.DailyClaims), activityWire(b.WeeklyClaims)
+	// 原生mission_daily.check_mission_state按active_scale判断已领取，
+	// 不能把内部奖励行编号当成客户端活跃度阈值。内部收据仍保留行编号。
+	out["daily_bonus_active"] = activityWire(basicClaimScales("daily_task_bonus", b.DailyClaims))
+	out["weekly_bonus_active"] = activityWire(basicClaimScales("weekly_task_bonus", b.WeeklyClaims))
 	out["activity_buff_count"] = activityWire(b.BuffCounts)
 	out["score_bonus_record"] = activityWire(b.ScoreClaims)
 	out["check_in_records"] = activityWire(p.CheckInRecords)
 	out["new_tasks"] = newTaskProperties(p.NewTasks)
 	return out
+}
+
+func basicClaimScales(table string, claims []int) []int {
+	values := []int{}
+	for _, id := range claims {
+		if scale := basicRewardRow(table, id).integer("active_scale"); scale > 0 && !containsInt(values, scale) {
+			values = append(values, scale)
+		}
+	}
+	return values
 }
 
 func basicRewardPushes(p Progress) []Push {
@@ -443,132 +497,151 @@ func (s *Service) basicRewardRPC(ctx context.Context, c *Connection, method stri
 	box := emptyActivityBox()
 	boxes := map[int]any{}
 	active := 0
-	err := s.updateProgress(ctx, c, func(p *Progress) error {
-		if err := ensureBasicRewards(p, s.Now(), true); err != nil {
-			return err
-		}
-		b := p.BasicRewards
-		var bonus int
-		switch method {
-		case "receive_power_supply":
-			row := basicRewardRow("bonus_buff", id)
-			// 本版仅这四条是可领取补给；其他倍率buff不能作为奖励凭证。
-			if !containsInt([]int{8, 9, 10, 18}, id) || row.integer("bonus_id") <= 0 {
-				return rejectBasic("补给编号无效")
+	var err error
+	for attempt := 0; attempt < 3; attempt++ {
+		box = emptyActivityBox()
+		boxes = map[int]any{}
+		active = 0
+		err = s.updateProgress(ctx, c, func(p *Progress) error {
+			if err := ensureBasicRewards(p, s.Now(), true); err != nil {
+				return err
 			}
-			local := s.Now().In(time.FixedZone("北京时间", 8*3600))
-			second := local.Hour()*3600 + local.Minute()*60 + local.Second()
-			if second < row.integer("begin_time") || second > row.integer("end_time") {
-				return rejectBasic("补给未到领取时段")
-			}
-			if b.BuffCounts[id] >= row.integer("max_count") {
-				return rejectBasic("本日补给已领取")
-			}
-			bonus = row.integer("bonus_id")
-			b.BuffCounts[id]++
-		case "receive_new_task_bonus":
-			row := basicRewardRow("new_task", id)
-			task, exists := p.NewTasks[id]
-			targets := map[int]int64{}
-			for tid, value := range task.FinishedTargets {
-				targets[tid] = int64(value)
-			}
-			if len(row) == 0 || !exists || task.Status != 1 || task.Expired || b.NewClaims[id] != 0 || basicTargetCount(targets, row) < int64(row.integer("target_need_count")) {
-				return rejectBasic("新手任务未完成、未开放、过期或已领取")
-			}
-			bonus = row.integer("bonus_id")
-			task.Status, task.Time = 2, s.Now().Unix()
-			p.NewTasks[id], b.NewClaims[id] = task, s.Now().Unix()
-		case "receive_score_bonus":
-			row := basicRewardRow("score_bonus", id)
-			var rewards [][]int
-			_ = json.Unmarshal(row["score_bonus_list"], &rewards)
-			if len(row) == 0 || containsInt(b.ScoreClaims[id], day) || p.Materials[row.integer("score_id")].Count < int64(day) {
-				return rejectBasic("累计积分奖励未达条件或已领取")
-			}
-			for _, pair := range rewards {
-				if len(pair) == 2 && pair[0] == day {
-					bonus = pair[1]
+			b := p.BasicRewards
+			var bonus int
+			switch method {
+			case "receive_power_supply":
+				row := basicRewardRow("bonus_buff", id)
+				// 本版仅这四条是可领取补给；其他倍率buff不能作为奖励凭证。
+				if !containsInt([]int{8, 9, 10, 18}, id) || row.integer("bonus_id") <= 0 {
+					return rejectBasic("补给编号无效")
 				}
+				local := s.Now().In(time.FixedZone("北京时间", 8*3600))
+				second := local.Hour()*3600 + local.Minute()*60 + local.Second()
+				if second < row.integer("begin_time") || second > row.integer("end_time") {
+					return rejectBasic("补给未到领取时段")
+				}
+				if b.BuffCounts[id] >= row.integer("max_count") {
+					return rejectBasic("本日补给已领取")
+				}
+				bonus = row.integer("bonus_id")
+				b.BuffCounts[id]++
+			case "receive_new_task_bonus":
+				row := basicRewardRow("new_task", id)
+				task, exists := p.NewTasks[id]
+				targets := map[int]int64{}
+				for tid, value := range task.FinishedTargets {
+					targets[tid] = int64(value)
+				}
+				if len(row) == 0 || !exists || task.Status != 1 || task.Expired || b.NewClaims[id] != 0 || basicTargetCount(targets, row) < int64(row.integer("target_need_count")) {
+					return rejectBasic("新手任务未完成、未开放、过期或已领取")
+				}
+				bonus = row.integer("bonus_id")
+				task.Status, task.Time = 2, s.Now().Unix()
+				p.NewTasks[id], b.NewClaims[id] = task, s.Now().Unix()
+			case "receive_score_bonus":
+				row := basicRewardRow("score_bonus", id)
+				var rewards [][]int
+				_ = json.Unmarshal(row["score_bonus_list"], &rewards)
+				if len(row) == 0 || containsInt(b.ScoreClaims[id], day) || p.Materials[row.integer("score_id")].Count < int64(day) {
+					return rejectBasic("累计积分奖励未达条件或已领取")
+				}
+				for _, pair := range rewards {
+					if len(pair) == 2 && pair[0] == day {
+						bonus = pair[1]
+					}
+				}
+				if bonus <= 0 {
+					return rejectBasic("积分奖励档位不存在")
+				}
+				b.ScoreClaims[id] = append(b.ScoreClaims[id], day)
+			case "receive_daily_task_active":
+				row := basicRewardRow("daily_task", id)
+				task, exists := b.Daily[id]
+				need, count := row.integer("target_need_count"), row.integer("task_limit_count")
+				if !exists || !basicRowOpen(row, *p, s.Now()) || task.Claimed || row.integer("auto_add") != 0 || need <= 0 || count <= 0 || basicTargetCount(task.Targets, row)/int64(need) < int64(count) {
+					return rejectBasic("日常任务尚未完成或已经领取")
+				}
+				active = row.integer("add_active")
+				if active <= 0 || b.DailyActive > math.MaxInt32-active || b.WeeklyActive > math.MaxInt32-active {
+					return rejectBasic("任务活跃度无效")
+				}
+				b.DailyActive += active
+				b.WeeklyActive += active
+				task.Claimed = true
+				b.Daily[id] = task
+				return nil
+			case "receive_daily_active_bonus", "receive_weekly_active_bonus":
+				table, available, claims := "daily_task_bonus", b.DailyActive, b.DailyClaims
+				if method == "receive_weekly_active_bonus" {
+					table, available, claims = "weekly_task_bonus", b.WeeklyActive, b.WeeklyClaims
+				}
+				row := basicRewardRow(table, id)
+				if !basicRowOpen(row, *p, s.Now()) || row.integer("active_scale") <= 0 || available < row.integer("active_scale") || containsInt(claims, id) {
+					return rejectBasic("活跃度奖励尚未达到条件或已领取")
+				}
+				bonus = row.integer("bonus_id")
+				if method == "receive_weekly_active_bonus" {
+					b.WeeklyClaims = append(b.WeeklyClaims, id)
+				} else {
+					b.DailyClaims = append(b.DailyClaims, id)
+				}
+			case "receive_check_in_bonus", "receive_all_check_in_bonus":
+				row := basicRewardRow("check_in_bonus", id)
+				if !basicRowOpen(row, *p, s.Now()) {
+					return rejectBasic("签到活动未开放")
+				}
+				var record basicCheckIn
+				raw, err := json.Marshal(p.CheckInRecords[id])
+				if err != nil || json.Unmarshal(raw, &record) != nil || record.ID != id {
+					return rejectBasic("签到记录不存在")
+				}
+				var rewards [][]int
+				if json.Unmarshal(row["check_in_bonus"], &rewards) != nil {
+					return errors.New("签到奖励配置无效")
+				}
+				for _, pair := range rewards {
+					if len(pair) != 2 || pair[0] > record.Count || containsInt(record.Received, pair[0]) || (method == "receive_check_in_bonus" && pair[0] != day) {
+						continue
+					}
+					part, err := grantNativeBonus(p, pair[1], 1, p.AvatarLevel, s.Now())
+					if err != nil {
+						return rejectBasic("签到奖励未发出：" + err.Error())
+					}
+					boxes[pair[0]] = activityWire(part)
+					if err := mergeActivityBox(box, part); err != nil {
+						return err
+					}
+					record.Received = append(record.Received, pair[0])
+				}
+				if len(boxes) == 0 {
+					return rejectBasic("签到没有可领取奖励")
+				}
+				p.CheckInRecords[id] = record
+				return nil
+			default:
+				return errors.New("基础奖励方法无效")
 			}
-			if bonus <= 0 {
-				return rejectBasic("积分奖励档位不存在")
+			var err error
+			box, err = grantNativeBonus(p, bonus, 1, p.AvatarLevel, s.Now())
+			if err != nil {
+				return rejectBasic("奖励未发出：" + err.Error())
 			}
-			b.ScoreClaims[id] = append(b.ScoreClaims[id], day)
-		case "receive_daily_task_active":
-			row := basicRewardRow("daily_task", id)
-			task, exists := b.Daily[id]
-			need, count := row.integer("target_need_count"), row.integer("task_limit_count")
-			if !exists || !basicRowOpen(row, *p, s.Now()) || task.Claimed || row.integer("auto_add") != 0 || need <= 0 || count <= 0 || basicTargetCount(task.Targets, row)/int64(need) < int64(count) {
-				return rejectBasic("日常任务尚未完成或已经领取")
-			}
-			active = row.integer("add_active")
-			if active <= 0 || b.DailyActive > math.MaxInt32-active || b.WeeklyActive > math.MaxInt32-active {
-				return rejectBasic("任务活跃度无效")
-			}
-			b.DailyActive += active
-			b.WeeklyActive += active
-			task.Claimed = true
-			b.Daily[id] = task
 			return nil
-		case "receive_daily_active_bonus", "receive_weekly_active_bonus":
-			table, available, claims := "daily_task_bonus", b.DailyActive, b.DailyClaims
-			if method == "receive_weekly_active_bonus" {
-				table, available, claims = "weekly_task_bonus", b.WeeklyActive, b.WeeklyClaims
-			}
-			row := basicRewardRow(table, id)
-			if !basicRowOpen(row, *p, s.Now()) || row.integer("active_scale") <= 0 || available < row.integer("active_scale") || containsInt(claims, id) {
-				return rejectBasic("活跃度奖励尚未达到条件或已领取")
-			}
-			bonus = row.integer("bonus_id")
-			if method == "receive_weekly_active_bonus" {
-				b.WeeklyClaims = append(b.WeeklyClaims, id)
-			} else {
-				b.DailyClaims = append(b.DailyClaims, id)
-			}
-		case "receive_check_in_bonus", "receive_all_check_in_bonus":
-			row := basicRewardRow("check_in_bonus", id)
-			if !basicRowOpen(row, *p, s.Now()) {
-				return rejectBasic("签到活动未开放")
-			}
-			var record basicCheckIn
-			raw, err := json.Marshal(p.CheckInRecords[id])
-			if err != nil || json.Unmarshal(raw, &record) != nil || record.ID != id {
-				return rejectBasic("签到记录不存在")
-			}
-			var rewards [][]int
-			if json.Unmarshal(row["check_in_bonus"], &rewards) != nil {
-				return errors.New("签到奖励配置无效")
-			}
-			for _, pair := range rewards {
-				if len(pair) != 2 || pair[0] > record.Count || containsInt(record.Received, pair[0]) || (method == "receive_check_in_bonus" && pair[0] != day) {
-					continue
-				}
-				part, err := grantNativeBonus(p, pair[1], 1, p.AvatarLevel, s.Now())
-				if err != nil {
-					return rejectBasic("签到奖励未发出：" + err.Error())
-				}
-				boxes[pair[0]] = activityWire(part)
-				if err := mergeActivityBox(box, part); err != nil {
-					return err
-				}
-				record.Received = append(record.Received, pair[0])
-			}
-			if len(boxes) == 0 {
-				return rejectBasic("签到没有可领取奖励")
-			}
-			p.CheckInRecords[id] = record
-			return nil
-		default:
-			return errors.New("基础奖励方法无效")
+		})
+		if err == nil || !retryableBasicRewardStoreError(err) || ctx.Err() != nil {
+			break
 		}
-		var err error
-		box, err = grantNativeBonus(p, bonus, 1, p.AvatarLevel, s.Now())
-		if err != nil {
-			return rejectBasic("奖励未发出：" + err.Error())
+		// 第一次锁超时已经等待过数据库的1秒期限；短退避让持锁事务先提交。
+		delay := time.Duration(attempt+1) * 20 * time.Millisecond
+		timer := time.NewTimer(delay)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			err = ctx.Err()
+			attempt = 3
+		case <-timer.C:
 		}
-		return nil
-	})
+	}
 	if err != nil {
 		var rejection *basicRewardRejection
 		if !errors.As(err, &rejection) {
@@ -576,9 +649,9 @@ func (s *Service) basicRewardRPC(ctx context.Context, c *Connection, method stri
 		} // 存储故障不伪装业务拒绝或成功。
 		switch method {
 		case "receive_power_supply", "receive_score_bonus":
-			return []Push{Callback(cb, []any{nil, err.Error()})}, nil
+			return []Push{Callback(cb, []any{nil, []byte(err.Error())})}, nil
 		case "receive_daily_task_active":
-			return []Push{Callback(cb, []any{false, err.Error(), 0})}, nil
+			return []Push{Callback(cb, []any{false, []byte(err.Error()), 0})}, nil
 		case "receive_all_check_in_bonus":
 			return []Push{Callback(cb, []any{1, activityWire(map[int]any{})})}, nil
 		default:
@@ -590,7 +663,9 @@ func (s *Service) basicRewardRPC(ctx context.Context, c *Connection, method stri
 	if method == "receive_daily_task_active" {
 		return append(out, Callback(cb, []any{true, "", active})), nil
 	}
-	out = append(out, materialManagerPush(c), cardMgrPush(c), push("Avatar", "client_prop_changed", []any{"rune_mgr", runeMgrProperties(p.Runes)}), powerPush(c), knowledgePush(c))
+	// 第七日原表奖励80002直接解锁头像框1004，不进入material_mgr。
+	// 必须在领奖回调前同步持有状态，单领与一键领取使用同一资产投影。
+	out = append(out, materialManagerPush(c), cardMgrPush(c), push("Avatar", "client_prop_changed", []any{"rune_mgr", runeMgrProperties(p.Runes)}), push("Avatar", "client_prop_changed", []any{"owned_head_box", p.OwnedHeadBox}), powerPush(c), knowledgePush(c))
 	switch method {
 	case "receive_power_supply", "receive_score_bonus":
 		return append(out, Callback(cb, []any{activityWire(box), ""})), nil

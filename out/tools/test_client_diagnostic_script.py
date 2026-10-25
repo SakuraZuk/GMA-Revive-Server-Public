@@ -29,6 +29,24 @@ try:
     except ValueError:
         sys.excepthook(*sys.exc_info())
     assert len(forwarded) == 1 and 'ValueError' in sent[-1][1]['message']
+    import functools
+    class HTTPClient:
+        def __init__(self):
+            request = types.SimpleNamespace(host='updates.example.org', method='GET', path='/?token=不能上报')
+            self.handler = functools.partial(lambda *args: None, 'key', request)
+        def callback(self):
+            handler.emit(logging.LogRecord('网络', logging.ERROR, 'http.py', 1, 'HTTPClient - callback: err=http_err_timeout', (), None))
+    HTTPClient().callback()
+    assert 'host=updates.example.org method=GET' in sent[-1][1]['message']
+    assert 'token' not in sent[-1][1]['message'] and '不能上报' not in sent[-1][1]['message']
+    logging._hs_client_diagnostic_revision = 1
+    exec(compile(code, 'client_diagnostic_script.py', 'exec'), {})
+    assert len(root.handlers) == count
+    try:
+        raise ValueError('升级保留异常链')
+    except ValueError:
+        sys.excepthook(*sys.exc_info())
+    assert len(forwarded) == 2
     print('客户端诊断重复安装、去重与原异常链验证通过')
 finally:
     root.handlers = before_handlers

@@ -49,7 +49,7 @@ func (s *Service) consignRPC(ctx context.Context, c *Connection, method string, 
 		}
 	}
 	var box map[string]any
-	var returnedCards []int
+	returnedCards := []any{}
 	newID := id
 	err := s.updateProgress(ctx, c, func(p *Progress) error {
 		if err := ensureRemainingGameplay(p, s.Now()); err != nil {
@@ -177,7 +177,17 @@ func (s *Service) consignRPC(ctx context.Context, c *Connection, method string, 
 			}
 			box = emptyActivityBox()
 			bonusIDs := []int{bid}
-			returnedCards = append([]int{}, task.Cards...)
+			// C83CDF61.commit_task_succ/get_vo_bubble_by_card_id直接以UUID索引
+			// card_mgr；任务内部仍保存模板编号，不能原样下发给语音演出。
+			// 旧任务中的幻书若已被归还，只省略其演出，不阻塞已完成的奖励。
+			for _, cardID := range task.Cards {
+				for _, card := range p.Cards {
+					if card.CardID == cardID && card.UUID != "" {
+						returnedCards = append(returnedCards, ObjectID(card.UUID))
+						break
+					}
+				}
+			}
 			if len(task.Cards) > 0 && containsInt(row.ids("hide_story_cards"), task.Cards[0]) {
 				bonusIDs = append(bonusIDs, row.integer("hide_story_bonus"))
 			}
@@ -243,16 +253,21 @@ func (s *Service) consignRPC(ctx context.Context, c *Connection, method string, 
 		}
 	}
 	if err != nil {
+		// 拒绝也可能发生在服务端跨日重生成之后：客户端列表可能仍持旧编号，任何
+		// 委托拒绝回包前都要重同步consign_tasks，避免原生回调继续使用陈旧编号。
+		sync := consignSyncPushes(c.SelectedAvatarUnsafe().Progress)
 		if method == "commit_consign_task" {
-			return []Push{push("Avatar", "commit_consign_task_failed", id, code)}, nil
+			return append(sync, push("Avatar", "commit_consign_task_failed", id, code)), nil
 		}
 		if method == "reward_consign_phase_bonus" {
-			return []Push{push("Avatar", "on_reward_consign_phase_bonus", code, consignBonusWire(map[int]int64{}))}, nil
+			return append(sync, push("Avatar", "on_reward_consign_phase_bonus", code, consignBonusWire(map[int]int64{}))), nil
 		}
+		// 原生refresh回调以task_id真值判断成败（ED61CEA3.refresh闭包），
+		// 失败必须回0让客户端走show_error_tips，否则会打开不存在任务的详情页。
 		if method == "refresh_consign_task_one" {
-			return []Push{Callback(cb, []any{code, id})}, nil
+			return append(sync, Callback(cb, []any{code, 0})), nil
 		}
-		return []Push{Callback(cb, []any{code})}, nil
+		return append(sync, Callback(cb, []any{code})), nil
 	}
 	out := append(remainingGameplayPushes(c.SelectedAvatarUnsafe().Progress), materialManagerPush(c), cardMgrPush(c))
 	if method == "reward_consign_phase_bonus" {
@@ -269,4 +284,17 @@ func (s *Service) consignRPC(ctx context.Context, c *Connection, method string, 
 
 func consignBonusWire(items map[int]int64) map[string]any {
 	return map[string]any{"__custom_type": "bonus.bonus", "bonus_id": 0, "contain_items": items, "contain_runes": map[int]int64{}, "buff_ids": []int{}, "is_double": false}
+}
+
+// 委托拒绝回包先重发当前consign_*属性；回滚后的已提交状态即服务端真相。
+func consignSyncPushes(p Progress) []Push {
+	if p.RemainingGameplay == nil {
+		return nil
+	}
+	props := consignProperties(p, p.RemainingGameplay.Consign)
+	out := []Push{}
+	for _, name := range []string{"consign_tasks", "consign_finish_times", "consign_phase_recv_bonus", "consign_phase_total_bonus", "consign_bonus_time", "consign_refresh_point", "consign_next_refresh_time"} {
+		out = append(out, push("Avatar", "client_prop_changed", []any{name, props[name]}))
+	}
+	return out
 }

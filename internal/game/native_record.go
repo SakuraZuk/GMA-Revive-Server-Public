@@ -198,7 +198,7 @@ func (s *Service) uploadNativeBattleRecord(ctx context.Context, c *Connection, a
 		return acceptNativeRecordChunk(av, record, chunk, s.Now().Unix())
 	})
 	if err != nil {
-		return []Push{Callback(cb, []any{false, err.Error()})}, nil
+		return []Push{Callback(cb, []any{false, []byte(err.Error())})}, nil
 	}
 	return []Push{Callback(cb, []any{true, ""})}, nil
 }

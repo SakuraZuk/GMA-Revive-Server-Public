@@ -76,9 +76,15 @@ func humanTestPair(t *testing.T, rated bool) (*Service, []*Connection, *FixtureA
 			humanTestRefresh(t, store, other)
 		}
 	}
-	for _, c := range cs {
+	for index, c := range cs {
 		layout := c.SelectedAvatarUnsafe().Progress.Social.HumanRoom.Players[hexOf(selectedOID(c))].Layout
-		handled, _, e := s.humanBattleFighting(ctx, c, socialArgs(map[string]any{"fighting_cards": layout.Fighting, "support_cards": layout.Support}))
+		args := socialArgs(map[string]any{"fighting_cards": layout.Fighting, "support_cards": layout.Support})
+		if index == 0 {
+			// 生产旧客户端的真实形状：重复上报的 battle_cards 为 null。
+			// 真人PVP必须沿用 send_pvp_cards 已冻结阵容，不能再次解析该值。
+			args = []json.RawMessage{json.RawMessage(`null`)}
+		}
+		handled, _, e := s.humanBattleFighting(ctx, c, args)
 		if !handled || e != nil {
 			t.Fatal(e)
 		}
@@ -207,8 +213,11 @@ func TestHumanPvpDivergenceRollbackAndReplaySameSeed(t *testing.T) {
 	}
 	seed, uuid := r.Seed, r.UUID
 	handled, pushes, err := s.humanResume(ctx, owner)
-	if !handled || err != nil || len(pushes) != 6 {
+	if !handled || err != nil || len(pushes) != 7 {
 		t.Fatal(err, pushes)
+	}
+	if pushes[2].Method != "sync_battle_method" || pushes[2].Args[0] != "revival_restore_pvp_enemy" || pushes[3].Method != "pvp_battle_start_load" {
+		t.Fatal("真人重连缺少加载前的对手卡牌恢复")
 	}
 	recovered := socialSaved(t, store, owner).Progress.Social.HumanRoom
 	if recovered.UUID != uuid || recovered.Seed != seed || recovered.Recovering[id] != 1 || len(recovered.Commands) != 1 {

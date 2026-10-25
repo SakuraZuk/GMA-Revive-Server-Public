@@ -87,7 +87,7 @@ func TestGachaGuaranteeUsesRarityAndPreservesOwnedCards(t *testing.T) {
 		if !found {
 			t.Fatal("十连未满足Android保底稀有度")
 		}
-		mgr := pushes[1].Args[0].([]any)[1].(map[string]any)
+		mgr := pushes[2].Args[0].([]any)[1].(map[string]any)
 		if _, ok := mgr[old]; !ok {
 			t.Fatal("抽卡推送丢失既有卡")
 		}

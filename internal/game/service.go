@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"hs-server/internal/hotfix"
@@ -100,12 +101,15 @@ type Accounts interface {
 
 // SyncPvpRankEntry 是跨账号排行榜行（真账号）。
 type SyncPvpRankEntry struct {
-	OID      []byte
-	UID      int64
-	Hostnum  int
-	Nickname string
-	Level    int
-	Score    int
+	OID        []byte
+	UID        int64
+	Hostnum    int
+	Nickname   string
+	Level      int
+	Score      int
+	HeadID     int
+	HeadBoxID  int
+	CustomHead string
 }
 
 type FixtureAccount struct {
@@ -223,7 +227,7 @@ func (a *FixtureAccounts) SyncPvpRankings(ctx context.Context, limit int, hosts 
 		for _, av := range record.Avatars {
 			if av.Progress.SyncPvpScore > 0 && (len(hosts) == 0 || hosts[0] == 0 || av.Hostnum == hosts[0]) {
 				out = append(out, SyncPvpRankEntry{OID: av.OID, UID: av.UID, Hostnum: av.Hostnum, Nickname: av.Info.Nickname,
-					Level: av.Info.Level, Score: av.Progress.SyncPvpScore})
+					Level: av.Info.Level, Score: av.Progress.SyncPvpScore, HeadID: socialProfile(av).HeadID, HeadBoxID: socialProfile(av).HeadBoxID, CustomHead: socialProfile(av).CustomHead})
 			}
 		}
 	}
@@ -264,17 +268,20 @@ const (
 
 // Connection 按连接串行处理业务，多个连接之间无需共用业务锁。
 type Connection struct {
-	mu                      sync.Mutex
-	phase                   Phase
-	identity                Identity
-	connType                int
-	hostnum                 int
-	speedChecks             int
-	refreshLoginSent        bool
-	finishedGuides          map[int]bool
-	reconnectAuth           json.RawMessage
-	deviceID                string
-	battleStartSent         bool
+	mu               sync.Mutex
+	phase            Phase
+	identity         Identity
+	connType         int
+	hostnum          int
+	speedChecks      int
+	refreshLoginSent bool
+	finishedGuides   map[int]bool
+	reconnectAuth    json.RawMessage
+	deviceID         string
+	battleStartSent  bool
+	// 同步PVP原生场景加载完成后，双方就绪通知只对同一战斗UUID下发一次。
+	// 旧线上会话升级后该字段为空，下一次Tick会主动补发，避免继续卡在准备界面。
+	syncPvpReadyUUID        string
 	battleEvents            []BattleEvent
 	ordinaryObservation     *BattleSession
 	pendingOrdinaryResult   *battleEnvelope
@@ -343,16 +350,20 @@ func (c *Connection) SelectedAvatar() (Avatar, bool) {
 }
 
 type Service struct {
-	Accounts             Accounts
-	Hotfix               *hotfix.Catalog
-	Now                  func() time.Time
-	TimeZone             int
-	onlineMu             sync.Mutex
-	online               map[string]map[*Connection]bool
-	nativePvpMu          sync.Mutex
-	nativePvpConfig      *nativeengine.Config
-	nativePvpResource    string
-	nativePvpAuthorities map[string]*nativeengine.Authority
+	Accounts                  Accounts
+	Hotfix                    *hotfix.Catalog
+	Now                       func() time.Time
+	TimeZone                  int
+	onlineMu                  sync.Mutex
+	online                    map[string]map[*Connection]bool
+	humanOnlineRefreshMu      sync.Mutex
+	humanOnlineSnapshot       humanOnlineSnapshot
+	nativePvpMu               sync.Mutex
+	periodicSettlementMu      sync.Mutex
+	backgroundPeriodicStarted atomic.Bool
+	nativePvpConfig           *nativeengine.Config
+	nativePvpResource         string
+	nativePvpAuthorities      map[string]*nativeengine.Authority
 }
 
 func New(accounts Accounts, catalog *hotfix.Catalog) *Service {
@@ -472,14 +483,11 @@ func (s *Service) Handle(ctx context.Context, c *Connection, method string, args
 			return nil, err
 		}
 	}
-	// 普通观察不能等待全服结奖锁而丢序号；普通结果由自身事务和收据处理。
-	// 日历仍在入场、排行和Tick刷新，真人及原生PVP结果维持原结奖路径。
-	if c.phase == Playing && activityAwardMethod(method) && !ordinaryObserverMessage(method, args) && !cachedOrdinaryObserverMessage(c, method, args) {
-		if err := s.refreshActivityAwards(ctx, c); err != nil {
-			return nil, err
-		}
-	}
+	// 全服活动结算由进程级后台任务串行执行。玩家请求不得等待全表锁，
+	// 否则高并发时会占满数据库连接并拖住登录、副本与普通观察序号。
 	switch method {
+	case "set_focus_target", "request_chat_channel", "query_phone_info", "close_asyn_pvp_ui", "home_enter_quit_log", "share_click_log", "notice_share", "receive_package_check":
+		return s.logQueryRepair(ctx, c, method, args)
 	case "reset_gift_box":
 		return s.resetShopGiftBoxRPC(ctx, c, args)
 	case "update_recommend_gift_state":
@@ -518,6 +526,8 @@ func (s *Service) Handle(ctx context.Context, c *Connection, method string, args
 		return s.consignRPC(ctx, c, method, args)
 	case "create_new_league", "apply_league", "agree_league_apply", "refuse_league_apply", "league_setup_auto_agree", "leave_league", "query_total_league_info", "search_league", "appoint_league_member":
 		return s.leagueRPC(ctx, c, method, args)
+	case "get_recommend_leagues":
+		return s.recommendLeagues(ctx, c, args)
 	case "player_get_house_random_reward":
 		return s.collectionResidentRPC(ctx, c, args)
 	case "gather_produce_material_speed_up":
@@ -551,11 +561,11 @@ func (s *Service) Handle(ctx context.Context, c *Connection, method string, args
 	case "set_global_vo", "set_story_vo":
 		return s.setVoice(ctx, c, method, args)
 	case "enter_dungeon":
-		return s.enterDungeon(ctx, c, args)
+		return retryShortLockConflict(ctx, func() ([]Push, error) { return s.enterDungeonRPC(ctx, c, args) })
 	case "load_entity_finish":
 		return s.battleLoaded(ctx, c, args)
 	case "battle_fighting":
-		return s.battleFighting(ctx, c, args)
+		return retryShortLockConflict(ctx, func() ([]Push, error) { return s.battleFighting(ctx, c, args) })
 	case "exit_battle", "leave_battle", "quit_battle":
 		return s.exitBattleRPC(ctx, c, args)
 	case "do_command":
@@ -628,6 +638,8 @@ func (s *Service) Handle(ctx context.Context, c *Connection, method string, args
 		return s.cardLockRPC(ctx, c, method, args)
 	case "card_enhance", "up_level_card", "upgrade_card":
 		return s.cardGrowthRPC(ctx, c, method, args)
+	case "change_card_dress":
+		return s.changeCardDress(ctx, c, args)
 	case "consume_ring", "update_level_one":
 		return s.cardOathRPC(ctx, c, method, args)
 	case "change_head", "change_head_box", "update_head_box_by_client":
@@ -636,6 +648,8 @@ func (s *Service) Handle(ctx context.Context, c *Connection, method string, args
 		return s.buyCommodityRPC(ctx, c, args)
 	case "receive_achv_bonus", "receive_all_achv_bonus":
 		return s.achievementRPC(ctx, c, method, args)
+	case "step_0_rune_stone", "step_1_rune_stone", "step_2_rune_stone":
+		return s.runeStoneRPC(ctx, c, method, args)
 	case "embed_rune", "unembed_rune", "up_level_rune", "decompose_runes", "lock_rune", "unlock_rune", "change_rune_extra_attr":
 		return s.runeRPC(ctx, c, method, args)
 	case "add_runes_templates", "change_runes_templates_name", "delete_runes_templates", "update_runes_templates", "set_top_runes_templates", "embed_rune_by_template":
@@ -658,10 +672,26 @@ func (s *Service) Handle(ctx context.Context, c *Connection, method string, args
 		return s.intimacyGiftRPC(ctx, c, method, args)
 	case "change_dungeon_skip_edit_state":
 		return s.setDungeonSkipEditState(ctx, c, args)
-	case "set_card_vo", "set_show_cards", "set_girl_random_enable", "set_explore_auto_agent":
+	case "change_explore_skip_edit_state":
+		return s.setExploreSkipEditState(ctx, c, args)
+	case "set_dungeon_bonus_double":
+		return s.setDungeonBonusDouble(ctx, c, args)
+	case "on_unlock_system":
+		return s.reportUnlockedSystems(ctx, c, args)
+	case "set_card_vo", "set_card_favorites", "set_show_cards", "set_girl_random_enable", "set_explore_auto_agent":
 		return s.loggedPreferenceRPC(ctx, c, method, args)
+	case "set_game_score_flag":
+		return s.setGameScoreFlag(ctx, c, args)
 	case "output_shop_enter_log", "output_shop_leave_log", "change_graphics_quality":
 		return s.loggedClientTelemetry(c, method, args)
+	case "set_auto_battle_habit", "set_auto_support_habit":
+		return s.setAutoHabit(ctx, c, method, args)
+	case "save_rune_auto_decompose_stars":
+		return s.saveRuneAutoDecomposeStars(ctx, c, args)
+	case "remove_rune_auto_decompose_stars":
+		return s.removeRuneAutoDecomposeStars(ctx, c, args)
+	case "change_channel":
+		return s.changeChatChannel(ctx, c, args)
 	case "query_mail_content", "read_mail", "delete_mail", "receive_attachment", "receive_all_attachments":
 		return s.mailRPC(ctx, c, method, args)
 	case "compose_cards":
@@ -739,6 +769,12 @@ func (s *Service) Handle(ctx context.Context, c *Connection, method string, args
 		c.identity, c.connType, c.hostnum, c.phase = identity, info.ConnType, info.Hostnum, Authenticated
 		if _, supported := s.Accounts.(ProgressAccounts); supported && len(identity.Avatars) > 0 {
 			if err := s.updateProgress(ctx, c, func(p *Progress) error {
+				if err := ensureMainlineAutoEnhance(p); err != nil {
+					return err
+				}
+				if err := promoteBattleOverflowMailbox(p); err != nil {
+					return err
+				}
 				if err := ensureBasicRewards(p, s.Now(), true); err != nil {
 					return err
 				}
@@ -928,12 +964,12 @@ func (s *Service) BecomePlayer(c *Connection) ([]Push, error) {
 	if err := s.refreshHumanPresence(context.Background(), c); err != nil {
 		log.Printf("真人在线租约登记失败，将由Tick重试：%v", err)
 	}
-	if err := s.refreshActivityAwards(context.Background(), c); err != nil {
-		log.Printf("活动排行结奖初始化失败，将由Tick重试：%v", err)
+	calendarCtx, cancelCalendar := context.WithTimeout(context.Background(), 5*time.Second)
+	if err := s.refreshPlayerActivityCalendar(calendarCtx, c); err != nil {
+		log.Printf("本角色活动日历初始化失败，将等待后台结算或下次登录：%v", err)
 	}
-	if err := s.refreshPvpAwards(context.Background(), c); err != nil {
-		log.Printf("首次玩家竞技结奖刷新失败，将由Tick重试：%v", err)
-	}
+	cancelCalendar()
+	// 全服活动/PVP结算仍只由唯一后台任务负责；这里至多更新本角色。
 	// on_login_success/on_become_player 是无参普通方法（argc=1 仅 self），客户端 entity_message
 	// 分发必然传入 parameters 实参而无法调用（实机 TypeError）；改由启动期热修触发。
 	// on_refresh_login（主城初始化链入口，dis/2034D84C.asm、preload_mgr.py）不在此推送：

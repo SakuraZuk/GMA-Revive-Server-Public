@@ -14,6 +14,19 @@ import (
 
 // ObjectID 在传输层编码为客户端 ExtType 42，避免嵌套玩家 ID 被当成文本。
 type ObjectID string
+
+// 原生37C6CA84：NORMAL_BATTLE=1。副本活动类型与战斗模式是不同枚举；
+// 探索活动类型2若写入模式，会触发5FBB9C5E的同步PVP跳过布阵分支。
+const nativeNormalBattleType = 1
+
+func ordinaryBattleTransportType(activityType int) int {
+	if activityType == 2 {
+		return nativeNormalBattleType
+	}
+	// 特殊活动的原生模式另有专用检查；本批只修复已取证的探索碰撞。
+	return activityType
+}
+
 type BattleSession struct {
 	UUID      string `json:"uuid"`
 	DungeonID int    `json:"dungeon_id"`
@@ -37,6 +50,13 @@ type BattleSession struct {
 	// 结算计数防重：battle_result 只推一次，new_task 通关计数同点推进一次。
 	ResultCounted bool `json:"result_counted,omitempty"`
 	RewardGranted bool `json:"reward_granted,omitempty"`
+	// 结果接收先持久抽奖收据，再在结算事务兑现，失败重试不重新抽取。
+	RewardBonusPlan      []BattleBonusReceipt `json:"reward_bonus_plan,omitempty"`
+	RewardPlanFrozen     bool                 `json:"reward_plan_frozen,omitempty"`
+	RewardResult         *battleEnvelope      `json:"reward_result,omitempty"`
+	RewardPlannedAt      int64                `json:"reward_planned_at,omitempty"`
+	RewardOverflowMailed bool                 `json:"reward_overflow_mailed,omitempty"`
+	RewardExtraPlanStart *int                 `json:"reward_extra_plan_start,omitempty"`
 	// 客户端权威观察链（bridge rev 12）：桥握手、事件序号与显式结果。
 	Team             []string               `json:"team,omitempty"`
 	RecoveredFrom    string                 `json:"recovered_from,omitempty"`
@@ -93,7 +113,7 @@ func (s *Service) enterDungeon(ctx context.Context, c *Connection, args []json.R
 	}
 	definition, known := dungeonCatalog[id]
 	if !known {
-		return nil, errors.New("未知副本")
+		return nil, runeReject("RET_DUNGEON_DATA_ERROR", "未知副本")
 	}
 	if id == asyncRule().DungeonID {
 		if _, ok := extra["asyn_pvp_eid"]; !ok {
@@ -151,7 +171,7 @@ func (s *Service) enterDungeon(ctx context.Context, c *Connection, args []json.R
 		// 不能使先前已扣费但尚未结束的战斗无法重入。
 		recovering := p.Battle != nil && !p.Battle.Finished && p.Battle.DungeonID == id
 		if !recovering && !canEnterDungeon(p, id) {
-			return errors.New("引导期间的副本与当前引导不匹配")
+			return runeReject("RET_DUNGEON_LOCKED", "引导期间的副本与当前引导不匹配")
 		}
 		if p.Battle != nil && !p.Battle.Finished && p.Battle.DungeonID != id {
 			queued = true
@@ -162,8 +182,9 @@ func (s *Service) enterDungeon(ctx context.Context, c *Connection, args []json.R
 				return errors.New("已有其他战斗会话")
 			}
 			session = *p.Battle
-			// 教学及4101/4102实证同连接重复入场；学会守护专用重新布阵保持原样。
-			deduplicate := id == 10001 || id == 10002 || id >= 501 && id <= 510 || definition.Type == 9
+			// 普通/活动关卡同连接同UUID已创建模型时，重复入口不能再次prepare
+			// 或重置Loaded/Started。学会守护的专用重新布阵保留原有路径。
+			deduplicate := p.Battle.ActivityContext == nil || p.Battle.ActivityContext.LeagueProtect == nil
 			if deduplicate && c.ordinaryPrepareUUID == session.UUID {
 				duplicatePrepare = true
 				return nil
@@ -193,7 +214,7 @@ func (s *Service) enterDungeon(ctx context.Context, c *Connection, args []json.R
 		var paidMaterials map[int]int64
 		if activity == nil {
 			var err error
-			paidMaterials, err = prepareOrdinaryDungeonCosts(p, id)
+			paidMaterials, err = prepareOrdinaryDungeonCosts(p, id, s.Now())
 			if err != nil {
 				return err
 			}
@@ -208,8 +229,12 @@ func (s *Service) enterDungeon(ctx context.Context, c *Connection, args []json.R
 			return err
 		}
 		powerCost *= remainingDungeonPowerMultiple(p, id)
+		powerCost, err = prepareOrdinaryDoubleCosts(p, id, powerCost, paidMaterials)
+		if err != nil {
+			return err
+		}
 		if !p.consumePower(powerCost, s.Now()) {
-			return errors.New("体力不足")
+			return runeReject("RET_DUNGEON_POWER_NOT_ENOUGH", "体力不足")
 		}
 		if activity != nil {
 			activity.PaidPower = int64(powerCost)
@@ -258,7 +283,7 @@ func (s *Service) enterDungeon(ctx context.Context, c *Connection, args []json.R
 		// 桥脚本必须在 shadow_battle 构造前安装（on_query_hotfix_success 直接执行源码）。
 		push("Avatar", "on_query_hotfix_success", clientExtensionsScript(), bridgeHotfixIndex),
 		Callback(cb, []any{0}),
-		push("Avatar", "start_server_battle_ok", definition.Type, id, ObjectID(session.UUID), activityBattleExtra(session.ActivityContext, session.Extra)),
+		push("Avatar", "start_server_battle_ok", ordinaryBattleTransportType(definition.Type), id, ObjectID(session.UUID), activityBattleExtra(session.ActivityContext, session.Extra)),
 	}
 	if len(layout.Fighting) > 0 || len(layout.Support) > 0 {
 		pushes = append(pushes, battleSync("set_last_fighting_cards", lastFightingWire(playerID, layout.Fighting, layout.Support)))
@@ -278,7 +303,7 @@ func dungeonEntryPush(p Progress, id int) Push {
 		finished = 1
 	}
 	return push("Avatar", "client_prop_set", []any{"dungeon_mgr", id,
-		map[string]any{"dungeon_id": id, "finished": finished}})
+		map[string]any{"dungeon_id": id, "finished": finished, "double": p.DungeonBonusDouble[id]}})
 }
 
 // storyDungeon 结算纯剧情节点：进度推进后回 battle_result，不开战。
@@ -308,7 +333,7 @@ func (s *Service) storyDungeonExtra(ctx context.Context, c *Connection, cb, id i
 		}
 		var paidMaterials map[int]int64
 		if activity == nil {
-			paidMaterials, err = prepareOrdinaryDungeonCosts(p, id)
+			paidMaterials, err = prepareOrdinaryDungeonCosts(p, id, s.Now())
 			if err != nil {
 				return err
 			}
@@ -318,6 +343,10 @@ func (s *Service) storyDungeonExtra(ctx context.Context, c *Connection, cb, id i
 			return err
 		}
 		powerCost *= remainingDungeonPowerMultiple(p, id)
+		powerCost, err = prepareOrdinaryDoubleCosts(p, id, powerCost, paidMaterials)
+		if err != nil {
+			return err
+		}
 		if !p.consumePower(powerCost, s.Now()) {
 			return errors.New("剧情副本体力不足")
 		}
@@ -345,6 +374,9 @@ func (s *Service) storyDungeonExtra(ctx context.Context, c *Connection, cb, id i
 			}
 		}
 		settle = settleClientBattle(p, fake, envelope, hexOf(selectedOID(c)), s.Now())
+		if err := ensureMainlineAutoEnhance(p); err != nil {
+			return err
+		}
 		settle.remainingCompletion = remainingDungeonCompletionPushes(*p, fake)
 		settle.fullBonus = box
 		p.Battle = nil
@@ -357,7 +389,10 @@ func (s *Service) storyDungeonExtra(ctx context.Context, c *Connection, cb, id i
 	if err != nil {
 		return nil, err
 	}
-	pushes := append([]Push{Callback(cb, []any{0})}, settlementPushes...)
+	// 原生check_site_finished只读取dungeon_mgr.finished，不读取服务器内部
+	// ClearedDungeons。剧情同样必须在battle_result之前同步真实完成行；
+	// 重入同步已提交进度，不重复首通奖励，也不靠重启刷新世界地图。
+	pushes := append([]Push{Callback(cb, []any{0}), dungeonEntryPush(c.SelectedAvatarUnsafe().Progress, id)}, settlementPushes...)
 	return pushes, nil
 }
 
@@ -408,6 +443,25 @@ func (s *Service) battleLoaded(ctx context.Context, c *Connection, args []json.R
 	if c.phase != Playing || len(args) != 0 {
 		return nil, errors.New("战斗加载完成需要玩家状态及空参数")
 	}
+	if r := c.SelectedAvatarUnsafe().Progress.Social.HumanRoom; humanRoomActive(r) {
+		// Android实际上报load_entity_finish；加载状态必须在共同房间双角色
+		// 事务内同步，不能只改本人Battle而永久等待pvp_load_complete。
+		_, err := s.humanTransaction(ctx, c, func(r *HumanPvpRoom, v map[string]*Avatar, id string) error {
+			b := v[id].Progress.Battle
+			if b == nil || b.UUID != r.UUID || b.Finished || (r.Status != "loading" && r.Status != "fighting") {
+				return errors.New("真人加载完成的战斗归属无效")
+			}
+			own := r.Players[id]
+			own.Loaded = true
+			r.Players[id] = own
+			b.Loaded = true
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		return s.advancePvpLoadBarrier(ctx, c)
+	}
 	battleUUID := ""
 	if err := s.updateProgress(ctx, c, func(p *Progress) error {
 		if p.Battle == nil {
@@ -433,7 +487,7 @@ func (s *Service) battleLoaded(ctx context.Context, c *Connection, args []json.R
 		log.Printf("实体加载完成，接续延迟的 battle_fighting uuid=%s", battleUUID)
 		return s.battleFighting(ctx, c, pending)
 	}
-	return nil, nil
+	return s.advancePvpLoadBarrier(ctx, c)
 }
 
 func (s *Service) battleFighting(ctx context.Context, c *Connection, args []json.RawMessage) ([]Push, error) {
@@ -443,13 +497,29 @@ func (s *Service) battleFighting(ctx context.Context, c *Connection, args []json
 	if c.phase != Playing || len(args) != 1 {
 		return nil, errors.New("战斗准备需要玩家状态及阵容字典")
 	}
-	layout, err := parseBattleLayout(args[0])
-	if err != nil {
-		return nil, err
-	}
 	current := c.SelectedAvatarUnsafe().Progress.Battle
 	if current == nil {
 		return nil, errors.New("没有战斗会话")
+	}
+	// 原生客户端在快速切场、教学演出回调或网络重试时，可能在开战成功后
+	// 再补发一份已经失去battle_cards对象的battle_fighting。阵容已在首次
+	// 开战事务中冻结，重复请求必须幂等忽略，不能重新解析旧对象后向客户端
+	// 回送业务失败；任何伪造内容也不会改变已开始会话或阵容。
+	if c.battleStartSent || current.Started {
+		log.Printf("忽略已开始战斗的重复 battle_fighting dungeon=%d", current.DungeonID)
+		return nil, nil
+	}
+	// 同步PVP在send_pvp_cards阶段已由服务器验证并锁定阵容。
+	// 部分旧客户端在收到就绪通知后，会把battle_cards自定义对象
+	// 重复上报成null或旧形状；此处必须使用锁定快照，不能再信任
+	// 或依赖客户端的第二份阵容。普通PVE仍走严格原生字典解析。
+	layout, lockedSyncPvp := syncPvpLockedBattleLayout(c.SelectedAvatarUnsafe().Progress)
+	if !lockedSyncPvp {
+		var err error
+		layout, err = parseBattleLayoutForDungeon(args[0], current.DungeonID)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if !current.Loaded {
 		c.pendingBattleFightingArgs = []json.RawMessage{append(json.RawMessage(nil), args[0]...)}
@@ -457,8 +527,7 @@ func (s *Service) battleFighting(ctx context.Context, c *Connection, args []json
 		log.Printf("battle_fighting 等待实体加载 uuid=%s dungeon=%d", current.UUID, current.DungeonID)
 		return nil, nil
 	}
-	team := layout.team()
-	placeholder := len(team) == 0 // 只有纯占位阵容走教学角色，混合空槽不得漏卡。
+	var team []string
 	started := false
 	var progress *Progress
 	if err := s.updateBattleFormation(ctx, c, layout, 0, true, func(p *Progress) error {
@@ -467,6 +536,12 @@ func (s *Service) battleFighting(ctx context.Context, c *Connection, args []json
 		}
 		if c.battleStartSent {
 			return nil
+		}
+		// 入事务后重读锁定快照，避免用于开战的阵容依赖事务外旧值。
+		if locked, ok := syncPvpLockedBattleLayout(*p); ok {
+			layout = locked
+		} else if lockedSyncPvp {
+			return errors.New("同步PVP锁定阵容已失效")
 		}
 		if err := validateBattleLayout(*p, layout); err != nil {
 			return err
@@ -477,6 +552,7 @@ func (s *Service) battleFighting(ctx context.Context, c *Connection, args []json
 			}
 		}
 		copy := cloneBattleLayout(layout)
+		team = layout.team()
 		p.Battle.Layout = &copy
 		p.Battle.Team = append([]string{}, team...)
 		if err := freezeActivityRankCards(p, p.Battle); err != nil {
@@ -507,6 +583,7 @@ func (s *Service) battleFighting(ctx context.Context, c *Connection, args []json
 	if !started {
 		return nil, nil
 	}
+	placeholder := len(team) == 0 // 只有纯占位阵容走教学角色，混合空槽不得漏卡。
 	c.battleStartSent = true
 	var playerID ObjectID
 	// Handle 已持有连接锁，此处直接读取鉴权身份，不能再调用 SelectedAvatar 加锁。
@@ -551,6 +628,21 @@ func (s *Service) battleFighting(ctx context.Context, c *Connection, args []json
 	return append(pushes, battleSync("battle_fighting"), battleSync("start"), battleSync("check_on_battle_start")), nil
 }
 
+// syncPvpLockedBattleLayout只识别当前UUID的已就绪同步PVP。
+// 返回独立切片，防止战斗会话与匹配快照共享可变底层数组。
+func syncPvpLockedBattleLayout(p Progress) (BattleLayout, bool) {
+	if p.Battle == nil || p.SyncPvpMatch == nil ||
+		p.SyncPvpMatch.Status != syncPvpMatchReady ||
+		p.Battle.UUID == "" || p.Battle.UUID != p.SyncPvpMatch.BattleUUID ||
+		len(p.SyncPvpMatch.OwnFighting) == 0 {
+		return BattleLayout{}, false
+	}
+	return BattleLayout{
+		Fighting: append([]string{}, p.SyncPvpMatch.OwnFighting...),
+		Support:  append([]string{}, p.SyncPvpMatch.OwnSupport...),
+	}, true
+}
+
 func sameBattleSlots(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
@@ -590,19 +682,12 @@ func (s *Service) Tick(ctx context.Context, c *Connection) (result []Push, resul
 		}
 	}()
 	defer func() {
-		if resultErr == nil && !finishingLogin {
+		if resultErr == nil && !finishingLogin && ctx.Err() == nil {
 			if c.phase == Playing {
-				if s.Now().Unix() < c.nextPvpAwardRetry {
-					// 上次后台结奖失败后留出重试间隔，不阻断普通战斗事件。
-				} else if err := s.refreshPvpAwards(ctx, c); err != nil {
-					c.nextPvpAwardRetry = s.Now().Unix() + 5
-					log.Printf("竞技与助战周期结奖失败，将重试：%v", err)
-				} else {
-					daily, err := s.refreshDailyState(ctx, c)
-					result = append(daily, result...)
-					if err != nil {
-						log.Printf("在线日界刷新失败，将在60秒后重试：%v", err)
-					}
+				daily, err := s.refreshDailyState(ctx, c)
+				result = append(daily, result...)
+				if err != nil {
+					log.Printf("在线日界刷新失败，将在60秒后重试：%v", err)
 				}
 			}
 			result = append(s.flushPlayerRefresh(ctx, c), result...)
@@ -614,6 +699,9 @@ func (s *Service) Tick(ctx context.Context, c *Connection) (result []Push, resul
 			result = append(s.flushMailbox(c), result...)
 		}
 	}()
+	if ctx.Err() != nil {
+		return nil, nil
+	}
 	if finishingLogin {
 		if s.Now().UnixMilli() < c.nextLoginFinishRetry {
 			return nil, nil
@@ -623,6 +711,12 @@ func (s *Service) Tick(ctx context.Context, c *Connection) (result []Push, resul
 			return nil, nil // 原凭据已留在连接，失败不标记成功，稍后重试。
 		}
 		return pushes, nil
+	}
+	// 已卡在实际加载与握手均完成的会话也沿冻结阵容推进，无须新的UI回调。
+	if c.phase == Playing {
+		if pushes, err := s.advancePvpLoadBarrier(ctx, c); err != nil || len(pushes) > 0 {
+			return pushes, err
+		}
 	}
 	if c.phase != Playing || !c.battleStartSent {
 		return nil, nil

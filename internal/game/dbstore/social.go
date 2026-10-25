@@ -1,6 +1,7 @@
 package dbstore
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
@@ -25,7 +26,7 @@ func (s *Store) SocialAvatars(ctx context.Context, q game.SocialSearch) ([]game.
 		}
 		ids = append(ids, b)
 	}
-	rows, err := s.pool.Query(ctx, `SELECT a.avatar_oid,a.uid,a.hostnum,a.nickname,a.level,a.head_id,a.head_box_id,a.custom_head_image_url,a.account,a.gender,a.nickname_set,a.created_at,p.state FROM avatars a JOIN avatar_progress p ON p.avatar_oid=a.avatar_oid WHERE (cardinality($1::bytea[])=0 OR a.avatar_oid=ANY($1)) AND ($2::bigint=0 OR a.uid=$2) AND ($3::int=0 OR a.hostnum=$3) AND ($4::text='' OR a.nickname=$4) ORDER BY a.avatar_oid LIMIT $5`, ids, q.UID, q.Hostnum, q.Nickname, limit)
+	rows, err := s.pool.Query(ctx, `SELECT a.avatar_oid,a.uid,a.hostnum,a.nickname,a.level,a.head_id,a.head_box_id,a.custom_head_image_url,a.account,a.gender,a.nickname_set,a.created_at,CASE WHEN $8::boolean THEN jsonb_build_object('server_avatar_level',p.state->'server_avatar_level','selected_head_id',p.state->'selected_head_id','selected_head_box_id',p.state->'selected_head_box_id','custom_head_cleared',p.state->'custom_head_cleared','sync_pvp_score',p.state->'sync_pvp_score','server_social',jsonb_build_object('friends',p.state->'server_social'->'friends','blacklist',p.state->'server_social'->'blacklist')) WHEN $9::boolean THEN jsonb_build_object('server_avatar_level',p.state->'server_avatar_level','selected_head_id',p.state->'selected_head_id','selected_head_box_id',p.state->'selected_head_box_id','custom_head_cleared',p.state->'custom_head_cleared','sync_pvp_score',p.state->'sync_pvp_score','assist_card_uuid',p.state->'assist_card_uuid','cards',(SELECT COALESCE(jsonb_agg(card),'[]'::jsonb) FROM jsonb_array_elements(COALESCE(NULLIF(p.state->'cards','null'::jsonb),'[]'::jsonb)) card WHERE card->>'uuid'=p.state->>'assist_card_uuid'),'rune_mgr',(SELECT COALESCE(jsonb_object_agg(r.key,r.value),'{}'::jsonb) FROM jsonb_each(COALESCE(NULLIF(p.state->'rune_mgr','null'::jsonb),'{}'::jsonb)) r WHERE r.value->>'card_uuid'=p.state->>'assist_card_uuid'),'server_social',jsonb_build_object('friends',p.state->'server_social'->'friends','blacklist',p.state->'server_social'->'blacklist')) ELSE p.state END FROM avatars a JOIN avatar_progress p ON p.avatar_oid=a.avatar_oid WHERE (cardinality($1::bytea[])=0 OR a.avatar_oid=ANY($1)) AND ($2::bigint=0 OR a.uid=$2) AND ($3::int=0 OR a.hostnum=$3) AND ($4::text='' OR a.nickname=$4) AND (NOT $6::boolean OR coalesce(p.state->>'assist_card_uuid','')<>'') AND (NOT $7::boolean OR coalesce(p.state->'server_owned_leagues','{}'::jsonb) NOT IN ('{}'::jsonb,'null'::jsonb)) ORDER BY a.avatar_oid LIMIT $5`, ids, q.UID, q.Hostnum, q.Nickname, limit, q.AssistOnly, q.LeagueOwnersOnly, q.FriendSummaryOnly, q.AssistSummaryOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -45,6 +46,25 @@ func (s *Store) SocialAvatars(ctx context.Context, q game.SocialSearch) ([]game.
 	return out, rows.Err()
 }
 func (s *Store) UpdateSocial(ctx context.Context, ids []string, fn func(map[string]*game.Avatar) error) ([]game.Avatar, error) {
+	return s.updateSocial(ctx, ids, "", fn)
+}
+
+// 助战刷新只改请求者。提供者保持原锁顺序与实时授权读取，但不解码无关库存。
+func (s *Store) UpdateAssistRefresh(ctx context.Context, self string, ids []string, fn func(map[string]*game.Avatar) error) ([]game.Avatar, error) {
+	if _, err := game.SocialOID(self); err != nil {
+		return nil, err
+	}
+	found := false
+	for _, id := range ids {
+		found = found || id == self
+	}
+	if !found {
+		return nil, errors.New("助战刷新缺少请求者")
+	}
+	return s.updateSocial(ctx, ids, self, fn)
+}
+
+func (s *Store) updateSocial(ctx context.Context, ids []string, assistSelf string, fn func(map[string]*game.Avatar) error) ([]game.Avatar, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	tx, err := s.pool.Begin(ctx)
@@ -52,7 +72,13 @@ func (s *Store) UpdateSocial(ctx context.Context, ids []string, fn func(map[stri
 		return nil, err
 	}
 	defer rollback(tx)
+	if _, err = tx.Exec(ctx, `SET LOCAL lock_timeout = '1s'`); err != nil {
+		return nil, err
+	}
 	ids = append([]string{}, ids...)
+	if err = lockSocialDependency(ctx, tx); err != nil {
+		return nil, err
+	}
 	sort.Strings(ids)
 	ids = uniqueSocialIDs(ids)
 	// 双玩家写入先按OID锁全部avatars，再按同序读取进度；与管理和普通写入一致。
@@ -67,16 +93,26 @@ func (s *Store) UpdateSocial(ctx context.Context, ids []string, fn func(map[stri
 		}
 	}
 	avatars := map[string]*game.Avatar{}
+	original := map[string][]byte{}
 	for _, id := range ids {
 		oid, e := game.SocialOID(id)
 		if e != nil {
 			return nil, e
 		}
-		av, e := loadSocialAvatar(ctx, tx, oid)
+		var av game.Avatar
+		if assistSelf != "" && id != assistSelf {
+			av, e = loadAssistSocialAvatar(ctx, tx, oid)
+		} else {
+			av, e = loadSocialAvatar(ctx, tx, oid)
+		}
 		if e != nil {
 			return nil, e
 		}
 		avatars[id] = &av
+		original[id], err = json.Marshal(av.Progress)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if err = fn(avatars); err != nil {
 		return nil, err
@@ -84,8 +120,21 @@ func (s *Store) UpdateSocial(ctx context.Context, ids []string, fn func(map[stri
 	out := []game.Avatar{}
 	for _, id := range ids {
 		av := avatars[id]
-		if err = saveSocialAvatar(ctx, tx, av); err != nil {
-			return nil, err
+		current, e := json.Marshal(av.Progress)
+		if e != nil {
+			return nil, e
+		}
+		if assistSelf != "" && id != assistSelf {
+			if !bytes.Equal(original[id], current) {
+				return nil, errors.New("助战刷新不能修改提供者资产或关系")
+			}
+			continue
+		}
+		// 只读取的助战/社交对手不重写整份JSON，也不抬高版本引发在线全量回载。
+		if !bytes.Equal(original[id], current) {
+			if err = saveSocialAvatar(ctx, tx, av); err != nil {
+				return nil, err
+			}
 		}
 		out = append(out, *av)
 	}
@@ -182,6 +231,9 @@ func (s *Store) UpdateComment(ctx context.Context, oid []byte, id string, fn fun
 		return game.Avatar{}, game.CardComment{}, err
 	}
 	defer rollback(tx)
+	if _, err = tx.Exec(ctx, `SET LOCAL lock_timeout = '1s'`); err != nil {
+		return game.Avatar{}, game.CardComment{}, err
+	}
 	// 评论锁先于任何玩家行锁，各点赞/编辑/删除使用同一顺序。
 	if _, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,7142))`, id); err != nil {
 		return game.Avatar{}, game.CardComment{}, err

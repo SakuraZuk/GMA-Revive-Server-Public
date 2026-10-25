@@ -1,20 +1,26 @@
 # -*- coding: utf-8 -*-
-# 真人共享输入桥；只扩展兼容的rev12至15，不替换其原生技能演算。
+# 真人共享输入桥；只扩展兼容的rev12至16，不替换其原生技能演算。
 def _install_revival_human_bridge():
     import time
     import gworld
     from battle_logic import client_battle
     from battle_logic.controlers import server as server_control
     shadow = client_battle.shadow_battle
-    if getattr(shadow, '_revival_bridge_version', 0) not in (12, 13, 14, 15):
-        raise RuntimeError('共享输入桥需要兼容战斗桥版本12至15')
-    if getattr(shadow, '_revival_human_bridge', 0) == 2:
+    if getattr(shadow, '_revival_bridge_version', 0) not in (12, 13, 14, 15, 16):
+        raise RuntimeError('共享输入桥需要兼容战斗桥版本12至16')
+    base_revision = getattr(shadow, '_revival_start_order_revision', 0)
+    installed_revision = getattr(shadow, '_revival_human_base_revision', 0)
+    if (getattr(shadow, '_revival_human_bridge', 0) == 2
+            and installed_revision == base_revision):
         return
     def function(method):
         return getattr(method, 'im_func', method)
     originals = getattr(shadow, '_revival_human_originals', {})
     def original(name, captured):
         method = function(getattr(shadow, name))
+        # 普通桥升级会替换这些钩子；重新包裹现行函数，不能取回旧report闭包。
+        if installed_revision != base_revision and name != 'set_battle_speed':
+            return method
         if name in originals:
             return originals[name]
         if getattr(shadow, '_revival_human_bridge', 0):
@@ -150,6 +156,7 @@ def _install_revival_human_bridge():
         'notify_battle_finish': old_notify, 'prepare': old_prepare,
         'revival_set_battle_preferences': old_preferences, 'set_battle_speed': old_speed}
     shadow._revival_human_bridge = 2
+    shadow._revival_human_base_revision = base_revision
 def _revival_start_human_bridge():
     try:
         _install_revival_human_bridge()

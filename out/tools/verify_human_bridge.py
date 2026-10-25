@@ -92,6 +92,17 @@ def main():
     assert len(events) == count
     b.extra_info = {}
     assert b.notify_battle_finish() == "普通原生结果"
+    # 普通桥热升级重置钩子后，共享桥需要重装到新函数且保持幂等。
+    for name, method in Shadow._revival_human_originals.items():
+        if name != 'set_battle_speed':
+            setattr(Shadow, name, method)
+    Shadow.notify_battle_finish = lambda self: '新版普通结果'
+    Shadow._revival_start_order_revision = 1
+    scope['_install_revival_human_bridge']()
+    updated = Shadow.notify_battle_finish
+    assert b.notify_battle_finish() == '新版普通结果'
+    scope['_install_revival_human_bridge']()
+    assert Shadow.notify_battle_finish is updated
     print("真人共享桥控制验证通过：原生调用、输入序号、同UUID去重、重放、人工输入、分歧中止；Android双端演算仍待MuMu实测。")
 
 

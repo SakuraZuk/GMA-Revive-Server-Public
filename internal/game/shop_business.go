@@ -157,7 +157,7 @@ func commodityProperties(p Progress, now time.Time) map[string]any {
 }
 
 // dungeon_check原生组合为组间且、组内或。未知条件拒绝，不当作放行。
-func shopConditions(conditions [][][]json.RawMessage, p Progress, level int) (bool, error) {
+func shopConditions(conditions [][][]json.RawMessage, p Progress, level int, clock ...time.Time) (bool, error) {
 	for _, group := range conditions {
 		if len(group) == 0 {
 			continue
@@ -171,6 +171,23 @@ func shopConditions(conditions [][][]json.RawMessage, p Progress, level int) (bo
 			var kind, value int
 			if json.Unmarshal(c[0], &kind) != nil {
 				unknown = true
+				continue
+			}
+			if kind == 13 {
+				var text string
+				if json.Unmarshal(c[1], &text) != nil || len(clock) != 1 {
+					return false, errors.New("活动天数条件需要文本和服务端时钟")
+				}
+				parts := strings.Split(text, "#")
+				if len(parts) != 2 {
+					return false, errors.New("活动天数条件格式无效")
+				}
+				id, e1 := strconv.Atoi(parts[0])
+				day, e2 := strconv.Atoi(parts[1])
+				if e1 != nil || e2 != nil || id <= 0 || day < 1 || len(activityData("activity_type", id)) == 0 {
+					return false, errors.New("活动天数条件数值无效")
+				}
+				matched = matched || activityDayNumber(id, clock[0]) >= day
 				continue
 			}
 			if kind == 12 {
@@ -288,7 +305,7 @@ func buyCommodity(p *Progress, id int, count int64, selectID int, level int, now
 	if (!selfSelect && selectID != 0) || (selfSelect && selectID <= 0) {
 		return nil, runeReject("RET_SHOP_INVALID", "商品自选材料参数不符合类型")
 	}
-	allowed, err := shopConditions(r.Unlock, *p, level)
+	allowed, err := shopConditions(r.Unlock, *p, level, now)
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +313,7 @@ func buyCommodity(p *Progress, id int, count int64, selectID int, level int, now
 		return nil, runeReject("RET_FORBID_SHOP", "商品尚未解锁")
 	}
 	if len(r.Invalid) > 0 {
-		invalid, err := shopConditions(r.Invalid, *p, level)
+		invalid, err := shopConditions(r.Invalid, *p, level, now)
 		if err != nil {
 			return nil, err
 		}
@@ -577,7 +594,19 @@ func grantNativeItem(p *Progress, id int, amount int64, level int, now time.Time
 			return errors.New("商品奖励余额溢出")
 		}
 		if mat.Limit > 0 && amount > mat.Limit-m.Count {
-			return runeReject("RET_SHOP_BUY_MAX_COUNT_LIMIT", "商品材料达到容量上限")
+			if p.battleRewardOverflow == nil {
+				return runeReject("RET_SHOP_BUY_MAX_COUNT_LIMIT", "商品材料达到容量上限")
+			}
+			available := max(int64(0), mat.Limit-m.Count)
+			excess := amount - available
+			if p.battleRewardOverflow[id] > math.MaxInt64-excess {
+				return errors.New("战斗溢出奖励数量溢出")
+			}
+			p.battleRewardOverflow[id] += excess
+			amount = available
+			if amount == 0 {
+				return nil
+			}
 		}
 		m.ID = id
 		m.Count += amount
@@ -612,6 +641,14 @@ func grantNativeItem(p *Progress, id int, amount int64, level int, now time.Time
 			return e
 		}
 		changes[id] += amount
+	case 15:
+		granted, err := grantRuneStone(p, id, now)
+		if err != nil {
+			return err
+		}
+		if granted {
+			changes[id]++
+		}
 	case 13:
 		cardID := 0
 		for candidate, appearance := range androidCardAppearances {

@@ -258,7 +258,8 @@ def _install_hs_activity_schedules():
     def set_time_panel(self):
         activity_id = data.chapter[self.chapter_id].chapter_type
         if schedules.get(activity_id, {}).get('permanent', False):
-            self.text_limit_time.set_string(u'常驻开放')
+            # Android Python2的C++ std::string绑定要求UTF-8字节串，不能传unicode。
+            self.text_limit_time.set_string(u'常驻开放'.encode('utf-8'))
             return None
         return activity_item._hs_native_set_time_panel(self)
 
@@ -266,7 +267,7 @@ def _install_hs_activity_schedules():
         activity_id = beginner_module.activity_mission_id
         if not schedules.get(activity_id, {}).get('permanent', False):
             return beginner_type._hs_native_update_activity_count_down(self)
-        self.title_time.set_string(u'常驻开放')
+        self.title_time.set_string(u'常驻开放'.encode('utf-8'))
         if self.count_down_handle:
             self.cancel_callback(self.count_down_handle)
             self.count_down_handle = None

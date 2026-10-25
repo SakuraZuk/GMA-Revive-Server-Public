@@ -96,7 +96,7 @@ func (s *Service) taskTowerRPC(ctx context.Context, c *Connection, args []json.R
 		if p.Battle != nil && !p.Battle.Finished && p.Battle.DungeonID != id {
 			return errors.New("已有其他战斗会话")
 		}
-		if err := activityData("dungeons", id).conditions("unlock_condition", *p, p.AvatarLevel); err != nil {
+		if err := activityData("dungeons", id).conditions("unlock_condition", *p, p.AvatarLevel, s.Now()); err != nil {
 			return err
 		}
 		ensureRemainingState(p).PendingTaskDungeon = id

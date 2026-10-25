@@ -20,6 +20,9 @@ func (s *Store) SetNicknameGender(ctx context.Context, oid []byte, name string, 
 		return game.Avatar{}, err
 	}
 	defer rollback(tx)
+	if _, err = tx.Exec(ctx, `SET LOCAL lock_timeout = '1s'`); err != nil {
+		return game.Avatar{}, err
+	}
 	var account, current string
 	var currentGender, hostnum int
 	var chosen bool

@@ -1,6 +1,28 @@
 package mobileproto
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
+
+func TestTupleKeyMatchesNativeCustomDictAndNeverEmitsArrayMapKey(t *testing.T) {
+	if got := TupleKey(1, 2); got != "(1, 2)" {
+		t.Fatalf("二元Tuple键格式错误: %q", got)
+	}
+	if got := TupleKey(1, 0, 0, 0, 0); got != "(1, 0, 0, 0, 0)" {
+		t.Fatalf("五元Tuple键格式错误: %q", got)
+	}
+	encoded := EncodeMsgpackValue(nil, Map{{Key: []any{1, 2}, Value: true}})
+	if bytes.Contains(encoded, []byte{0x92, 0x01, 0x02}) {
+		t.Fatalf("复合键仍以msgpack数组发送: %x", encoded)
+	}
+	if !bytes.Contains(encoded, []byte("(1, 2)")) {
+		t.Fatalf("复合键未按原版字符串发送: %x", encoded)
+	}
+	if _, err := DecodeMsgpackToJSON(encoded); err != nil {
+		t.Fatalf("修复后的复合键无法解码: %v", err)
+	}
+}
 
 func TestMsgpackTruncationHugeCountsAndDepthAreRejected(t *testing.T) {
 	valid := EncodeMsgpackMap(map[string]any{"_0": []any{1.25, int64(999999), "中文", map[string]any{"_1": true}}})

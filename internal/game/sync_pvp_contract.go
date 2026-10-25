@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"hs-server/internal/mobileproto"
+	"log"
 	"sort"
 	"strconv"
 	"time"
@@ -377,6 +378,7 @@ func (s *Service) syncPVPLoaded(ctx context.Context, c *Connection, args []json.
 // syncPVPLoadPushes 重连与首次加载共用同一冻结快照。
 func (s *Service) syncPVPLoadPushes(c *Connection, match *SyncPvpMatch, cb int, callback bool) []Push {
 	c.battleStartSent = false
+	c.syncPvpReadyUUID = ""
 	playerID := ObjectID(hexOf(selectedOID(c)))
 	enemyID := ObjectID(robotAvatarEID(match.Robot.ID))
 	enemyTeam := make([]string, 0, len(match.Robot.SyncPvpCards))
@@ -385,10 +387,12 @@ func (s *Service) syncPVPLoadPushes(c *Connection, match *SyncPvpMatch, cb int, 
 	}
 	loadTeams := mobileproto.Map{{Key: playerID, Value: map[string]any{"fighting_cards": battleSlotWire(match.OwnFighting), "support_cards": battleSlotWire(match.OwnSupport)}}, {Key: enemyID, Value: map[string]any{"fighting_cards": battleSlotWire(enemyTeam), "support_cards": []any{}}}}
 	rule, _ := syncPvpScoreRuleFor(match.Score)
+	infos, _ := s.syncPvpSelectInfos(c, match)
 	pushes := []Push{
 		push("Avatar", "on_query_hotfix_success", clientExtensionsScript(), bridgeHotfixIndex),
 		push("Avatar", "start_server_battle_ok", 2, syncPvpRule().DungeonID,
 			ObjectID(match.BattleUUID), s.nativeSoloLoadExtra(c.SelectedAvatarUnsafe().Progress, map[string]any{"sync_pvp": true})),
+		battleSync("revival_restore_pvp_enemy", infos),
 		push("Avatar", "pvp_battle_start_load", loadTeams),
 		battleSync("set_last_fighting_cards", lastFightingWire(playerID, match.OwnFighting, match.OwnSupport)),
 		battleSync("prepare", []any{playerID, enemyID}, rule.DungeonBattleID, match.Seed, syncPvpRule().DungeonID),
@@ -404,6 +408,43 @@ func (s *Service) syncPVPLoadPushes(c *Connection, match *SyncPvpMatch, cb int, 
 		pushes = append(pushes, Callback(cb, []any{RetSuccess}))
 	}
 	return pushes
+}
+
+// advancePvpLoadBarrier 使用选卡阶段冻结的阵容推进正式战斗。shadow_battle
+// 不会创建布阵UI，notify_battle_fighting却进入旧battle_layout.set_ready，
+// 因而不能作为正式场景的开战屏障。实体和桥均就绪后走同一开战事务。
+// 真人每端独立确认；共同房间仍须双方就绪，恢复沿原日志继续。
+func (s *Service) advancePvpLoadBarrier(ctx context.Context, c *Connection) ([]Push, error) {
+	if c == nil || c.phase != Playing {
+		return nil, nil
+	}
+	p := c.SelectedAvatarUnsafe().Progress
+	b := p.Battle
+	if b == nil || b.Finished || !b.Loaded || !b.BridgeReady {
+		return nil, nil
+	}
+	if r := p.Social.HumanRoom; humanRoomActive(r) && r.UUID == b.UUID {
+		own := r.Players[hexOf(selectedOID(c))]
+		if !own.Selected || !own.Loaded || own.Ready || own.Started {
+			return nil, nil
+		}
+		_, pushes, err := s.humanBattleFighting(ctx, c, []json.RawMessage{json.RawMessage(`null`)})
+		if err == nil {
+			log.Printf("真人PVP实际加载与桥握手完成，冻结阵容已就绪")
+		}
+		return pushes, err
+	}
+	if b.Started || c.battleStartSent {
+		return nil, nil
+	}
+	if _, locked := syncPvpLockedBattleLayout(p); !locked {
+		return nil, nil
+	}
+	pushes, err := s.battleFighting(ctx, c, []json.RawMessage{json.RawMessage(`null`)})
+	if err == nil {
+		log.Printf("同步PVP加载屏障完成，已按冻结阵容下发原生开战")
+	}
+	return pushes, err
 }
 
 func (s *Service) cancelSyncPVP(ctx context.Context, c *Connection, args []json.RawMessage) ([]Push, error) {
@@ -439,11 +480,21 @@ type syncPvpRankRow struct {
 
 // querySyncPVPRank 返回跨账号真实排行，本服过滤在存储层分页前完成。
 func (s *Service) querySyncPVPRank(ctx context.Context, c *Connection, method string, args []json.RawMessage) ([]Push, error) {
-	var ownScore int
-	for _, av := range c.identity.Avatars {
-		if av.Hostnum == c.hostnum {
-			ownScore = av.Progress.SyncPvpScore
+	// 本人名次无需榜单或其他角色完整进度；直接使用存储层全量名次查询。
+	if method == "query_sync_pvp_rank" || method == "query_sync_pvp_world_rank" {
+		cb, ok := callbackArg(args)
+		if !ok || len(args) != 1 {
+			return nil, errors.New("同步PVP排行回调参数无效")
 		}
+		host := 0
+		if method == "query_sync_pvp_rank" {
+			host = c.hostnum
+		}
+		rank, err := s.Accounts.SyncPvpRank(ctx, selectedOID(c), host)
+		if err != nil {
+			return nil, err
+		}
+		return []Push{Callback(cb, []any{rank})}, nil
 	}
 	hostFilter := 0
 	if method == "query_sync_pvp_local_rank_list" || method == "query_sync_pvp_rank" {
@@ -505,20 +556,7 @@ func (s *Service) querySyncPVPRank(ctx context.Context, c *Connection, method st
 		}
 		return []Push{push("Avatar", name, list)}, nil
 	}
-	cb, ok := callbackArg(args)
-	if !ok || len(args) != 1 {
-		return nil, errors.New("同步PVP排行回调参数无效")
-	}
-	_ = ownScore
-	hostnum := 0
-	if method == "query_sync_pvp_rank" {
-		hostnum = c.hostnum
-	}
-	rank, err := s.Accounts.SyncPvpRank(ctx, selectedOID(c), hostnum)
-	if err != nil {
-		return nil, err
-	}
-	return []Push{Callback(cb, []any{rank})}, nil
+	return nil, errors.New("未知同步PVP排行请求")
 }
 
 func syncPvpRankWire(row syncPvpRankRow) map[string]any {

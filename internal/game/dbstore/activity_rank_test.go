@@ -38,6 +38,13 @@ func TestPostgresActivityRankingFullCountStableAndReload(t *testing.T) {
 			n.RankDamage = 9999999
 		}
 		p := game.Progress{AvatarLevel: 20, Activities: game.ActivityState{Mountain: &game.MountainState{Dungeons: map[int]game.ActivityProgress{1: d}}, Nian: map[int]game.ActivityProgress{20200001: n}, NianDay: "2026-10-08"}}
+		p.Materials = map[int]game.Material{12: {ID: 12, Count: 123456, Total: 123456}}
+		p.Cards = []game.Card{{UUID: fmt.Sprintf("%024x", i), CardID: 4401, Level: 20, Grade: 1}}
+		p.Battle = &game.BattleSession{UUID: fmt.Sprintf("%024x", i), DungeonID: 102}
+		p.SelectedHeadID = 4401
+		p.SelectedHeadBoxID = 1001
+		p.CustomHeadCleared = true
+		p.Activities.House = &game.HouseFrageState{}
 		raw, err := json.Marshal(p)
 		if err != nil {
 			t.Fatal(err)
@@ -63,6 +70,13 @@ func TestPostgresActivityRankingFullCountStableAndReload(t *testing.T) {
 		}
 		if rows[0].Rank != 1 || rows[0].Avatar.Info.Nickname != "活动排行1" || len(rows[0].Cards) != 1 {
 			t.Fatal("榜首/冻结阵容重载错误", rows[0])
+		}
+		projected := rows[0].Avatar.Progress
+		if projected.Activities.House != nil || projected.Activities.Calendar != nil || kind == 8 && len(projected.Activities.Nian) > 0 || kind == 10 && projected.Activities.Mountain != nil {
+			t.Fatal("排行传输了无关活动存档")
+		}
+		if len(projected.Cards) != 0 || len(projected.Materials) != 0 || projected.Battle != nil || projected.SelectedHeadID != 4401 || projected.SelectedHeadBoxID != 1001 || !projected.CustomHeadCleared {
+			t.Fatal("公开排行读取了无关库存或遗漏已选外观")
 		}
 		if kind == 8 && (rows[0].Score[0] != 2 || rows[0].Score[1] != -1) {
 			t.Fatal("原生负AP成绩错误", rows[0].Score)

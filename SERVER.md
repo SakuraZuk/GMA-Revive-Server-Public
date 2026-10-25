@@ -1,5 +1,927 @@
 # 幻书启世录服务端技术说明
 
+## 2026-10-25 GitHub源码同步与当前阅读入口
+
+纯源码副本的构建、全仓测试及vet通过：顶层400 PASS、106 SKIP、0 FAIL。检查前清除HS_*测试配置，副本只含Git源码文件；未携带数据库、客户端资源和原生运行时。106项外部依赖跳过不计作验收。源码隐私审计覆盖774个文件，公开提交使用noreply身份和独立历史。
+
+本次同步本地最新服务端源码及中文资料，源码热修版本为 **runtime2026101305**（普通战斗桥revision16）。2026-10-25重新执行默认全仓、正式规则全仓和整仓vet均通过。生产发布、真实PostgreSQL与Android记录仍属于各自注明的历史时点，本次没有新的生产部署或实机验收。
+
+最近保存的正式发布报告为2026-10-15的1305：真实PG103 PASS、0 SKIP、5辅助PASS，Linux原生专项与双平台构建通过。游戏SHA256=7d857946a4d7f51d8fac753da1bec465a1bbe99d65bc958b63366d18b5d99064；私有热更SHA256=f453c39821328bc2579f5378acc038b5958b10c035231333f23436e29ff281ec。这些哈希用于辨认历史证据，不代表今天重新核验线上；公开示例配置哈希不同。
+
+普通副本保持Android原生计算；同步/异步PVP采用服务端单原生权威。最新修补包含结算短冲突重试、重复入场/prepare幂等、普通手动原生校验、收藏领奖差量推送、抽卡共享资料、迟到页面回调保护、委托拒绝重同步、失败消息字节类型及开战有界重试。普通胜利好感+1属于本服政策，原服公式待校准。
+
+继续保留后台活动排行长事务锁等待，以及陈列大厅、弱网切换、抽卡后编队、镜像/饕餮结算、试炼荒庭终局和800提示来源等验收门；不能将源码上传写为玩法全部修复。详细接口和历史取证集中在SERVER.md，待修矩阵见REPAIR-TASKS.md。下方旧批次只作历史索引，旧PID、会话编号及“正在发布/待轮询”不可作为当前操作指令。
+
+源码发布只包含服务端源码、示例配置、测试、工具和资料；客户端资源、原生运行时、玩家数据、日志、数据库、密钥和构建产物由本机独立保管。公开仓库接续独立公开历史，禁止推送私有分支或标签。重复的整段发布记录已合并为SERVER.md同名章节引用，未增加长期MD。
+
+## 2026-10-15 当前正式运行版本1305及本批回包契约修补
+
+runtime2026101305已组合发布，游戏PID331114，Linux游戏SHA256=7d857946a4d7f51d8fac753da1bec465a1bbe99d65bc958b63366d18b5d99064；独立热更PID122158，双端配置SHA256=f453c39821328bc2579f5378acc038b5958b10c035231333f23436e29ff281ec。本地三检、双平台构建、Linux原生专项0 SKIP、真实PG103 PASS/0 SKIP/5辅助PASS全部在私有工作区绑定同一源码；组合发布及双核验通过，回滚入口/opt/hs-server/releases/completion-20261015-012631-620686。发布报告out/bug-all-1305-final-completion-release-20261015-012631-620686.json；下文1304及更早记录仅为历史。
+
+本批四项证据驱动修补（均先取现网堆栈再改，不带猜测）：
+
+1. 委托刷新拒绝契约（ED61CEA3.refresh闭包以task_id真值判成败）：现网23:18:56/23:19:05两次`refresh_consign_task_one task=323/316 委托任务不存在`后客户端把失败回包(code,非零id)当成功，init_show触发consign_tasks[id] KeyError、委托页崩溃。服务端失败回包改`(code,0)`走原生show_error_tips，且所有委托拒绝回包先重发当前consign_*属性重同步任务列表（consignSyncPushes）。回归TestRemainingConsignRejectResyncTasksAndZeroCallbackID。
+2. 线上字符串类型契约：客户端msgpack以encoding='utf-8'解码，raw字符串一律变unicode，进tips.set_string(std::string)必抛cannot convert。现网rune_mgr.py:258堆栈=embed_rune_by_template失败分支show_tips(msg)。契印预设、异步竞技开战、原生录像上传的失败msg统一改[]byte走msgpack bin类型让客户端得到str（basic_rewards/sync_pvp_rewards既有同款）。
+3. 阵容预设保存回包晚于页面销毁：battle_team_preset_list.update_team_list访问已释放team_list控件崩溃。客户端热修revision1在控件为None时跳过纯UI重建，预设数据仍由实体属性同步；原生复现+守卫+幂等安装在test_ui_callback_repair_native.py通过。
+4. 战斗好感度（反馈"完成战斗无法获得幻书好感度"）：结算界面按get_card_intimacy与战前快照差值显示+N，服务端此前不发。本服政策=普通战斗胜利后每张出战卡好感+1并压MaxIntimacy上限，经card_common_mgr推送在battle_result前到达；原表win_value=0/win_factor=0.125倍增基数及每日上限无客户端证据，未伪造，待真实数据校准。回归TestBattleWinGrantsFightingCardsIntimacy。
+
+开战入口短锁重试：现网2026-10-14晚battle_fighting多次因55P03直接外抛（匿名样本角色连续四把），客户端无开战推送即"进战斗无反应"。enter_dungeon/battle_fighting按1303基础领奖同规则在同一请求内有界重试3次（retryShortLockConflict），整体回滚后重开；永久错误原样外抛。回归TestBattleFightingRetriesShortLockConflict/PermanentStoreErrorPropagates。发布后短窗仍有1次battle_fighting超时：后台活动排行全服单事务120s超时循环（两天87次）是持锁根因，需dbstore分批改造，未在本批伪造修复。
+
+活动商店不显示兑换物品（密世文字/文字活动反馈）定位结论：客户端activity_dictionary_shop等以data.shop过期窗口过滤；现网145项运营热修已把活动201商店5001/5002及商品窗口重定位为2026-10-07→2037-12-31，原生探针check_shop_unlock=True，初音5010同理。服务端无需改动，待玩家客户端复测；若仍空查其runtime是否最新。送礼反馈现网4次拒绝均为正当规则（无特殊剧情/材料不足）、成功11次，无服务端故障证据。LR800提示在npk全模块与文本表穷尽检索无踪迹，保持未定位，不删不造规则。
+
+## 2026-10-13 当前正式运行版本1304及逆向规则
+
+21:17现网边界：20:58起33035行匿名窗口有get_recommend_leagues数据库超时1次、外部遥测异常4条；服务短窗口不得描述为零报错。MuMu已实际验证主线1-4手动攻击及敌方下一轮推进，尚无弱网和终局证据，当前客户端主线进度不足以开放六类全部入口。
+
+1304已组合发布，游戏PID295321，游戏SHA256=9d9e1a6e0860e33f1626323b60f69876c4526f4dfe2be44ade1e02302eafd5e3；热更PID114795，双端配置SHA256=afe7808c96a5b7a25be19583cff259fa2c285cafe97199ee542d9e55325a40a3。独立核验服务/进程/运行时/环境/服务器列表通过，私有备份已刷新；下文1303及更早记录仅为历史。发布报告out/bug-all-1304-final-completion-release-20261013-205255-502981.json。
+
+结算协议：普通客户端result成功上报后不再上报第二次；服务端必须在55P03/40P01/40001或上下文暂时失败后保留深拷贝pending及已冻结的真实奖励，下一Tick重新开启事务核验收据。永久业务错误不自动循环，不伪造成功。数据库验收注入SQLSTATE并执行整体回滚，覆盖Tick恢复、冷读及唯一收据；不是实际死锁制造证明。
+
+客户端协议：普通战斗桥revision16的手动move_to/use_skill仅在当前战斗已开始且尚未result_sent时走原生本地控制器；非法实体/目标/技能仍拒绝，坐标保持原形状，接受命令仍经log_command上报。竞技权威子类恢复原网络入口；各兼容脚本已同步支持16。prepare仅在同id/参数完全一致时幂等，不同参数保留原生断言；登录恢复revision12仅对同UUID重复入场幂等，异UUID无重建授权仍拒绝。
+
+投影与页面规则：收藏领奖比较前后属性，只发实际变化字段及原回调；登录不提前创建系统房间。抽卡push顺序包含card_common_mgr在card_mgr之前，新模板必须同时有共享资料；召唤页面revision2记录迟到结果但不访问已销毁控件、不将当前页面强切回召唤。详细规则与验证见HANDOFF的1304条目，未新建重复长期MD。
+
+当前候选全仓/正式规则/vet、双平台构建、Linux原生专项0 SKIP通过；真实PG103 PASS、0 SKIP、5辅助PASS。Android已成功登录及领取补给，六类玩法完整图形验收尚未完成；不得以这些证据声称无卡死或800提示已定位。
+
+## 2026-10-13 玩家反馈续修：奖励事务短冲突与天体4410跨级卡死
+
+本轮runtime2026101303已组合发布，2026-10-13 19:06独立核验通过：游戏PID289576，运行二进制SHA256=0efc2941e1d4c5c66a89f2f3d468804135fb6551de5bcd496bbfd9b20a3d180f；独立热更PID114047，双端热更SHA256=14c2a5a3adc1ad27dd58268e7cadcfa5cacc89be23947f3558d501e8ea0d3090。游戏、PostgreSQL、SDK、登录和独立热更服务均为active，后端直连、客户端HTTPS及HTTP服务器列表核验通过，本机私有分发备份已刷新。正式发布报告为out/bug-all-1303-final-completion-release-20261013-190233-366967.json。
+
+基础奖励RPC仅在PostgreSQL返回55P03、40P01或40001时执行最多3次有界重试；每次重试都重新开启事务、读取玩家行并核验唯一收据，其他错误仍立即返回。该规则用于避免短暂锁冲突导致客户端没有回调，同时不放宽发奖条件、不重复发奖。
+
+天体运行论4410好感由140跨至160时，服务端送礼、扣材料、好感升级和冷登录投影原本均正确；卡死根因是客户端跨级或切页先销毁girl_gift页面，成功回调仍访问旧页面并抛异常，导致特殊送礼in_anim锁未释放。1303热更改为仅在页面仍存在时调用set_back_bonus，但无论页面是否销毁都继续执行原成功回调；Python2.7原版闭包回归及页面生命周期回归通过。
+
+新增回归覆盖日常60活跃第三档、体力超过自然Max后领取每日50体力、五类幻星辰墟第六层4106/4206/4306/4406/4506完整入场至结算链，以及残夜目标20102每次正常累计1。私有候选默认/正式规则全仓、整仓vet、Windows/Linux构建、Linux原生专项均通过；真实PostgreSQL为102 PASS、0 SKIP，另有5个辅助PASS。源码、本地测试、真实PostgreSQL、Linux原生和正式发布证据相互独立。
+
+发布后2026-10-13 19:06:05至19:17:45匿名短窗口中，游戏日志18757行：panic/fatal/OOM、数据库超时、异常退出、自动重启、PVP播放确认拒绝和战斗事件序号故障均为0，登录完成16次，PVP加载/开始/结算各1次。2条客户端异常是同一个外部性能遥测域名解析失败，不是收藏室、镜像或试炼荒庭堆栈；报告为out/recent-service-log-audit.json。该短窗口不等于Android/MuMu或玩家实机验收。
+
+仍未关闭：陈列大厅领取资源后卡住及重启加载卡死、弱网时手动失效而自动正常且关闭自动后等待数回合、抽卡后幻书界面卡死及阵容不能沿用、镜像关卡结算失败、试炼荒庭自动操作卡住并影响敌方、客户端“LR800已满”提示来源。腾讯表格状态不得仅凭1303服务端证据改为修复完成，需逐项取得对应玩家或Android/MuMu闭环。
+
+## 2026-10-13 玩家继续反馈：初音地图入场循环前置修复
+
+本轮2026101302已组合发布，2026-10-13 16:36独立核验通过：游戏PID283584，运行二进制SHA256=b827294d11f404498bb8eaa165dafd7e73201407de6195f4b55f62426168ad46；独立热更PID113154，双端配置SHA256=bd2837dbd1fbb028eab2397583d270d554ef3e35e9dae6937ec8d6f98e5857c9。游戏进程、原生运行时、正式规则、双端配置及直连/HTTPS/HTTP服务器列表均核验通过，本机私有分发备份已刷新。最终报告out/bug-all-1302-final-completion-release-20261013-163128-955274.json、out/bug-all-1302-final-native-solo-release-verification.json。上传曾发生一次SSH中断，工具重连续传后组合发布成功。
+
+发布后16:36:43至16:37:36短窗口1186行游戏日志、1次登录完成，未见数据库超时、客户端异常或服务重启；匿名报告out/bug-1302-post-release-logs.json。该短样本仅证明服务窗口状态，不证明初音实机完成或全部玩法无BUG。本轮未进行Android/MuMu验收，助战、学会、其他活动及结算反馈仍需按各自证据继续处理。
+
+1301上线后14:30至16:01窗口123582行、106次登录完成，数据库超时/panic/OOM/重启0；9条客户端异常均为外部HTTP遥测错误，不能将此窗口说成玩法无BUG。匿名业务统计out/bug-1301-followup-business.json仍有初音剧情地图尚未进入6次、好友助战次数不足2次/非指定卡1次、学会查询服务器无效1994次、战斗归属拒绝37次，以及未实现的活动入口。归属拒绝可能是旧战斗迟到请求，尚无证据把每次拒绝都计为结算丢失。
+
+初音原版activity_miku_map_entrance.enter_miku_map先核验地图开放日与章节，若miku_enter_map_dungeon_id未通关则play_dungeon_story，剧情收尾直接enter_dungeon；只有通关后才enter_miku_map。证据out/bug-miku-entry-native-20261013.txt。服务端prepareMikuDungeon先要求地图已存在，与原生顺序形成循环前置；首次地图和后续地图均可能无法进入。现仅原表明确指定的地图入场剧情可先openMikuMap初始化；该函数仍核验开放日及章节，后续mikuStoryGate仍核验剧情/进度/节点。不为其他剧情或未知地图补档，不把入场初始化当通关，既有地图保持原进度。
+
+本机TestMikuMapEntranceStoryBeforeFirstMapRPC和原探索/结算测试通过，覆盖真正enter_dungeon首次入口、普通剧情不初始化地图、第二地图不绕前置。新增TestPostgresMikuEntranceBeforeMapAndColdPersistence覆盖实际数据库Handle/独立Store冷读及重复入口不重置探索；候选1302完成默认/正式规则全仓、vet、双平台构建、Linux原生0 SKIP及真实PG101 PASS/0 SKIP/5辅助PASS，新增首次入场冷持久用例通过。本次验收与发布均绑定1302产物，1301记录仅为历史证据。
+
+助战开战拒绝、学会无效服号及未实现活动仍保留定位门，不能因初音一项修复就宣布群友反馈已清。群友未提供时间，本轮直接审计现网和原生调用顺序，不再要求用户代提供时间。资料整合进四份既有中文UTF-8核心MD。
+
+## 2026-10-13 卡门、关卡进入与竞技恢复共用链修复
+
+本轮2026101301已组合发布，2026-10-13 14:30独立核验通过：游戏PID279184，运行二进制SHA256=8fa8a6ccbd2038b3f57853353904e92500c83c8edf8b28a7039b7a7ae3c7c7d5；独立热更PID112357，双端配置SHA256=186a49c5356c3d002bfbe0f4153a4d554b10739e88cc3804bb7baeaaab804a0b。直连/HTTPS/HTTP服务器列表通过，本机私有分发备份已核验刷新。最终报告out/bug-all-1301-final-completion-release-20261013-142620-007172.json及out/bug-all-1301-final-native-solo-release-verification.json；旧1211顶部记录属于此前正式版本。群友反馈没有具体时间，继续直接依照匿名服务日志、现有反馈清单与原版函数定位，不要求用户代为提供复现时间。
+
+14:03现网审计窗口346664行：11次数据库超时、69条客户端异常标记，无panic/OOM/重启；客户端异常包含外部遥测失败，不能把69条都计为玩法故障。明确的玩法堆栈为原版start_server_battle_ok第36行已有battle断言、real_prepare第376行bid=21重复准备断言，以及sync_pvp_mgr周胜奖励失败分支PRINT_ITEM中文编码异常。匿名业务失败统计见out/bug-common-failures-20261013.json；助战锁超时、初音地图/剧情前置状态、多项未实现接口仍需独立处理，不宣称全部BUG已清。
+
+结算后下一副本进入失败原先只记录日志并保留队列，没有返回该请求回调。现改为一次取走请求和夏日双参标记；真实业务拒绝返回原错误码，存储及内部错误返回原版未知错误13；夏日入口保留(ret,box)。当前已经提交的奖励与battle_result仍正常发送，失败入口不重复建战斗，不留下失效队列。新回归覆盖排队后资格变化、普通单参/夏日双参、原结果提交及重复result不重复回调或发奖。
+
+单端同步/异步及真人竞技恢复保持服务端UUID和持久日志，但客户端必须重新创建对象。恢复加载链新增hs_recover_previous_uuid与hs_recover_rebuild授权；客户端登录恢复包装revision11仅在服务端明确授权时调用原生raw_clear_battle，再完整执行原版创建/prepare。既有普通恢复同UUID幂等保持。原版Python2战斗创建函数、真实RpcMethod单字典/关键字入口、连续同UUID重建已验证；模型清理仍为夹具，不能当Android图形验收。真实原生对局和PG恢复专项新增授权字段断言，同时保留UUID/日志/扣票/唯一结果保护。
+
+周胜奖励失败消息改UTF-8字节，保留原两参回调与中文，避免原生Python2 PRINT_ITEM再次发生ascii编码异常；重复领取拒绝及资产原子回滚回归保留。正式运营规则回归额外发现收藏室第三房间仅检查解锁键存在，值0也被初始化；改为大于0才创建，原测试在正式规则下已通过。此项不能证明收藏室90%附加加载任务已全部解决。
+
+首次全仓在合并热修前发现脚本不一致，拒绝沿用；重新合并后通过。首轮正式规则发现零值房间误判，暂停候选发布，修正后重新默认/正式规则全仓、vet及Windows/Linux构建通过；原生Linux最终专项0 SKIP，最终真实PG100 PASS/0 SKIP/5辅助PASS，产物SHA256=c10c9de2e804c1b0fd74c261ae273aada8d4711bcd47297ad102ba8593bd7e89。旧PG100 PASS/0 SKIP只属于修正房间前产物，禁止充当最终验收。2026-10-13本轮ADB无设备，MuMu管理器确认0/1/2均关闭；不代替群友的实际关卡/结算验收。
+
+防复发门槛：共用入口必须验证失败回调形状、延迟请求/重复结果、事务回滚和冷恢复；竞技恢复必须包含原生对象生命周期与播放世代。默认与正式规则均须通过，真实PG不能以SKIP代替，最终源码/二进制/热修哈希须绑定同一候选。发布后14:30至14:31:37匿名窗口1734行、3次登录完成，数据库超时/客户端异常/panic/OOM均0，报告out/bug-common-1301-post-release-logs.json；仅为短窗口，尚无本轮竞技实战或持续负载证据。发布工具新增validate_regression_checks硬门槛：默认全仓、正式规则全仓、vet报告与日志哈希必须匹配最终构建；Linux原生报告必须源码一致且0 SKIP。21项发布边界故障注入通过，覆盖正式规则失败、旧原生报告、有SKIP和日志被改写时阻断发布。中文详细资料整合进既有四份核心MD，不创建重复长期MD。
+
+## 2026-10-12 全部70条继续施工：剧情塔、赠礼失败与主线自动补完
+
+最新正式线上为1211（2026-10-13 01:34核验），候选012017完成全仓Go、vet、Windows/Linux构建、Linux原生专项、真实PG100 PASS/0 SKIP/5辅助PASS；组合发布报告completion-release-20261013-012944-104110.json。游戏PID257243，运行二进制SHA256=762d949796fba181bfcc2e329ad98c9c804c18e734bbe622b79b79f86ef33b98；独立热更PID108838，双端hotfix SHA256=90a5b7a4084f08537408fa85aacdc1cc79646073b14177f460b0fa068cd54bcc。服务器列表直连/HTTPS/HTTP通过，本机私有分发备份已核对刷新，归档out/bug-all-1211-final-*。下文1204/1209/1210及1211验收前的待验描述为历史过程，不代表最新线上状态。
+
+1211实际验证了助战无契印资格预选、锁内真实装备重新授权及同步竞技榜一次JSON字段提取，新增初音原表商店→残页→冷登录合成→再冷读及重试拒绝通过。1210发布后10594行匿名日志仍有助战刷新1次数据库超时、无客户端异常/panic/OOM；因此不能用旧窗口或单次EXPLAIN宣布性能问题全清。1211发布后01:34至01:36:50匿名窗口4034行、6次登录完成，数据库超时/客户端异常/panic/OOM均0，报告out/bug-all-1211-log-audit-20261013.txt；只是短样本，持续压力仍未完成。MuMu原进程2766在01:34:10加载1211，最近4500行Python堆栈及原生崩溃0，活动/战斗恢复/模型生命周期/原生记录就绪标记存在；不代替目标玩法操作，私有原日志out/bug-android-1211-followup-private-20261013.txt。
+
+继续核查同桌活动角色选择：原表唯一选项奖励在story/gaokao/story/gk1_1_1b的choose_character_53，A/B分别发209011/209012，原版get_gaokao_character_gender按男角色材料判断，否则女角色。新增ExamOriginalCharacterChoicesAndColdPersistence实际Handle双分支/冷持久/重复与改选拒绝本机通过；test_exam_character_native.py执行原版资格、实际双参closure回调和材料性别函数通过。此专项在1211冻结后新增，仅为本机/原版函数证据，尚无新PG或Android图形剧情转场证据，不据此关闭26行。
+
+收藏室90%进一步确认原版场景各阶段比例0/70/75/90/100，90至100为additional_task；jump_to_room把dormitory_main.init_show交给loading_task，后者等待map_mgr.init_maps及家具/角色加载完成计数。取证out/bug-scene-mgr-native-20261013.txt、out/bug-dormitory-init-native-20261013.txt、out/bug-dormitory-map-native-20261013.txt；尚未取得实际卡住任务与异常，未强行跳过加载完成屏障，不宣称根因已修。
+
+资料维护同步修复：历史反馈表编号不同，update_all_repair_evidence.py改为按反馈正文匹配，撤除按相同行号写入其他问题的错误证据；四份既有中文资料持续整合，不新增长期MD。70条本轮状态明确区分：40条相关实现已上线但反馈场景实机未验，3条部分流程/隔离专项通过但完整场景未确认，2条收藏室已追到附加加载但实际任务/根因待确认，25条仍需独立定位。以上均不是完整关闭计数；高层幸运保底按用户决定另补。
+
+全部70条持续修复，不以一批发布代替全清。正式候选20261012-225521包含剧情塔空阵容保护、赠礼失败解锁、沙之书自动补完、原生特殊阵型、副本业务错误码和助战候选精简投影。全仓Go、vet、Windows/Linux构建通过，真实PostgreSQL95 PASS、0 SKIP、5辅助PASS，Linux原生专项通过。2026-10-12 23:03组合发布1202成功，游戏PID245661，游戏SHA256=7df235b561352d94d2d8f6bac8721a620a9e8b3f290d5f43821f1f42519b867d；独立热更PID106851，双端私有hotfix SHA256=f9136d724a94b9200e256d072fda64105d2c898b07bd220ce17b058d54118828。发布记录out/bug-all-1202-final-completion-release-20261012-230306-810349.json。SHA/PID仅是本次核验时点，不保证未来进程不变。
+
+MuMu既有Android12实例2、原客户端1.0.128已真实进入主城，无重装、清数据或修改资源；该单次主城证据不能关闭全部登录白光、收藏室、都市及各关卡验收。服务器列表后端直连、HTTPS、HTTP已通过。正式资源两种入口所有NPK的HEAD长度/Range与校验表本机长度/MD5通过，不等于vivo实际下载或全资源内容验收。
+
+本批战斗材料容量规则由用户明确选择：容量内到账，超出部分保留邮件，释放材料容量后领取。普通副本与活动结算包装withBattleOverflowMail只在战斗奖励上下文暂存超出量，商店、日常及普通邮件领取仍保留原容量拒绝。按单材料limit_count拆附件，中文邮件、奖励冻结、无过期时间。邮件编号与UUID由本场UUID/材料/拆分序号确定，入库前检查正式邮箱与待投递邮箱冲突；500封满时写server_battle_overflow_mailbox，不丢奖或阻塞结算，删除邮件/登录时自动投递。材料到账、邮件/队列、通关进度与已发奖标志同一资产事务提交。结算及显式恢复同步short_mail_info；容量未释放的领取整盒拒绝，不部分写入。
+
+普通副本显式结果先以短事务预演并保存reward_bonus_plan、reward_result和reward_planned_at，再按收据兑现随机材料/幻书/契印。预演不提交资产或进度；兑现回滚、断线和跨日重试保持相同来源/UUID/数量，不重新抽奖；已冻结胜负不能被退出改成失败。冷登录兑现后只同步属性并进入主城，不向不存在的原生battle推结果；显式恢复仍可补发已持久原盒。首通及每日来源沿用冻结计划，避免跨日变化导致来源不匹配。已完成或归属不符的重复结果不入待重试队列，原版可省略finished_task_list的结果包继续支持。
+
+活动包含独立随机事件及状态转换，本批没有将这些规则全部冻结：材料溢出处理已覆盖活动结算，但不能宣称活动所有随机分支冷重试均已固定。幻书和契印库存上限不是本次材料溢出方案的授权对象，继续保留其容量校验，单独核查相关反馈。用户已批准高层基础掉落先行；契印原石本机实现已接入，幸运保底另补，真实数据库和Android对应流程仍须独立验收。
+
+新增专项覆盖拆分、不过期、冷序列化、容量不足领取不变、释放容量领取、重复结果/附件拒绝、满邮箱队列/编号冲突、普通随机契印预演后回滚及跨日冷恢复。第一次全仓Go已通过；后续补充冷登录场景与邮件属性同步后，232539候选runtime1203全部绑定验证通过：全仓Go、vet、Windows/Linux构建、真PG97 PASS/0 SKIP/5辅助PASS、Linux原生0 SKIP；23:33组合发布成功，23:40只读核验游戏PID248226、运行进程与构建SHA一致、独立热更PID107244、双端配置SHA一致及服务器列表直连/HTTPS/HTTP通过。游戏SHA256=06c88cbb6d494d1b459a9ab7bb9e5f5c5c465c94ee42445bd28153449fb7a111，双端hotfix SHA256=553a75371812484dbd490e6f3b42452b6ffc3f529b95f8a3a5176c887f0cd7b4。报告归档out/bug-all-1203-final-*。真实PG新增两项分别走原表6101随机契印真实结果并注入第二事务回滚，以及固定收据夹具覆盖满邮箱/冷登录/领取；后者只验证兑现链，不作为原版副本掉落证据。
+
+225521之后的源码不能引用1202已发布产物作为验证。私有分发备份旧版本被prepare保护检查拦截，已核对现网游戏二进制与双端hotfix精确匹配1202正式发布SHA后刷新本机私有备份，远端未写入。所有后续候选采用新runtime索引，不能用相同1202对应不同正文。
+
+副本入场原版dungeon_mgr.enter_dungeon.server_callback只接收一个ret，再调用本次callback与show_error_tips。现有传输层已对失败入口提供通用13兜底；新增业务层明确错误码1005（体力）、1003（锁定）、1004（关闭）、1019（未知），条件无法解析和存储故障仍保留诊断错误。原版四种错误闭包回调、实际拒绝资产不变、无效协议/损坏规则隔离及数据库故障不伪造业务拒绝专项通过；已有教学入口与门服协议回归更新为对应原版错误码。真PG新增拒绝回包/独立Store冷读无扣费用例待最终绑定，不能把错误提示当不可用功能完整实现。
+
+refresh_assist_use_times原候选查询读取最多1000份完整进度，即使随后只锁10名也会传输/解码无关库存。新增AssistSummaryOnly只读投影，保留公开身份/头像、指定助战UUID、该卡、该卡装备契印与好友/黑名单；随机预选后原UpdateSocial事务仍完整重读并核验指定卡、关系和授权，锁顺序与双向黑名单保护不变。全量角色读取及其他助战业务不启用该投影。新增真PG与夹具投影一致性和原陌生助战原子/冷重试回归待最终绑定，不能声称线上长负载已通过。
+
+21:40后匿名服务窗口68508行，旧1201进程237608仍运行；18客户端异常、17数据库超时、8布阵数量拒绝，无OOM/自动重启。BF29F0ED.map_mgr.generate_slots按formation_data生成槽，EB947BB0.get_battle_cards分出战/援护列表；本版130种特殊战斗有5/6/7出战或4援护阵型，统一4/2错误拒绝。已合并派生容量到既有battle_story_slots.json，按冻结副本battle_id取原生上限，普通/PVP通用4/2和固定剧情角色空槽保护保留。时代从零重启/传说将被改写36700011..36700023全部6人开战、重复请求和冷读取通过；130项原版generate_slots/get_battle_cards一致，超出关卡上限仍拒绝。新增真实PG六人冻结与独立Store冷读用例须绑定新最终构建执行；不能把该规则根因当作六关完整剧情/Android结算已通过。
+
+推荐好友请求在按需补丁之前可能已捕获旧on_get_search_friend绑定回调，修改类方法不会替换已存闭包。新Avatar请求包装保留原生缓存/RPC及回包，只对确切原版推荐回调按本次friend_items对象身份和tab长度保护，列表销毁/换代的迟到请求不更新新界面；有效推荐仍沿原版刷新。缓存越界失败对照、正常刷新、原生异步闭包捕获和换代隔离通过，见test_feedback_callbacks_native.py。客户端资源及原版玩法数据没有修改。
+
+剧情塔2301102/2302102原表是普通enter_dungeon入口，原版battle_cards.check放行全零出战槽。守卫从探索类型2扩至剧情塔23，固定my_avatar_list、storyline_cards及其他玩法仍沿原版，援护不当出战卡。原表两关空锁阵容、回到布阵、重复触发、补齐后继续通过；旧revision1守卫外还有诊断包装，已从诊断器保存原函数取回原生函数并刷新诊断缓存，热升级和幂等安装通过。资料见test_qq_empty_explore.py与test_ui_callback_repair_native.py；图形对象为夹具。
+
+天体4410的choice3原生先置in_anim，material_mgr消费失败只显示错误、不回调成功，因此界面锁持续。按原版资格、特殊次数降级及RPC保留消费逻辑，只有原版特殊送礼闭包对应的当前界面/请求代次在失败时执行原生after_story返回赠礼页；不播放成功对白、不发奖励。预检失败、服务端失败、真实成功奖励、旧请求/旧界面隔离及次数降级通过，见test_qq_gift_failure_native.py。此项保护不能替代具体送礼资格失败原因或Android选择验收。
+
+沙之书自动补完根因由原版return_to_city→check_chapter_finished→sp_card_enhanced_result.show_special_card定位。sites714（第一章）、417（第二章）各有card_auto_enhance=[4401,2]，必须整章非支线/活动地点全部完成；第一章两阶段包含一次技能补完，两章四阶段包含两次。原表card_forbid_list=[5,6]，common_const确认禁止分解和手动补完。新增ensureMainlineAutoEnhance在真实战斗/纯剧情结算及登录事务补齐历史存档最低应有阶段，首个拥有实例与原版展示一致，不耗素材、不降低已得阶段。单节点缺失不发、两个实例隔离、等级/经验/资产不变、两章累计、冷复制幂等、实际714入口状态在battle_result前同步均通过；新真实PG历史登录用例仍须绑定最终构建执行。原生触发/章节/地点/禁止规则取证为out/bug-*-enhance-*-20261012.txt及bug-chapter-finish-native-20261012.txt。
+
+全部70条矩阵仍保留逐项验收缺口，在线状态未回填。主城/收藏室/都市加载、vivo更新、具体赠礼资格失败原因、高层装备、活动所有关卡/动画、长负载及Android实操继续处理。新增技术说明整合现有四份中文UTF-8资料，不创建重复长期文档。
+
+1202发布后23:09至23:27匿名日志采样24360行，3数据库超时、10客户端异常，无OOM/panic/服务重启/战斗序号拒绝；异常包含外部遥测错误和委托完成窗ObjectId类型转换，不能宣称该窗现场已完全修复。原版general_tips_mgr.real_show_tips在分发时才获取gui.consign_finish_new，完成窗类可能在首次回包中加载而早于5秒轮询。新增提示入口转换，入队前把真实拥有卡UUID映射模板ID，空卡只显示已经提交的真实奖励，其他提示类型/参数/排队/演出保留。原版show_tips及real_show_tips执行到未包装完成窗的整链回归通过；完整安装器在完成窗模块尚不存在时也保护入口，重复安装不叠加。工具test_feedback_callbacks_native.py和test_ui_callback_repair_native.py通过；该修补不在1203产物内。
+
+继续发现普通剧情塔的额外任务奖励在原副本奖励包装之后发放，扩大同一结果事务的溢出收集边界，内层只复用同战斗上下文，异战斗嵌套仍拒绝。普通结果预演也包含settleRemainingDungeon；reward_extra_plan_start划分副本与额外任务收据，防止把任务奖励误当副本奖励重复兑现。原表7001三任务实际入口/冻结/完整资产增量专项通过，其他绝密层和探索回归通过。server_battle_overflow_mailbox只持久保存，InitialProperties删除该内部属性，客户端仅收到原生short_mail_info。234411候选runtime1204已通过全仓Go、vet、Windows/Linux构建、真实PG97 PASS/0 SKIP/5辅助PASS及Linux原生专项。23:54组合发布成功，2026-10-13 00:00只读核验游戏PID250393及运行二进制SHA一致，独立热更PID107577，双端hotfix SHA一致，服务器列表直连/HTTPS/HTTP通过。游戏SHA256=689b39a9bf513b4dc946f3cf1843072c75f367a1be3ae2ea7428b5c8a42bd663；hotfix SHA256=66af7a61a5c4738c83bcf55c198cab39a399d50a08dd3d6dc0f56c1d0ca7203b。报告归档out/bug-all-1204-final-*；这些证据仍不代替Android对应玩法验收。
+
+MuMu原进程2766日志23:38确认由1202加载1203；当前账号实际幻书列表及沙之书详情显示模型/属性，未消耗道具、未抽卡或改造资产。仅是这个账号的这两页，不覆盖收藏室、都市、全幻书或抽卡后场景重建。高层装备本的基础掉落表已查出，但额外幸运保底规则缺少原版服务端证据，用户已经明确批准先恢复原表基础掉落、保底另补；本轮按此范围实现，不增加未知保底规则。
+
+活动排行榜进一步消除整份存档传输：山海子榜仅返回当前mountain_dungeon，年兽子榜仅返回当前nian，年兽总榜仅返回冻结nian_total；同时保留已选头像、头像框、自定义头像清除状态及公开同步竞技成绩。原COUNT与页面仍处于同一只读REPEATABLE READ快照，服区过滤、冻结阵容、同分OID顺序和个人全量名次不变。新增1107角色分页/外观/无关资产隔离回归，当前本机专项编译通过但数据库跳过，真实PG须在新1205候选重新验证；不能引用1204产物作为这项通过证据。
+
+2026-10-13的1204线上匿名采样仍有战斗输入异常：原版battle_mgr.on_allow_player_input调用fashion.activate(False)，combat.on_deactivate访问BattleEntity.battle缺失。源码新增当前所属绑定保护，仅当gworld.get_battle与本管理对象一致、该实体和entity_infos已登记且所属为空时补self，随后完整执行原生停用/激活、鼠标取消及自动切换检查。既有非空所属不覆盖，旧战斗不接入新对象，其他异常不吞。真实Python2原函数整链复现/修补、自动切换检查、旧战斗隔离、按需加载安装及幂等通过。原生assemble闭包提前捕获组件函数，因此包装local/shadow/record/watch实际战斗类最终入口，完整安装/原生组合闭包回归通过；1205排行与1206早期输入候选各真PG97 PASS/0 SKIP但未发布，最终1207候选Linux专项因SFTP断线残留写句柄报Text file busy失败，禁止发布；新候选以新inode激活且复核哈希后重新验收；只能定位具体堆栈，不能据此宣布清单44已实机修复。
+
+2026-10-13续修：1210候选010441完成全仓Go、vet、Windows/Linux构建、Linux原生、真PG99 PASS/0 SKIP/5辅助PASS并于01:16组合发布，已核验游戏PID255491、SHA256=a2aaa77e84524ade448368ec0d0dd934dd5f7581a160b09b6bc18f4c56eb12dc、独立热更PID108512、双端hotfix SHA256=4df7e4f87c162dae1aaee24198059b68713c47e98dbc6b9ccbd74d74a3848941、服务器列表三入口通过，归档out/bug-all-1210-final-*。1208候选全仓一致性检查发现服务器内嵌runtime索引仍1207而配置1208，禁止发布；已统一为1209并生成独立005222候选，全仓Go、vet、Windows/Linux构建及Linux原生专项通过，真PG99 PASS/0 SKIP/5辅助PASS，1209已组合发布且01:03只读核验通过，游戏PID253857、SHA256=e91db9ab84c5c820c409fa98ae3e0893c9302825e8e688f05e8397a569004318，独立热更PID108176、双端hotfix SHA256=d554a3928fcd5c5608ebd814c50636c588378d14ef71157dfb96a044c13b4d9b，服务器列表直连/HTTPS/HTTP通过，归档out/bug-all-1209-final-*。补查原石普通RPC回调键类型需显式ObjectId，主源1210已修正，不能把1209实库通过当1210通过。用户已选择高层装备本先恢复原表基础掉落，幸运保底另补。奖励解释器只在装备本当前每日基础来源临时允许Lucky字段，不扩展商店或自选盒资格；完整发固定/随机契印、材料与原石，额外幸运分支尚未启用。原石Type15存current_rune_stone专用状态，不作为普通材料累计。按原表每日1颗、有效2小时；未过期不覆盖，同日过期不绕每日上限，北京时间日界重置次数。旧日冻结兑现不得回拨新日次数或阻塞其他奖励。
+
+原石RPC step_0_rune_stone(callback,materialID)、step_1_rune_stone(callback,UUID列表)、step_2_rune_stone(callback,UUID列表)，均回三参(success,msg,rune_info)。开启最多100次，优先23×1、否则11×10，原石目标盒抽10件隐藏契印；打磨累计最多3件、原表免费；鉴定按原表20项星级/部位金币12价格，校验真实背包容量与UUID冲突，同事务扣费发原件。开启只揭示star/suit，打磨加pos/extra_suit，鉴定才发完整属性。隐藏runes与server_day不下发；普通RPC回调rune_info键显式ObjectId，以真实gate编码Ext42核验，不能只用属性容器自动转换代替；原版RuneStone.load真实ObjectId双字典及阶段校验已通过。相同参数重开属于合法新抽奖，完成阶段重传不重复扣费，已分解鉴定件不能再领。仅明确业务拒绝转换失败回调，存储/目录故障保留诊断错误。本机原石全流程、装备全层七日基础生成、原石冻结跨日兑现回归通过；新实库用例HighEquipmentBaseRuneStoneStagesAndColdRecovery已加入1209候选，1209整套真PG99 PASS/0 SKIP/5辅助PASS，但补查发现普通RPC回调没有自动转换UUID键；1210已显式ObjectId键并有业务/实际gate编码断言，须重新绑定候选验收，不以本机SKIP计通过。
+
+初音获取已确认原版来源：商品5010009需累计50000白昼和声，单价3000和声换1残页，永久限购50，配方3411需50残页并确定生成3411角色。MikuOriginalShopFragmentsComposeAndColdPersistence经真实Service.Handle覆盖累计资格不足不扣料、150000和声兑换50残页、限购重试、原件与获得时间、冷存档和重复合成拒绝，本机通过；新增测试未进入已冻结1210，真实PG整链和Android入口仍待验。不凭本测试给线上角色补发资产。
+
+继续线上匿名审计1209窗口11314行仍有助战刷新5次/排行3次超时，不能宣称消除。排行失败目录明确为4/0同步竞技榜。只读EXPLAIN：原助战候选投影5秒超时；去掉预选契印并jsonb_to_record一次提取后230行872.364毫秒；同步竞技原查询1233.741毫秒，一次提取完整公开外观后690.126毫秒。这是当前只读查询样本，不是长期压力结论。主源新增AssistCandidates(ctx,host,limit)只返回指定卡/身份/双向关系，维持同服OID排序最多1000窗口及原随机十人算法，最终候选仍由UpdateAssistRefresh锁内读取完整指定卡契印并重新授权。非入选候选不解码契印；预选结果不写回任何提供者存档。同步竞技榜改一次jsonb_to_record提取score及外观，正积分/同服/同分OID/limit不变。新增真实PG预选资格字段/无契印隔离断言，原持久授权和回滚用例保留；新代码本机编译通过但PG跳过，待1211重新绑定完整验收。
+
+助战refresh_assist_use_times新增锁内精简投影：self仍完整存档；提供者仅助战卡、绑定契印、公开身份、好友/黑名单。保持原依赖咨询锁、全部avatars排序锁和同顺序progress锁，不用预选旧快照替代锁内授权；提供者进度被回调修改立即拒绝并回滚self，只返回self完整Avatar，禁止把投影替换在线完整存档。其他选择/消耗/开战仍走完整事务，夹具可回退原接口。新增真实PG投影一致/原存档未知大整数/修订不变/整事务回滚用例，本机数据库SKIP，等待新候选真PG验收；不宣布线上超时已消失。
+
+
+## 2026-10-12 全部70条重新施工：1202候选，尚未全部完成
+
+用户明确要求全部修复，本轮覆盖反馈快照中的70条非空反馈，包括旧21条已修复与4条无法修复。历史跳过记录不作为本轮授权；清单、入口与逐项验收条件整合到REPAIR-TASKS及 `out/bug-all-repair-matrix-20261012.json`。不能再把1201两项上线当成全部交付。
+
+本轮新增源码修补：入馆指南普通/活动任务的旧行销毁后 `_ins=None` 时跳过旧行update，原版领奖闭包仍刷新当前任务列表；委托完整RPC还会打开 `consign_finish_new`，该窗按模板编号创建模型，新UUID回包在此产生类型转换异常，现于完成窗入口将UUID映射回真实卡牌模板，旧模板编号保留，空演出仍展示已提交奖励。主页面公共信息查询兼容原生Int键转换的TypeError/ValueError，并精确升级1201包装；详情页保留UUID语义。体力补给原版回调会索引未加载大厅的swallow对象，现保留原生buff/bonus预检与RPC，独立检查有效界面后更新红点，真实奖励始终展示，失败不展示。以上不修改资产、次数或奖励数值。
+
+`out/tools/test_feedback_callbacks_native.py`执行原版委托完整RPC，经详情、主页面、地图、收藏室到完成窗，并保留原生类型转换失败对照；普通/活动任务原版领奖闭包销毁失败对照与活行回退通过；补给原版预检/回调占位异常及真实奖励回归通过。既有UI/入馆场景专项与本轮Go专项通过，图形控件为夹具，不能当Android实操。runtime/内置索引候选升1202，正式候选与发布仍须完成绑定验证；1201现网尚未切换。
+
+最新21:06后日志确认新的委托完成窗类型异常、好友推荐旧行IndexError、材料容量导致结果拒绝、学会/排行榜/助战超时。新增匿名报告 `out/bug-all-followup-anonymous-20261012.json` 只保留错误栈与固定业务摘要，排除含昵称/库存的RPC参数行；日志审计同样排除该类正文。旧过程证据不当零异常证明。
+
+时空回廊两条反馈由原表定位为剧情塔2301102/2302102，原版panel_detail直接走普通enter_dungeon；绝密记录task_tower的extra丢弃不能解释它们。天体送礼模板4410，对应选择441023/441053的choice_level=3；最新窗口无该项拒绝，仍需核查实际原生选择和资格。材料check_limit_count原版函数可封顶，但完整脚本引用扫描没有发现其业务调用者，暂不据单函数猜改发奖或删容量保护。全部玩家验收未完成，70条均保持逐项施工状态。
+
+
+## 2026-10-12 历史1201批次：组合发布与独立核验完成
+
+最终runtime2026101201已组合发布，游戏PID237608、SHA`d5b578f663388a77c043a9ec7bb68ceebee3a4620761b3ab86bef05bfb1ff50f`；独立热更PID106055，双端私有热更SHA`d985c65b4673000b4a5bd8eb6fe95b1c02bed595bbdf231ab4b10d517e41f8fd`。运行进程、原生运行时、正式规则与候选哈希一致，后端/客户端HTTPS/HTTP服务器列表均通过；本机私有分发备份已同步1201，旧备份在私有候选保存。双端回滚入口为`/opt/hs-server/releases/completion-20261012-210009-228361`和`/opt/hs-hotfix/releases/completion-20261012-210009-228361`；内存覆盖文件独立保留，不属于组合回滚清单，回滚时须同时评估该文件。
+
+最终源码包括：尖叫屋完整位置回包且仅选中项入账；委托UUID回包与主页面UUID转模板编号兼容；周期预读只保留不可变JSON快照，写阶段按revision/xmin重新读取/解码/计算，移除第二份全服解码对象；Go1536MiB软预算和GOGC50；日志窗口覆盖旧进程及systemd异常退出，排除GC诊断数值的HTTP误计。全仓Go、vet、Windows/Linux构建、真实Python2双页面回调及UI专项、Linux原生引擎/单端/双端均通过；最终绑定真实PG92 PASS、0 SKIP、5辅助PASS。`out/bug-final-*.json`与日志是本批最终证据，旧失败与第一次发布证据保留为过程记录，不代替最终验收。
+
+必须保留线上限制：21:03起的完整窗口4126行，OOM/自动重启/战斗序号故障0，但数据库超时20条、客户端异常6条，仍包含main_consign_new原路径ObjectId KeyError；不能证明这些客户端已经运行1201补丁，不能据此判定完全解决或简单忽略。21:06后补充窗口1411行，委托主页面/尖叫屋异常及DB超时0，客户端异常2，OOM/自动重启0；进程237608保持，服务内存约2.01GiB。该窗口没有目标玩法完成次数证明，软预算不是RSS硬上限，长期压力和所有客户端稳定性仍待验收。证据见`out/bug-final-post-log-20261012.json`、`out/bug-final-followup-20261012.json`、`out/bug-final-process-memory-20261012.json`。
+
+当前可交付结论是两项回包契约修补、周期重复对象削减与内存预算已经实现并上线，候选验证和运行产物核验完成；反馈清单全部70条已留档并索引，其余问题继续保留。Android尖叫屋/委托双页面实操、1201实际执行与持续高并发验收未完成，在线表未回填、不标全清。新增技术资料整合进既有四份中文UTF-8核心MD，没有新增重复长期MD。未改`com.netease.hsqsl`资源，未重装或清空客户端。
+
+## 2026-10-12 委托主页面第二条原生路径与最终候选1201
+
+扩大服务日志窗口后，UUID回包在详情页已符合契约，但原版主页面`main_consign_new.get_vo_bubble_by_card_id`实际索引`card_common_mgr`模板编号字典，出现新的ObjectId KeyError。第一版只验证详情页，覆盖不足，故此前“委托两处修补已完整”的结论撤回，未当作最终玩家验收。主页面汇编见`out/consign-main-native-20261012.txt`；匿名现场见`out/bug-full-window-anomalies-20261012.json`。
+
+`internal/game/ui_callback_repair_script.py`新增主页面查询包装：旧模板编号保留；UUID先由实际`card_mgr`映射到`card_id`，再调用原生公共信息及语音逻辑；已移除幻书的迟到演出返回无语音，不重复发奖。详情页继续按UUID使用原版函数。按需加载与修补版本标记保留，重复安装不叠加包装。`out/tools/test_feedback_callbacks_native.py`扩充真实主页面`get_vo_bubble_by_card_id/play_vo/commit_task_succ`，先复现UUID KeyError，再验证UUID、旧模板编号、空列表和已移除幻书均完成；详情页和尖叫屋原版回调仍通过。完整证据见`out/bug-20261012-native-complete.log`，既有UI回归也通过，见`out/bug-ui-native-complete-20261012.log`。图形对象仍为夹具。
+
+热更升到runtime2026101201，公开与私有候选分别生成，现网私有配置在生成前核对1103。最终候选入口已更新`out/private-release-workspace.json`。该候选同时包含尖叫屋、委托双页面、周期预读减少副本与服务日志窗口修正；不能用前一版产物验收替代最终构建。减少副本的第一轮真实PG91 PASS、0 SKIP、5辅助PASS，但整套180秒总期限耗尽，最后冷登录用例未完成，因此记录为失败。失败证据保留`out/bug-memory-first-remote-database-verification.json`与`out/bug-memory-first-database-test.log`；整套预算改360秒，原有单用例时限与并发/回滚断言不变，最终候选重新执行全套，不把超时直接改写为通过。服务器内置bridgeHotfixIndex也同步1201；完整冷启动/运行热更一致性回归、全仓Go、vet及Windows/Linux正式构建已通过，真实库与Linux原生专项正在执行。
+
+完整服务窗口还包含入馆指南销毁控件回调、PVP重入断言、战斗序号拒绝及数据库超时，均继续保留；首个PID过滤报告不能替代这些现场。此次只修证据明确的契约和周期对象重复；其他反馈不宣布关闭。GC诊断中的三位数会匹配旧通用5xx正则，计数不能视为HTTP业务故障数量。
+
+最终1201私有候选已完成全仓Go、vet、Windows/Linux构建、原生双页面回调、UI专项、Linux引擎与单端/双端专项，真实PG92 PASS、0 SKIP、5辅助PASS；此前超时用例在本轮完整通过。候选游戏SHA`d5b578f663388a77c043a9ec7bb68ceebee3a4620761b3ab86bef05bfb1ff50f`，数据库SHA`3a69de8d33c869d761fc8462d50fb252ed2ed8c7f252ec534cf5c6cca27f2517`，私有热更SHA`d985c65b4673000b4a5bd8eb6fe95b1c02bed595bbdf231ab4b10d517e41f8fd`。证据见`out/bug-final-build-20261012.json`、`out/bug-final-database-20261012.json`、`out/bug-final-native-linux-20261012.json`及对应日志。此时生产进程235284、NRestarts0；最终组合发布预检进行中，Android画面与长期高负载仍未通过。
+
+## 2026-10-12 发布后发现OOM：周期预读副本与审计窗口修正
+
+本节覆盖下文“短窗口服务正常”的最终结论。第一次发布后进程234335在20:34被内核OOM终止，234896再次因内存不足退出；旧版本231906也有同类事件。内核显示游戏匿名RSS约3.6GB，主机无swap。证据见`out/bug-post-release-restart-20261012.json`。这说明此前20:03的SIGKILL不能继续只记录为未知信号；内核已确认同窗口存在OOM。但不能声称全部登录、白屏或战斗反馈都由同一原因造成。
+
+源码核查确认周期预读在`internal/game/dbstore/social_all.go`同时保留全服解码Progress、比较用JSON和第二份解码Progress，造成明确的重复存活对象。修补将`periodicProgressSnapshot`收敛为不可变JSON、revision与xmin，预读不再二次解码全服进度。写阶段重新解码已缓存JSON；版本变化仍按Serializable快照重读当前数据库并重新计算，未共用预览修改后的对象，不绕过回滚和跨角色依赖锁。原有`TestPostgresPeriodicPreviewDoesNotBlockAndRecomputes`继续作为并发/重算验收；普通全服管理事务保持原单次回调语义。
+
+已安装`deploy/hs-game-memory.conf`对应的systemd覆盖文件`30-memory-budget.conf`，Go软预算1536MiB、GOGC50；它避免无预算堆增长挤占同机服务，但不是系统硬上限，也不能作为泄漏根因已经全部修复的证明。首次诊断临时加gctrace，进程235284经过274秒仍NRestarts0，早期回收后活跃堆曾约1.3GB，后续回收后约97MB，采样服务内存约1.23GB；证据见`out/bug-memory-budget-20261012.json`与`out/bug-memory-budget-sampling-20261012.json`。该采样发生在减少副本源码发布之前，只证明软预算短窗口缓解；长期高负载仍待验收。临时gctrace在最终发布前撤除。
+
+审计工具`out/tools/audit_recent_service_logs.py`旧查询带当前_PID过滤，服务重启后会漏掉旧进程和systemd的OOM记录，甚至在新进程0行日志时写“未发现异常”。已改成整个服务时间窗口，并把服务异常退出、自动重启纳入异常状态；Python编译与旧PID遗漏回归通过，证据见`out/bug-audit-restart-regression-20261012.log`。先前只按新PID得到的零异常报告保留为历史取证，不再作为稳定性验收。
+
+减少副本候选全仓Go、vet及Windows/Linux构建已再次通过；真实PostgreSQL和Linux原生专项正在重跑，正式切换与后续内存采样须以本节后续绑定报告为准。本次没有新增客户端接口、修改发奖数值或改变热更资源。清单两处回包修补与该内存修补一并保留；Android实机及其余反馈继续独立验收。
+
+## 2026-10-12 反馈清单复核：尖叫屋与委托回包修补已发布
+
+用户反馈来源：https://docs.qq.com/sheet/DSnJ2V1VFaWxhQVVO?tab=BB08J2 。本次逐格只读核对第5至78行，共70条非空文字反馈：在线标记已修复21条、修复中8条、待修复37条、无法修复4条；全部测试列仍为待测试。空白行36/39/40/51不作为BUG；79至95反馈为空。表中行号已变化，后续必须同时核对描述，不能沿用旧行号。在线状态只是反馈表原标签，不代表本轮验收或Android通过；本轮未修改在线表。完整B/D/E快照见`out/bug-feedback-snapshot-20261012.json`。
+
+本轮确认两处真实客户端异常，匿名日志见`out/bug-feedback-error-audit-20261012.json`：委托完成发模板编号2202，原生语音查询按卡牌UUID索引，产生KeyError；尖叫屋发单元素材料数组，原生揭晓动画按三个幽灵的位置索引，产生IndexError。两处均由原版Python2函数对照复现，不能把外部HTTP监控上报超时视作同一个卡死根因。
+
+- 当前第72行“委托无法收回”：`internal/game/consign_rpc.go`在完成事务内把任务模板编号按顺序映射到实际拥有卡牌的UUID，回包`commit_consign_task_success(task_id, card_uuids, box)`的第二参数为ObjectID数组。同模板有多个实例时选择第一个已有实例；旧任务幻书已归还时省略该演出项，奖励与阶段收据仍正常提交。任务存档保持原模板编号，不迁移历史任务、不改变奖励。原生模块C83CDF61的`commit_task_succ`与`get_vo_bubble_by_card_id`证据见`out/consign-native-20261012.txt`。
+- 当前第57行“尖叫屋选择后重播动画、无法退出”：`internal/game/house_frage_business.go`的`open_game_site(callback_id, selected_index)`成功回调改为`[true, selected_index, 完整三个材料位置, count]`。揭晓材料由已冻结`site.Game`复制；实际入账仅`site.Game[selected_index]`，未选位置只展示，Opened收据与Double消费仍同事务保存。原生模块F544E824的`on_choice_ghost`证据见`out/ghost-native-20261012.txt`。
+
+验证证据：旧尖叫屋回包专项失败见`out/bug-20261012-before.log`，旧委托失败见`out/bug-20261012-consign-before.log`；尖叫屋修后专项见`out/bug-20261012-ghost-final.log`。`out/tools/test_feedback_callbacks_native.py`执行原包实际回调，三个选择位置均揭晓完整数组且只选择项领奖，委托UUID与已归还空列表均完成演出，旧回包均复现异常，日志见`out/bug-20261012-native.log`。图形对象为夹具，不代表Android实机画面。Go专项覆盖尖叫屋三个位置、双倍次数、冷登录重复选择不改变存档，以及100次委托完成的UUID/成就/收据；真实PG新增`TestPostgresHouseGhostFullReplyColdDuplicate`并扩充委托生命周期断言，验证结果须以本批绑定报告为准。
+
+全仓基线通过，但本地无真库的PG跳过不能写通过。正式候选目录由`prepare_private_release.py`核对现网私有配置生成，入口见`out/private-release-workspace.json`；仅使用私有候选进行正式构建与实库验收。20:03现场游戏进程曾变化，本轮未触发该重启；本轮只读核查游戏SHA仍为昨日1103的`bf0bd9df5e1a9b2b0891372c126a6793efcbb4d0957caf97fc5da29cbdd32ca2`，服务active/running、PID232891、NRestarts6。发布前必须重新核验，不能用历史PID推断他人正在部署。
+
+尚未定位的反馈继续保留。双倍退出已有原生体力返还证据，尚无原生双倍券返还证据，不能凭反馈直接增加退券；战斗结算出现材料容量上限拒绝，不能删除容量保护；送礼现有日志仅证明部分角色提交成功，不证明第48/63行已解决；日常60活跃度与时空回廊两个指定事件仍需实际触发证据。匿名日志另有avatar回调swallow对象不可索引异常，尚未匹配具体入口。原有第23/26/32/33行记录为历史用户要求跳过，不把第三方表格备注视为本次新授权或新指令。
+
+本批私有候选源码验证已完成：全仓Go与vet退出码0，Windows/Linux游戏及热更、Linux数据库测试产物构建通过，源码构建期间哈希一致。真实PostgreSQL92 PASS、0 SKIP、5辅助PASS；新增尖叫屋测试和委托UUID断言均在真实库执行。游戏候选SHA`692f16b89117e3947e530aaed70caefab437b29601e31871054839019886a947`，数据库产物SHA`095da2f7b7542af29d48513b76ede34ae1417f5ea71492e9edce4d9bcc2de41c`。与已发布1103构建清单对比，差异仅两份业务文件及四份回归测试；私有热更和正式规则哈希均保持一致。证据已复制为`out/bug-build-verification-20261012.json`、`out/bug-all-test-20261012.log`、`out/bug-vet-test-20261012.log`、`out/bug-database-verification-20261012.json`及`out/bug-database-test-20261012.log`。Linux原生引擎、单端/双端房间及活动原生专项也已通过，0 SKIP，测试前后游戏PID均232891，源码哈希一致；证据见`out/bug-native-linux-verification-20261012.json`与`out/bug-native-linux-20261012.log`。正式切换已完成，运行产物独立核验见下文；Android画面仍未验收。20:03历史服务重启记录为SIGKILL及自动重启，并非已证明Go panic或OOM；触发来源尚未确定，证据见`out/bug-service-restart-summary-20261012.json`。
+
+正式切换已完成：20:30创建回滚备份`/opt/hs-server/bin/backup-20261012-203045`，随后仅发布游戏二进制。独立复核运行进程PID234335，active/running、ExecMainStatus0、NRestarts0，`/proc/234335/exe`的SHA与本批游戏候选一致。私有热更SHA仍为`4cc16352e6907dde9fcaa091547ef7f3d9afb70ebe759f4d20f5f92fa82e2e59`，独立热更PID99277；未发布热更、未更换资源。发布与运行证据见`out/bug-game-release-20261012.json`、`out/bug-game-process-verification-20261012.json`。首个极短窗口85行游戏日志，panic/fatal/OOM/5xx、数据库超时、客户端异常均0，登录及目标玩法次数也为0，不能作为玩家场景通过。匿名报告见`out/bug-post-release-log-audit-20261012.json`。当前第57/72行已完成源码、原生函数对照、真实库及生产切换，Android实际尖叫屋/委托画面仍待复测；清单其余问题未自动关闭。
+
+## 2026-10-11 实时PVP开战后场地事件打断播放链修复已发布（runtime2026101103）
+
+1102已经修复实际加载屏障，但不能作为整局完成：19:46至19:50三次真实玩家尝试均先出现“该原生命令没有播放确认规则”，随后持续“战斗事件序号跳号”及“上一权威动作尚未播放完成”，0结算。此前审计只覆盖加载异常和推进失败，漏掉do_command的播放确认及序号故障；已新增独立计数与匿名摘要。断线context canceled是随后连接退出的结果，不能单独解释玩家为什么断线或作为本轮业务通过依据。
+
+代码对照和失败回归确认一条确切缺口：MapPlayback按原生kind=field/native_type=4跳过场地自主动作，但旧桥log_command仍把场地magic_field_idle发成command；Checkpoint只接受真正被投递的FIFO命令，因该场地命令无规则而回滚，客户端单向事件序号继续递增，于是永久跳号。新增Go回归先在旧源码失败，修补后场地事件不消费Seen/Boundary、下一权威技能及稍后输入仍可解除屏障；非场地、未映射实体、超出原生数量/缺失参数列表及未知命令仍不得绕过确认。
+
+服务端内部nativeLocalFieldIdle只接受已有原生权威证明并映射的场地实体，以及magic_field_idle原生占位参数（或旧桥空参数）；它仅保留连续观察序号，不执行技能、不推进权威日志、不修改胜方或奖励。客户端原生场地执行保留，场地log_command仅上报snapshot，普通卡仍上报command。竞技专用工厂安装修订从2升到3，以覆盖已安装旧工厂；桥协议31及普通副本rev15保持兼容，Python2工厂、升级、幂等、场地snapshot后普通command连续序号回归通过。未知播放拒绝新增固定事件/命令名/错误类型日志，不记录玩家标识或正文；不通过宽松接受跳号或任意未知命令来伪造恢复。 原版android_base/8364763B.marshal的command_magic_field_idle(self,user,action_info)只转调command_pass_action(user)，不读取action_info；服务端不执行客户端占位参数，只保留观察连续性。
+
+最终候选在仓库外20261011-200220私有目录完成：全仓Go、vet、Windows/Linux正式构建、Linux原生单端/双端和新增场地播放回归均通过，真实PostgreSQL91 PASS、0 SKIP、5辅助PASS。游戏SHA为bf0bd9df5e1a9b2b0891372c126a6793efcbb4d0957caf97fc5da29cbdd32ca2，数据库产物SHA为c2474d020040e8b64e04f05140b18a5dc10082177afc97c5f8754d411a3d7625，双端私有热更候选SHA为4cc16352e6907dde9fcaa091547ef7f3d9afb70ebe759f4d20f5f92fa82e2e59。双主机预检通过，20:15组合发布完成：游戏PID199573，独立热更PID99277；运行进程SHA与本节游戏候选一致，双端热更SHA与本节私有候选一致。双端备份为/opt/hs-server/releases/completion-20261011-201051-315407和/opt/hs-hotfix/releases/completion-20261011-201051-315407。服务器列表后端/HTTPS/HTTP三链通过，私有正式分发备份已同步1103；发布只能使用新私有候选及其绑定验收，不得直接使用公开热更配置。完整玩家整局仍未验收，本机MuMu1.0.128等待手动登录且窗口工具捕获超时；不清空数据或替换热更新资源。
+
+发布后首窗口2190行日志：登录5/5完成，播放确认拒绝、战斗序号故障、客户端异常、数据库超时、panic/fatal/OOM/5xx均0，但新PVP对局数0，不是完整一局通过。20:16在线56角色，当前同步PVP会话0、加载握手齐备未开战0；这些是聚合现状，不代表全部玩家永远无故障。证据已同步out/completion-release-20261011-201051-315407.json、out/remote-release-verification.json、out/server-list-recovery-verification.json及新增审计计数。 后续20:17窗口4693行，登录9/9，PVP播放拒绝/序号故障/客户端异常仍0、对局0；20:16:13出现一次refresh_assist_use_times助战刷新5秒上下文超时，独立保留，不能声称全站零异常或归因于已被修补的PVP场地播放。
+
+## 2026-10-11 实时PVP实际加载屏障重修已发布（runtime2026101102）
+
+本次19:09匿名现场仍有PVP客户端崩溃，1101的缺面板补丁没有完成修复。完整调用栈是`notify_battle_fighting → battle_pvp.on_player_ready → battle_layout.set_ready → switch_editor_mode → set_support_mode`，先缺`support_skills_panel`，补空面板后继续缺`authority_shadow.main_slots_area`。原版Python2的`battle_mgr.handle_battle_entities_create`在同步模式2明确跳过布阵初始化；因此正式shadow场景不能再进入旧布阵界面。此前“就绪通知才能开放开战入口”的解释已经撤回，不得继续补假控件或猜测区域。
+
+源码统一采用选卡阶段已经冻结的阵容，机器人和真人均由实际`load_entity_finish`及桥`ready`推进；机器人直接执行现有开战事务，真人在双角色共同房间事务内标记实际Loaded/Ready，双方就绪后沿原有持久投递开战。真人不再等待原包没有发送的`pvp_load_complete`；旧接口保留兼容。桥先到、实体先到、旧在线会话Tick、同UUID重复通知、冷恢复及原生权威世代沿用已有校验，不改变积分、奖励和结算规则。第一端等待对手时不再提前把连接标为已开始。
+
+客户端1101空面板包装已经撤销，热升级精确恢复原始函数；只拦截正式PVP场景迟到的旧布阵就绪通知，真正布阵场景保留原生行为。`test_ui_callback_repair_native.py`执行本版原生RPC本体、PVP就绪和set_ready入口，先复现异常，再验证正式场景隔离、1101热升级、重复安装及真正布阵回退；图形控件仍为夹具，不冒充Android画面。
+本批正式候选在仓库外私有工作目录生成并构建。全仓Go、vet、Python2 UI及权威工厂/对手恢复回归通过；Linux原生引擎、真人共同开战/超时/恢复/唯一结算、同步机器人/异步真人防守/异步机器人专项通过，0 SKIP；绑定当前候选产物、私有热更及正式规则的真实PostgreSQL为91 PASS、0 SKIP、5辅助PASS。跨进程真实PG共同房间用实际load_entity_finish和ready自动开战，不再用手工battle_fighting掩盖加载缺口。
+
+19:29游戏与独立热更组合发布完成，并已再次独立核验。游戏PID`196526`、SHA`5eec0cf7959039cbd6843e20ecf439936553173ab619f78227965f6c6dccc239`；热更PID`98751`，双端私有热更SHA`f4d1beddc3481800096e3f3935e8cfde4544cb454c3bf650324ded53a49f5744`；数据库产物SHA`625256d58bc8514a7b0d17ce3f3da48ad17f97c33998eaa2acad1f132fc496aa`。进程、服务监听、原生运行时和环境一致，后端/客户端HTTPS/HTTP三条列表路由通过；双端回滚备份为`/opt/hs-server/releases/completion-20261011-192829-088143`和`/opt/hs-hotfix/releases/completion-20261011-192829-088143`。私有配置备份已同步1102，公开工作树不能直接发布。
+发布后19:42匿名窗口：21500行游戏日志，登录结果/完成23/23；同步PVP实际加载屏障1次、客户端started核验1次、末态结算0次。客户端异常、旧面板崩溃、阵容拒绝、数据库超时、panic/fatal/OOM/5xx均0；仍不能据此宣称完整对局通过。19:32:27一条推进取消紧邻TCP读取EOF；传输层的stopClock在连接退出时取消当前Tick上下文，事务失败保留已提交Journal，不能用独立后台上下文强行继续给已断开的连接推进。补充真实原生回归验证取消后Journal不变、恢复原输入窗口及后续超时重试/冷重建通过，Windows和Linux均0 SKIP，Linux前后游戏PID一致。审计工具新增推进重试/上下文取消/非取消失败及匿名摘要，避免再次漏计取消日志；当前非取消推进失败0。
+
+证据入口：`out/remote-release-verification.json`、`out/native-solo-release-verification.json`、`out/recent-service-log-audit.json`、`out/live-pvp-state-audit.json`、`out/native-journal-cancel-linux-verification.json`。正式候选91项真实PG及完整对局专项为已发布源码的验证；补充取消回归仅增加测试与审计资料，没有再次更改生产二进制或热更。
+
+本机已有MuMu Android 12实例2已启动，实际ADB端口为16448，客户端1.0.128进程和日志可读；启动及列表阶段0 Traceback/AttributeError、0服务器列表失败。客户端日志明确等待手动选服/登录，尚无PVP整局。窗口工具首次FrameArrived timed out，重新选窗口后window capture timed out，未使用旧坐标继续操作；已请求手动验证。未重装、清空数据或修改任何热更新资源，详见out/mumu-pvp-startup-audit.json。
+
+
+接口与诊断补充：`advancePvpLoadBarrier(ctx,c)`仅内部使用，不新增客户端RPC；判定当前UUID归属、已鉴权、实际加载和桥握手，不解析第二份客户端阵容。机器人输出原有add_fighting_cards/battle_fighting/start/check_on_battle_start；真人通过HumanDelivery持久投递。新增匿名日志区分服务端允许开战、客户端started快照实际核验、权威末态结算，避免把下发通知当作玩家开战。`audit_recent_service_logs.py`的总状态不再由热更正文脱敏探针决定，通过与否分别记录；`audit_live_pvp_state.py`使用只读连接和5秒语句期限，只统计在线角色聚合状态，不保存UID、OID、房间、卡牌和指令正文。部署预检与提交前强制拒绝IPv4/IPv6文档示例网段；仍必须使用prepare_private_release.py生成的私有目录，不得从公共示例配置发布。
+
+`./com.netease.hsqsl`没有修改或删除。本批资料整合到既有四份核心MD，不新增重复长期说明。
+
+## 2026-10-11 近期全日志修复、服务器列表事故恢复与私有正式发布
+
+从15:30起完整审计`hs-game/hs-sdk/hs-login/hs-postgres/hs-hotfix/hs-dns`：登录主链持续完成，未见panic/fatal/OOM/HTTP 5xx；确认真人PVP已跨过加载屏障但旧客户端缺少`support_skills_panel`，真人开战仍解析第二份畸形阵容；16:15连接池波峰来自连接同秒刷新在线租约；另有空契印分解、旧逻辑服号学会查询噪声及公网POST正文污染日志。源码现分别补齐缺失面板空装饰适配、真人PVP冻结阵容、10–14秒稳定错峰、完整快照轮询错峰、空分解幂等、学会旧服号兼容和热更POST正文脱敏。已开始战斗后的重复`battle_fighting`无论携带旧空对象或伪造阵容均只做无状态幂等忽略，不改冻结阵容或会话。
+
+正式发布工具现把`hotfixserver`二进制纳入构建哈希、双主机备份、原子提交和失败回滚；`audit_recent_service_logs.py`仅输出匿名计数并用固定探针验证公网正文不落日志。最终私有候选全仓Go、vet、Python2原生UI、Linux私有原生单端/双端专项通过，真实PostgreSQL为91 PASS、0 SKIP、5辅助PASS。正式运行游戏PID`194382`、SHA256`59f29206bf8bf78ee4d226b40127829424a37c3fb8a4d9ba71a962bac2ecc2a0`；独立热更PID`98307`，私有热更SHA256`ef45ef1c28b4b1428e4b5a29fe29bf426e78347295313c02eee418a4f332d96c`，runtime`2026101101`。
+
+18:36曾错误把公开脱敏`deploy/data/hotfix.json`覆盖线上私有配置，造成客户端获取服务器列表失败。18:41先从两台主机自动备份恢复原私有SHA`80fd4c28...`，18:42后端直连/客户端HTTPS/客户端HTTP三条列表链均通过；随后在仓库外私有工作目录合并runtime、重新构建、Linux原生、真实PG和只读预检后，于18:54发布上述私有正式候选，三条列表链再次通过。公开示例配置没有再用于正式分发，本机私有备份已更新为最终SHA；`./com.netease.hsqsl`始终未修改或删除。
+
+最终PID窗口3550行游戏日志有5次`login_result`和5次`on_refresh_login`，用户验证失败、客户端异常、`support_skills_panel`、阵容形状拒绝、数据库超时、panic/fatal/OOM/HTTP5xx均为0；热更脱敏探针摘要2次、正文泄露0。窗口内没有真人PVP完整对局，所以服务端/原生验证不能替代玩家Android/MuMu实际完成匹配、加载、开战和结算。
+
+## 2026-10-11 同步 PVP 部分玩家仍卡加载：锁定阵容统一兼容已发布
+
+上一批双方就绪屏障上线后，生产已出现4次“同步PVP加载屏障完成”，说明`Loaded + BridgeReady -> notify_battle_fighting`链路已执行。但旧进程又记录一次真实`battle_fighting`失败：`fighting_cards`列表类型或数量无效。这表明部分客户端已离开就绪屏障，却在开战交界处把第二份阵容上报为`null`或旧自定义形状，因严格解析被拒绝后继续停在加载界面。
+
+原生`activity-EE73BC1D.asm`确认`battle_cards.fighting_cards/support_cards`都是`ObjIdList`；`activity-EB947BB0.asm`1568行附近的`battle_layout_mgr.get_battle_cards`则会遍历布阵槽构造该自定义对象，空槽保留为0。因不同旧客户端/序列化路径存在形状差异，服务端不应在同步PVP开战时再依赖它。`send_pvp_cards`已经完成卡牌归属校验，并把权威快照锁定到`SyncPvpMatch.OwnFighting/OwnSupport`。
+
+`internal/game/battle.go`现仅在“当前战斗UUID与已就绪同步PVP匹配UUID一致且主战已锁定”时，忽略客户端重复上报的阵容形状，在事务内重读服务器锁定快照构造`BattleLayout/Team`，然后仍执行卡牌归属校验和原生权威启动。快照使用独立切片，不与匹配状态共享可变底层数组。普通PVE、活动战斗及非当前PVP会话仍严格解析原生字典；同样的`fighting_cards:null`仍会被拒绝。重复`battle_fighting`不重置阵容、不重复启动。
+
+新回归覆盖：就绪后`fighting_cards:null`与旧形状依然使用锁定阵容开战，实际保存的`Battle.Layout/Team`与快照一致，重复请求幂等，普通PVE畸形输入仍拒绝，原桥先到/实体先到/旧会话Tick补发全部保持通过。全仓Go测试、`go vet`、Windows/Linux正式构建通过；真实PostgreSQL 91 PASS、0 SKIP，另5项辅助PASS，真库用例已用畸形阵容完成开战、锁定快照落库及结算。实库产物SHA256为`23bb26b3e5562f2facdceaadd1e1ed54747f585928ce249be2c2c2d55a661416`。Linux项目私有原生引擎及单端/双端房间专项在发布前后均通过、0 SKIP。
+
+15:30仅游戏二进制原子发布完成：PID`184792`，SHA256 `f1c1432f94ef4cbcabba8e5bac82b36315d290a123223761f91c1de1969509a7`，回滚备份`/opt/hs-server/bin/backup-20261011-152751`。独立远程核验确认游戏、PostgreSQL、SDK、登录服务active且9000监听属于新进程；发布后原生专项前后PID不变。游戏主机与独立热更的正式热更SHA均保持`80fd4c28b86a8f9288833f198438fb682cc6f5a53318c20f9d8c008bf24fb5ca`，独立热更PID`93185`且active；本地公开热更与线上私有正式文件SHA不同，通用组合核验因此按设计拒绝，未为通过检查覆盖热更。`./com.netease.hsqsl`未修改或删除。
+
+新PID发布后长窗口有67次角色绑定和72次普通战斗启动，0 panic/fatal、0新`fighting_cards`类型错误。发布重连洪峰的15:30:16及15:31:42曾出现4条短暂deadline：两次助战刷新、一次真人在线租约、一次真人持久房间读取；15:31:43后连续6910行日志0新deadline、0阵容类型错误、0 panic/fatal。抽样时PostgreSQL为17会话（含本次只读审计），无idle-in-transaction或连接耗尽，游戏仍active。窗口内暂无新玩家完成一场同步PVP，因此Android/MuMu或玩家实际进入、开战、结算仍是唯一未关闭门；服务器和真实原生测试不冒充客户端最终通过。
+
+## 2026-10-11 同步 PVP 永久卡准备界面旧修复记录（方案已撤回）
+
+本节为当时发布记录；notify_battle_fighting路径会误入未初始化布阵，结论及实现已被本文件顶部1102替代，不得再照本节下发旧就绪通知。
+
+生产库匿名聚合确认8场同步PVP均已锁定阵容、战斗UUID一致、`Loaded=true`、`BridgeReady=true`，但`Started=false`、`BridgeStarted=false`；其中5场超过1小时，最老约24小时。原生 `activity-A66FD60A`、`activity-C4F986B7`、`activity-3B69CDD4` 证明：同步PVP的实体加载和桥握手完成后，服务器必须分别向机器人和本人下发 `Avatar.notify_battle_fighting`，本人的通知才会执行 `battle_layout.set_ready`、设置 `challenge_ready` 并开放开战入口。旧服务端没有发送该通知；客户端中的 `pvp_load_complete` 是匹配界面音效名，不是真实Android上行RPC，因此双方会永久停在准备。
+
+`internal/game/sync_pvp_contract.go` 新增幂等就绪屏障，仅在同一战斗同时满足`Loaded`、`BridgeReady`、匹配与战斗UUID一致、阵容已锁定且尚未开始时，按机器人、本人顺序各发一次通知。`load_entity_finish`与桥`ready`两种到达顺序都调用同一屏障；Tick会为发布前已经卡住的在线连接补发一次。连接切换到新PVP UUID时清空旧标记，不修改玩家资产、积分或比赛结果。通用`Battle.Status`仍保持原有语义，避免修PVP时破坏普通副本重复入场。
+
+最终全仓Go测试、`go vet`、Windows/Linux正式构建通过。真实PostgreSQL先保留一轮90 PASS、0 SKIP的失败：新增测试把空援护错误编码成`null`，屏障实际已发出两条通知，但严格阵容解析拒绝该测试输入；改为契约要求的空数组后，最终91 PASS、0 SKIP、5辅助PASS，并实际覆盖匹配、桥ready、实体loaded、双方通知、`battle_fighting`和结算。Linux游戏SHA256为`88f8edba38388d5214686ac706144b9cacc73e366f5b05d12c9ee54acddd4ef4`，实库测试产物SHA256为`3be2cfa0b53046ad827ba9dc07ea08a8963df643643e7c75e9da6d60345ab173`。
+
+14:42:53仅游戏二进制原子发布完成，新PID`182120`，回滚备份`/opt/hs-server/bin/backup-20261011-144050`；独立远端二进制、服务和监听核验通过。Linux真实原生引擎及单端/双端房间专项通过、0 SKIP，执行前后游戏PID不变。组合原生核验脚本因本地公开热更SHA与线上正式私有SHA不同而按设计拒绝，没有用覆盖热更消除该差异；独立热更仍active、PID`93185`、SHA256`80fd4c28b86a8f9288833f198438fb682cc6f5a53318c20f9d8c008bf24fb5ca`。发布后匿名聚合显示8份旧ready匹配及锁定阵容仍保留，服务重启已清除旧场景Battle，尚无人重新进入，故当前补发日志、started和bridge_started均为0；这不是修复失败，也不是玩家通过证据。`./com.netease.hsqsl`未修改，仍需玩家Android/MuMu重新进入并完成一场PVP。
+
+## 2026-10-11 数据库查询风暴导致再次登录失败：服务器修复已发布
+
+复合键修复上线后玩家仍偶发进不去，本次按真实线上窗口继续追查，确认不是旧 `unhashable type` 复发。发布前20分钟有324次 `context deadline exceeded`，PostgreSQL明确记录 `too many clients already`、保留连接槽耗尽和 `idle-in-transaction timeout`；约40名玩家时事务约95次/秒。根因有两条：`tickHumanPvp` 把存档中仍保留的已结算/已中止 `HumanRoom` 永久按100毫秒活跃局轮询完整角色JSON；每个连接五秒刷新在线租约后又各自执行全局在线表 `DELETE + SELECT`，数据库抖动后所有连接同步重试，最终占满16个游戏连接并拖住登录、副本、升级和重连。
+
+源码修复位于 `internal/game/human_delivery.go`、`internal/game/sync_pvp_human.go` 和 `internal/game/service.go`：同一进程五秒内的全局在线读取由互斥缓存合并，租约失败改为五秒后重试；完整角色快照按状态分级为普通在线及已结算/已中止房间5000毫秒、匹配等待500毫秒、活跃真人局250毫秒。同进程即时刷新通知继续保留。新增32路并发读取合并和轮询频率回归；跨实例在线列表允许五秒缓存，下一窗口仍须完整完成共同选卡、指令屏障、结果投递与回滚。
+
+全仓 Go 测试、`go vet`、Windows/Linux 构建通过。第一次全量实库为90 PASS、0 SKIP，唯一失败是旧跨实例用例仍要求新租约两秒内可见，该失败没有用于发布；用例改为验证明确的五秒缓存边界后，定向真实PG 47.08秒通过，最终完整真实 PostgreSQL 为91 PASS、0 SKIP，另5项辅助PASS。最终测试产物SHA256 `246fc8cab416ec0a01b01c44a5ec5b090c19a6c918bf9214ddf311d23a0e16a3`。
+
+12:58:28仅游戏二进制原子发布完成：PID `177985`、SHA256 `25b286cf2a789ec424181ff43f82f799f492c2387f0b1d1681fc11910be4be94`，回滚备份 `/opt/hs-server/bin/backup-20261011-125538`。至13:09:41的新PID窗口22156行中，16次玩家绑定、16次 `login_result`、16次 `on_refresh_login`，没有绑定悬空；deadline、连接耗尽、idle-in-transaction、复合键异常和登录收尾延后均为0。数据库10秒样本为17会话、1 active、0 idle-in-transaction，约31.3事务/秒。游戏主机与独立热更主机配置SHA均保持 `80fd4c28b86a8f9288833f198438fb682cc6f5a53318c20f9d8c008bf24fb5ca`，`./com.netease.hsqsl` 未修改。完整无玩家数据证据见 `out/login-pressure-release-20261011.json`。
+
+当前能确认服务器登录链和数据库压力已恢复；本机没有运行中的MuMu实例，ADB 7555未监听，因此仍等待玩家Android/MuMu实际看到UID并进入大厅，不能把服务端9/9冒充界面最终通过。
+
+## 2026-10-11 复合键协议导致登录收尾卡死：已修复并发布
+
+远端旧进程在 `Avatar.client_prop_changed` 下发 `house_unlock_state`、`restroom_grid_info` 时出现 `TypeError: unhashable type: 'list'`。原版 `custom_types.CustomDict.client_dump` 会把 Tuple 键先转为 Python 字符串（如`(1, 2)`、`(1, 0, 0, 0, 0)`），客户端再由 `Tuple.load` 还原；服务端此前把 `[]any` 直接作为 msgpack map 键，客户端 fallback 解包成 list 后中断，表现为登录界面无 UID。修复位于 `internal/mobileproto/msgpack.go`：所有 `mobileproto.Map` 的数组复合键统一按原版 `str(tuple)` 编码，并增加 `TupleKey` 与回归测试；收藏室、初音任务等现有复合键均自动覆盖。
+
+本批全仓 Go 测试、`go vet`、Windows/Linux 正式构建通过；本批真实 PostgreSQL 为 91 个 `TestPostgres` PASS、0 SKIP，另 5 项辅助 PASS。游戏二进制 SHA256 为 `9e43470efc4d6fcc10cdaf57612442bab321c557a5077f33c5a3e9dc669584fa`，已仅原子替换 `/opt/hs-server/bin/gameserver`，备份为 `/opt/hs-server/releases/completion-20261011-050017-128446`，新 PID `167989`，9000/18080 监听和 `hs-game/hs-sdk/hs-login/hs-postgres/hs-dns` 均 active。发布后新 PID 窗口统计：3 次新连接、3 次 `on_refresh_login`、0 次 `unhashable type`、0 次 `hs_client_error`、0 次登录收尾延后、0 次 deadline/lock timeout；旧 PID 在发布前的历史错误仍保留在日志中，不能计入新版本。
+
+线上 `/opt/hs-hotfix/data/hotfix.json` SHA256 仍为 `80fd4c28b86a8f9288833f198438fb682cc6f5a53318c20f9d8c008bf24fb5ca`，本地公开 `deploy/data/hotfix.json` 为 `857054a9f6d5e620c5a3a41ce7e9ad502765aa8eafc1670c3bd85dd2e82a388b`；本次未上传、覆盖或重启热更项目，也未触碰 `./com.netease.hsqsl`。服务端日志证明登录收尾已恢复，不替代 Android/MuMu 界面实机截图验收，需继续观察更长窗口。
+
+## 2026-10-11 登录界面批量卡死紧急修复完成
+
+01:00收藏室房间补建版本把`house_dormitory1/2`的系统解锁在`quick_login`事务中直接扩成`server_collection.rooms`所有权。真实客户端收到含新增空房间的Avatar初始属性后，在`sync_server_time`之后、发送`set_reconnect_auth_msg`之前中断，因此界面看不到UID。故障进程30分钟内98次鉴权、角色绑定全部成功，但只有24次`on_refresh_login`；无鉴权失败、属性编码失败、数据库deadline或lock timeout，故不是账号、UID生成、监听或连接池故障。
+
+01:32先精确回退游戏二进制到上一已验证版本，热更1011、数据库及其他服务不变。随后按错误版本运行时段、空cards/slots、无对应布局三个条件定位18份受影响存档中的21个误写空房间（房间1共18条、房间2共3条）；修复前把受影响行保存到服务器项目0700证据目录，事务内删除且revision递增，再重启使在线连接读取新版本。清理后可疑计数为0，回退进程最近10分钟18次鉴权、绑定和`on_refresh_login`全部完成，三类登录错误均为0。
+
+源码现将第一、第二房间旧档迁移延后到玩家已完成登录后的真实收藏室RPC；`ensureCollection`登录投影不再扩展这两间房，既有第三房间正式政策不变。新增本地及真实PostgreSQL回归同时验证：冷登录完成`on_refresh_login`且不写第一/第二房间，登录后布局请求才按原生系统解锁迁移，两个房间/两条布局冷重登保留，不伪造809/810钥匙，非法第三房间请求不改revision/state。全仓Go测试、vet、双平台正式构建通过；第三轮真实PostgreSQL为91 PASS、0 SKIP、5辅助PASS，前两轮因新增断言误伤既有第三房间政策的失败记录保留，不计作通过。
+
+02:02组合发布完成，管理令牌轮换导致游戏进程再次安全重启后，独立远端/原生核验仍通过。正式游戏SHA256为`ff24f7eed6fde1ee940360b9195e7bc023e97c29589f1acfdc3830b9bc383984`，最终PID162523；热更仍为1011及`80fd4c28b86a8f9288833f198438fb682cc6f5a53318c20f9d8c008bf24fb5ca`。最终进程首个窗口6次新登录全部完成鉴权、绑定和`on_refresh_login`，三类错误为0；仍须继续观察更长窗口，服务端日志证据不等同于Android界面截图。只读检查工具的环境变量脱敏同时修正，意外暴露风险涉及的管理令牌已轮换，新值仅保存在本机私有文件。
+
+## 2026-10-11 收藏室房间候选完整通过，发布进行中
+
+005003候选session88856退出0：全仓Go、vet、双平台构建通过，91项真实PostgreSQL PASS、0 SKIP、5辅助PASS。新增无钥匙旧档按已开放系统补建两个房间、实际摆放及冷重登、非法房间请求revision/state完全不变、再次进入不重置均通过。游戏SHA256为19d9ac8e9e8c16514a3435115652cee93989afe43cf5f00e85208bdf93c757f4，测试产物4257145a9a1063ab0a7dccb1ef63f3d8a0527a6888901b5b1be98fe0edb82357；热更仍1011及80fd4c28b86a8f9288833f198438fb682cc6f5a53318c20f9d8c008bf24fb5ca，本批没有客户端正文变化。
+
+只读预检session12930退出0；组合发布/独立核验session31045从00:56:47执行中，先轮询同一session，不重复发布。D38仍修复中，F38当前为尚未发布的验收说明，待真实发布结果回填；B15/B21及其他广义家具、住客问题未自动关闭。送礼成功原版继续进入girl_status好感度动画和语音，已有ret/bonus_box匹配证据不足以证明送礼卡死修复。
+
+## 2026-10-11 收藏室第一、第二房间系统与存档不一致修补
+
+上一轮为有效进展：跨日与模型保护已正式发布，双周期成功。本轮从新B38及B15/B21的收藏室反馈继续取证。仅只读抽取日志中六次实际保存请求对应角色的收藏室/材料，再读取其系统解锁与通关证据，未修改线上数据。六份样本全部已有house_dormitory1，第一份另有house_dormitory2，实际Collection.Rooms/Placements均为空，且都没有809/810钥匙。它们的空布局校验通过，不能据此说摆放功能通过。
+
+原版guis/gui_utils.is_area_opened直接按dormitory_attrs.room_system_name查询unlock_systems；dormitory_main.setup_unlock_tips_list也按该映射上报on_unlock_system。实际Python2执行9组房间/版本判定通过，原函数SHA256为de38dbfc46c2dbeb5904178a8e88fa133ed95819895fc882fcd3f2784b2e0f37。三个房间规则一致，该函数不读取house_unlock_state或809/810是否存在。现行服务端ensureCollection却仅在本服剩余政策开启时补房间3，遗漏已开放的房间1/2；旧代码新增TestCollectionRoomsFollowNativeSystemUnlocks已明确失败“房间1仍被服务端锁定”。证据收藏室系统房间不一致复现.log，原版接口/开放判定/入口txt和原版执行验收.log。
+
+修补：ensureCollection遍历原目录Rooms，根据各自System对应UnlockSystems版本大于0，仅创建缺失的CollectionRoom；不重置已有住客/能量/布局，不扣费、不生成钥匙、不重发家具，零版本及未开放房间仍拒绝。显式钥匙解锁原接口保留。新Go回归覆盖房间1/2摆放、未开放房间3拒绝及重复初始化持久JSON完全一致；首次CloneProgress对象比较受到规范化影响，改为前后持久JSON直接比较，失败证据保留。收藏室/解锁既有专项通过。新增真实PG回归TestPostgresCollectionSystemRoomsLayoutColdPersistence覆盖无钥匙旧档、两个房间真实RPC摆放、冷重登、非法房间请求revision/state不变及再次进入不重置。
+
+同时在收藏室和头像业务拒绝处记录固定方法/资源编号/错误码与原因；送礼记录拒绝或事务提交完成，只有礼物种类数和回礼数量，不记录完整请求/库存或口令。纯诊断003949候选session42092退出0，90项PG与5辅助通过、0跳过，全仓/vet/构建通过，但没有发布。实际房间修补已另建005003候选，session88856执行全仓、vet、双平台及完整真实PG；后续先轮询同一session，不使用旧诊断候选报告。线上仍a924aa0d游戏与热更1011，尚未发布房间修补。
+
+六份只读存档的本地重放全部通过：把各自真实unlock_systems合入副本，用原有11012地板验证，修补前全部因房间无ownership被拒绝；ensureCollection补齐后第一份有两间，其余各一间，布局校验全部通过、材料序列化前后相同。证据收藏室六存档本地重放.log及源码.go.txt；重放未回写生产，临时测试文件已移出编译目录。原版送礼server_callback两参数ret/bonus_box也已核对，成功后进入girl_gift回调，当前服务端回调形状匹配；没有据此认定送礼卡死已修复。00:52:15旧PID153623完整27770行窗口三类超时均0，保留收藏室修补前完整运行窗口.json/log，证明上一跨日修补的本次约16分钟运行窗口。
+
+腾讯表已回填D38=修复中，F38注明房间系统/存档不一致、六样本重放通过及实库尚在执行；写前核对B38，写后回读保存截图收藏室定位表格回填.png。其他状态未改，按上一全表清单当前为13已修复、19修复中、4无法修复、6待修复；这是该次读写快照，不保证之后协作表没有新增。
+
+## 2026-10-11 空榜跨日与模型保护联合发布完成
+
+session18594退出0：000931组合发布及独立远端/原生核验全部通过。游戏PID153623，SHA256为a924aa0d319e0196ea25b5c08193d68592f67da5a9c9abbae86e2e4fca82bd97；独立热更PID92501，版本2026101011，配置SHA256为80fd4c28b86a8f9288833f198438fb682cc6f5a53318c20f9d8c008bf24fb5ca。六报告已同步根out并归档空榜跨日与模型保护联合发布/，私有配置只同步至用户本机deployment-config/hotfix.json，公开deploy/data/hotfix.json未覆盖为私有分发地址。
+
+00:36:23新PID首个完整窗口1661行，0锁超时、0context、0idle。00:35:58活动周期842角色预读23.713秒、写阶段2.297秒、9个变动角色成功提交，先前跨零点全服空档持续40001路径本轮已成功完成。后续00:37:11完整3094行窗口确认00:36:24竞技/助战周期也成功：842角色预读24.074秒、写阶段2.331秒、49个变动角色提交；三类超时仍均为0。活动与竞技/助战两轮都已成功，但仍不代表长期高并发或下一日界验收。证据空榜跨日联合发布首窗口.json/log及空榜跨日联合发布双周期窗口.json/log均保留。当前没有运行中的测试或发布session。
+
+模型失效速度保护已随1011正式下发；原版Python2夹具、三路热更一致性和90项PG验收通过，但没有Android连续战斗/材料本退出到主线活动的全流程验证，B16保持修复中。现表42项与全部历史反馈继续在案，全表目标未完成。
+
+## 2026-10-11 空榜跨日与模型保护候选验收通过，发布执行中
+
+000931第三轮session18959退出0，全仓Go、vet、双平台构建通过；90项真实PostgreSQL PASS、0 SKIP、5辅助PASS，教学生命周期、空年兽/助战跨日不改revision、真实周奖容量失败整轮回滚均通过。游戏候选SHA256为a924aa0d319e0196ea25b5c08193d68592f67da5a9c9abbae86e2e4fca82bd97，测试产物6641a61c7d59470ebd27eea87854fb98120634e1fec7c0f0fda3a57411e902ab；热更1011配置SHA256为80fd4c28b86a8f9288833f198438fb682cc6f5a53318c20f9d8c008bf24fb5ca。前两轮失败保留，不能把失败夹具修改说成新增生产缺陷修复。
+
+只读预检session40218退出0。组合发布及独立服务/原生核验session18594正在执行，日志位于私有000931候选的out/idle-calendar-deploy.log、idle-calendar-remote-verify.log、idle-calendar-native-verify.log。后续先轮询同一session，不重复发布；待核实实际新PID、哈希及完整周期成功后再报告上线结果。四份现有MD已同步新增五条反馈，文档核验通过；网页未写入，不增加已修复数量。
+
+## 2026-10-11 腾讯清单新增五条反馈
+
+在线逐格复核发现B38新增“收藏室无法放置家具，提示收藏室错误”；B47“无法更改头像”、B48“饕餮之诞活动镇灵台南难度二卡死”、B49“试炼荒庭会卡死”、B50“给幻书送完礼物后会卡死”，五项均待修复且备注空。现有非空42项：13已修复、18修复中、4无法修复、7待修复；B51—59为空。证据十一日联合候选全表复核.json、十一日新增行复核.json、十一日新增行状态.json、新增收藏室反馈详情.json。本次网页只读，未改状态。头像更换界面/实体/客户端校验/回调原生四份txt已取证：原版先检查owned_head_box和资源类型，call_server传回调及编号，成功回调仅接收ret并更新玩家面板、头像组和缓存，与服务端现行参数/回调一致；尚未证明新增无法更改头像的根因，不能直接关闭。
+
+镇灵台南不属于用户明确跳过的镇灵台西，继续排查；试炼荒庭与既有历史问题关联但不能直接判同根因。B38原清空的抽卡黑屏、B39藏书竞斗、B40妄言历史问题继续在案，不以新文本覆盖历史。收藏室00:25:43保存回包确实到达on_update_restroom_grid_info，但当前日志只有7字节长度，没有返回码与请求参数，不能据此认定成功或定位具体拒绝规则；原文保存新增收藏室保存回包原文.log。
+
+旧PID148937的00:13:38起完整采样已有29次lock timeout、3次context deadline、0idle超时，跨日周期仍失败，证据十一日联合候选等待窗口.json/log。新候选尚未发布，不能拿本地或实库通过替代线上性能结果。
+
+## 2026-10-11 联合候选第二轮实库结果与教学刷新夹具修正
+
+000931联合候选session94032退出1：全仓、vet、双平台通过，真实PG为89 PASS、0 SKIP、5辅助PASS，唯一失败TestPostgresClientBattleLifecyclePersistence要求取名后的Tick必含全量material_mgr刷新。新增空档跨日revision/state专项及周奖容量回滚专项通过。第二轮完整报告和日志保留于out/evidence/qq-bugs-20261010/空榜跨日第二次实库失败/；本批没有发布。
+
+核查setNicknameGender实际只直接返回nickname/gender/nickname_flag，并不发布全量刷新；旧测试此前依赖后台空年兽或助战日期写库偶然建立刷新队列。现于真实取名、教学引导完成后和进入战斗前，通过已鉴权POST /admin/player/update提交性别2，确认201后再继续原生命周期。保留Tick全量属性逐项对照实库、不得下发旧权威指令、不得推进战斗或改变资产的断言；没有在生产代码补无意义写入，也未清队列回避核验。session18959重新执行全仓、vet、双平台及真实PG；后续先轮询同一session。线上仍233214及热更1010，不能将候选报告当作已上线。
+
+## 2026-10-11 空年兽账本跨日候选与模型时标联合验收
+
+针对跨零点833角色连续冲突，settleActivityCalendar现在仅对首次初始化账本或已有年兽排行成绩/小时历史的角色推进年兽日期和结算收据。未参赛者保留原空榜账本，不再逐日重写；山海结算和赛季处理仍独立执行，未按年兽条件跳过其他活动。新增prepareFirstNianRanking，在首份有效年兽成绩入账的同一角色事务里接续当前日/周截止基线；已有成绩或小时历史不迁移日期，未来日期明确拒绝。原奖励表、资产发放、跨角色保护锁、版本冲突和整轮回滚不变。
+
+本地专项通过：未参赛跨日持久JSON完全一致、真实零伤害首次参赛建立基线、已有成绩不跳过待结周期、日期回拨拒绝，以及既有日榜/周榜/山海/本服综合奖回归。初次测试用CloneProgress后做对象DeepEqual受到克隆规范化影响，改为直接比较持久JSON前后；未放宽业务不变量。新增TestPostgresIdleActivityCalendarRolloverPreservesVersion直接核对实库revision和state。原社交元数据回载测试补入明确排行成绩，使其仍经过真实周期写入，不再依赖“所有空榜角色每天都改档”的旧行为。
+
+模型独立235711候选session56438已exit0，89项真实PG PASS、0 SKIP、5辅助PASS，全仓/vet/双平台通过；证据归档模型时标独立候选验收/，没有发布。000931联合候选首轮session5592退出1：实库空档跨日版本4变5，定位到PVP后台无条件ensureFriendAssistDay更新空助战日期；另一个周奖容量夹具直接植入成绩而未同步首次参赛基线，旧周日期导致不进入目标奖周期。失败产物与完整日志归档空榜跨日首次实库失败/，不得删除或计作通过。现已仅在Active/Passive/RewardTimes有实际计数时后台重置助战，时钟回拨校验保留，真实助战使用/进入路径继续建立当天基线；空角色不再仅为日期写库。周奖夹具显式植入与其2026-10-20成绩对应的日基线2026-10-19、周基线2026-10-14，保留容量满必须全服回滚及清理后重试全部断言。年兽/助战/周期本地专项通过，session66166退出0。当前session94032重新全仓、vet、双平台和实库，先轮询同一session；尚未发布。热更保持候选1011，线上仍233214游戏及热更1010。本轮未改腾讯表格状态，全表和历史反馈继续在案。
+## 2026-10-11 跨零点结算持续冲突，模型候选暂不发布
+
+00:03前后的同PID148937完整跨零点窗口出现活动排行连续三轮40001回滚：00:01:03写阶段7.652秒、00:02:01为8.452秒、00:02:59为4.888秒，均833角色、变动角色返回0；同时完整窗口已累积10次lock timeout，0context、0idle。证据周期互斥跨零点窗口及周期互斥跨零点重试窗口.json/log。此前23:45的9角色成功仅是小范围启动周期，不能代表跨日全量成功；性能与跨日结算仍未关闭。
+
+源码定位到settleActivityCalendar对所有角色无条件推进cal.NianDay/NianWeek，并为没有年兽参赛记录的角色写日榜空收据。跨日时即使未参赛也会变动，缩锁会重新接近全服范围，并在普通改档下整轮冲突；需减少不必要的空账本写入，同时保证首次参赛基线、历史收据和真实排名奖励完整。不能简单跳过整个结算回调、强行提交旧快照或放宽锁超时。下一步应验证未参赛跨日不产生写入、首次参赛在自身事务建立正确截止基线、真实参赛者奖与重试仍一致；尚未实现该候选。
+
+模型失效时标修补235711已补齐三路下发，重新全仓Go/vet/双平台通过。游戏候选SHA256为58ac30696dee12e751753851c03131a7458348137c6f57606d222cd8c84fc62a，热更1011的私有配置SHA256为80fd4c28b86a8f9288833f198438fb682cc6f5a53318c20f9d8c008bf24fb5ca，测试产物451ce87a464fafbf2780d22aae89d1041f9b3b339164bea0d2f4698193857e6e。session56438真实PG仍执行中，先轮询同一session，不得复制旧通过报告。尚未发布1011，当前线上仍游戏479aad04及热更1010。全表状态未改，优先解决新确认的跨日持续冲突后再组织下一发布。
+## 2026-10-10 模型失效后速度更新候选，原版复现和修补回归通过
+
+从联合修补跨23点窗口.log定位到22:45:43客户端真实异常：revival_set_battle_preferences(1.75,True)经player_input、battle_base、story_mgr、fashion、model_driver、super_model分发到wrapper.model.set_animator_speed，调用已失效模型get_socket_count抛出“Invalid model which has beed destroy!”。原版wrapper.model.is_valid直接读取_ins.valid；destroy正常路径把_ins替换为swallow并最终标记destroyed，不能只依赖destroyed字段判断引擎已失效的句柄。
+
+新增internal/game/model_lifecycle_script.py：只包装底层set_animator_speed和set_move_timescale，在原生is_valid为假时不再访问引擎对象；动画速度仍保存animator_speed，model_driver仍保存time_scale。有效模型全部继续执行原函数，不捕获或吞掉其RuntimeError；同对象重新有效后立即恢复原处理。安装以类修订号幂等，模块尚未导入或尚未定义类时延迟1500ms再试。通过既有合并器同时进入启动和运行期扩展，候选runtime.index=2026101011，尚未发布。
+
+test_model_lifecycle_native.py实际调用原版Python2的driver.set_time_scale、driver.set_animator_speed、super_model分发闭包、model.is_valid及两个底层速度函数。旧路径复现同类RuntimeError；修补后两种成员顺序均只更新有效模型，挂点特效帧率/动画率保持原逻辑。覆盖缓存、模型恢复、暂停、重复安装、模块迟到和有效模型其他错误继续抛出。引擎句柄为失效边界夹具，因此不是Android实机回归，也不能把此异常直接等同所有连续战斗或白屏反馈。证据模型时标生命周期原生验收.log及模型驱动/底层/复合模型/移动时标原生反汇编文件。
+
+完整启动双版本和运行期正文经Python2编译通过，扩展标记各唯一，清单一致性核验通过。235711私有候选首次全仓session81479退出1：TestClientExtensionsMatchesColdAndRuntimeHotfix检出游戏内扩展仍为1010且缺少新脚本，未进入发布。完整失败日志保留模型时标三路一致性首次失败.log。已补client_extensions.go的go:embed与同顺序组合、battle_observe.go的bridgeHotfixIndex=2026101011及桥头部索引，重新生成私有清单；不改测试预期绕过不一致。当前session56438重新执行全仓Go、vet、双平台构建、真实PG，后续先轮询此session。线上仍233214游戏版本及热更1010，本轮尚未修改腾讯表格状态。循环共享保底、首次对决及其他全表历史问题仍在案。
+## 2026-10-10 循环与共享抽卡保底原版取证，未改正式概率
+
+上一轮周期互斥发布已有实际进展。本轮先复核幻术星尘对决：冷重连缺enemy_cards的1005修补仍在，但没有新增证据证明首次对决卡死已解决，因此保持在案。随后核查启程尚缺的20033循环及1060共享规则，新增out/tools/test_shared_promise_native.py，直接执行原版Python2的get_promise_card、get_onetime_promise_card、do_promise、check_promise_rule、refresh_record，使用实际卡表和启程权重；随机选择器仅用于确定性检查候选集合，不生成新概率。
+
+实际原版验证通过：20033阈值固定10，九次未命中后第十次强制稀有度3；提前命中稀有度3会清零count/finish_count，命中稀有度4不会清零；real_count=10在循环重置后保留。1060在count=59且finish_count<2时触发，满足两次则不触发；刷新到60后原版将完成次数记为2，不能把此收据字段反推为历史一定抽得两张典藏。1060被多个卡池共用（完整ID列表见循环与共享保底原生验收.json），不能只在启程维护独立计数。
+
+当前服务端PromiseCardRecord只有rule_id/count/finish_count，未存real_count；handleGachaContract只接入首抽1001和启程1002—1011。原版模块能确认单规则行为，但现有客户端pyc中未找到外层promise_check调用者，尚缺多规则同时触发时的选择/替换顺序及旧档无逐抽来源的迁移依据。不能用通用“稀有度不低于3”逻辑冒充20033，更不能从各池总次数猜已有命中收据。本轮没有修改正式抽卡、卡池概率或玩家存档，也没有发布和修改表格状态。工具及JSON/log为新增原生证据，不是Android抽卡验收；全表目标继续未完成。
+## 2026-10-10 周期跨角色互斥及助战拷贝优化已部署，线上重试成功
+
+233214候选全仓Go、vet、双平台构建及89项真实PG PASS、0 SKIP、5辅助PASS通过。session70935组合发布、独立服务/监听核对和原生运行时核验均退出0。游戏PID148937，SHA256为479aad04f0458b02099a619556975846fa2e3e4ff90055d82fd9b34514a813d2；热更PID92086、版本2026101010、SHA256为20706a97a45ae523f8ddfdb77b3a9b46716d64c1db5a13aafc6eea59c4942463。六报告、全部验收/发布日志和私有热更备份已同步，归档周期跨角色互斥发布/。当前没有运行中的验收或发布session。
+
+新PID首窗口23:45:04共3138行，无lock timeout、context deadline或idle超时。823角色活动周期预读25.856秒后无需写；竞技助战周期预读24.056秒、写阶段2.359秒，因并发改档40001整轮回滚。后续23:47:12完整7287行确认：23:45:52下一轮预读22.105秒、写阶段1.802秒，9个变动角色成功提交，三类超时仍均为0。首次冲突和成功重试都保留于周期跨角色互斥重试完成窗口.json/log，不用后续窗口抹掉首冲突。这证明本次后台重试能完成，不是长期高并发、跨日结算或Android全玩法验收。
+
+本批上线仅服务端周期依赖保护与助战资格检查避免全档拷贝，未发布完整资源校验表，未补造玩法或概率规则。本轮网页只读，现表37项非空的13已修复/18修复中/4无法修复/2待修复不变；第38—40行清空反馈与其他历史反馈继续在案。旧231552混合事务失败证据保留。全表目标未完成。
+## 2026-10-10 周期跨角色互斥修正候选，完整验收进行中
+
+上一轮真实PG已证明单独把周期设为Serializable不足以保护Read Committed双角色事务。新候选233214在dbstore/periodic_guard.go增加按当前schema隔离的数据库保护锁：普通UpdateSocial、非只读UpdateLeagueSocial、非周期UpdateAllSocial在任何业务读取和行锁之前取得事务级共享锁；周期写阶段独占池连接，先尝试取得会话级独占锁，成功后才建立Serializable事务快照。忙时周期直接拒绝且不推进周期键，后台按原规则重试。普通单角色UpdateProgress不取得此锁，仍以行版本冲突拒绝旧写。
+
+会话锁在事务提交或回滚后独立清理，清理使用新的3秒上下文；无法确认释放时关闭物理连接，禁止带锁连接返回连接池。保护锁不会替代角色行锁、幂等收据或权限校验。此方案仍可能让跨角色请求等待周期写阶段，不能声称全站请求完全无等待；目标是避免周期计算锁住全部普通玩家存档，同时保留跨角色一致性。日志已将“加锁事务耗时”更正为“写阶段耗时”，仍不是实际行锁时长。
+
+验收保留普通无关玩家写入、同角色并发改档拒绝、嵌套快照及版本重读；新增周期独占/释放后重试、周期先开始时社交旧依赖被拒绝、普通社交/全服管理/学会写入先开始时周期避让且下一轮读取新状态。此前失败证据不删除，新的测试要求对应当前互斥契约，不再要求两个周期同时进入受保护阶段。根本地TestSocial辅助测试通过，不是PG通过。
+
+233214候选session53130已退出0：全仓Go、vet、双平台构建及89项真实PG PASS、0 SKIP、5辅助PASS通过。游戏SHA256为479aad04f0458b02099a619556975846fa2e3e4ff90055d82fd9b34514a813d2，测试产物23c06a32d0b7349304ae4c83fdaf1bea4df0873075fa21ae95db4faf078934e5。只读发布预检session75280退出0，组合发布/独立核验session70935进行中，尚不能宣布上线完成。候选包含助战资格拷贝优化，热更保持1010。后续先轮询同一session，保留任何首次失败并同步六报告。
+
+23:33:56旧PID145550完整67692行窗口：4次lock timeout、6次context deadline、0idle；其中3次助战刷新，另3次真人房间/在线租约。证据学会修补待替换完整窗口.json/log。表格现有非空37项：13已修复、18修复中、4无法修复、2待修复。第38—40行已清空，历史的抽卡角色黑屏、藏书竞斗、妄言仍未关闭，不能把清空当作修复。第47—59行无新增，证据全表周期互斥候选复核.json及周期互斥候选新增反馈检查.json。本轮网页只读，没有新增已修复；全表和历史问题目标仍未完成。
+## 2026-10-10 周期缩锁候选混合事务实库失败，禁止发布
+
+231552私有候选包含助战资格去除全档拷贝及周期写阶段改用可串行化快照、只锁实际变动角色。session62347已退出0：全仓Go、vet、双平台构建通过，真实PG 87 PASS、0 SKIP、5辅助PASS。首轮独立证据归档out/evidence/qq-bugs-20261010/周期隔离首轮验收/。候选游戏SHA256为e7465630ccfde3992b0ac5a52cb8ea279edfcd4f25e1f25aabc81bc6b6e57b66，未发布；线上仍225602学会修补版本。
+
+首轮新增测试证明普通无关角色写入不受周期计算阻塞、同一角色并发改档拒绝旧快照且重试不重复、两个可串行化周期不能形成写偏差。但普通UpdateSocial仍是Read Committed，不能据此推断混合隔离事务的跨行依赖也安全。已新增TestPostgresPeriodicRejectsMixedSocialWriteSkew：周期依赖乙写甲，普通双角色事务依赖甲写乙，要求旧周期整轮拒绝。session25024已退出1：新增混合事务用例失败，87项原PG仍PASS、0 SKIP、5辅助PASS。23:26:14实库明确记录“错误=<nil>，甲=1，乙=1”，周期未拒绝旧跨行依赖，两个互斥写入同时落库。此候选禁止发布，不能拿原87项通过抵消新增失败。本轮测试产物SHA为71df455ccb943acacd965938e1fa98a646736ceb7c58b21b203e8a853b6c55a6；构建、完整日志和报告归档out/evidence/qq-bugs-20261010/周期混合事务失败/。下一步须修正跨行读依赖保护，并覆盖普通多角色事务及全服管理事务，不能只修改一个测试期望。当前没有运行中的发布或验收session。
+
+未通过混合事务核验前不发布缩锁候选，不增加表格已修复计数。日志中的“加锁事务耗时”目前仍表示整个写阶段，不能解释为实际持锁时间。用户指定无法修复仍限四项；其余全表及历史清空问题继续在案。
+## 2026-10-10 学会推荐类型修补已部署，首次运行核验失败须保留
+
+225602候选全仓Go/vet/双平台及85项真实PG PASS、0 SKIP、5辅助PASS通过；组合部署和独立服务/监听核对成功。首轮session84224在verify_native_solo_release.py因“本批启动日志异常”exit1：新PID145550于23:07:04—05出现4条lock timeout（引导完成、战斗结果、观察检查点、battle_fighting）。完整失败日志与摘要已归档，不能写成整批首次全通过。
+
+后续session92342复核exit0，证明游戏/热更哈希、进程、原生运行时及后续最近100条窗口通过，不抵消首轮错误。当前游戏SHA256为3455caebe790ad46868e301b32dd3c188c6e5144a9c1ae0905aa42ccedee3fe5、PID145550；热更1010、PID91768、SHA256为20706a97a45ae523f8ddfdb77b3a9b46716d64c1db5a13aafc6eea59c4942463。六报告、首失败说明及私有分发备份已同步；归档学会推荐类型修补发布/。当前没有运行中的发布/验收session。
+
+23:09:45新PID完整7125行仍4锁超时、另1次context deadline、0idle。23:07:05周期预读21.325秒，写事务1.639秒、仅5角色变化，却仍锁全部814角色；故同时出现1秒锁等待失败并不矛盾。源dbstore/social_all.go在非空预读后false/cache阶段依然对全表avatars和progress FOR UPDATE，这是下一项需要消除的明确范围；必须保持全局排行与奖励一致性，不能直接提交旧预读档或只锁部分行而忽略并发变化。
+
+已部署只包括学会trial_score与两个boss血量容器类型修正，不含根工作树availableAssistCard候选优化、不含完整资源校验表候选。根工作树助战优化已有专项和本地对照，尚需独立全仓/实库/发布。腾讯表B42的差量缺陷说明已保存，D42仍修复中；未新增已修复计数，全表仍13已修复、18修复中、4指定无法修复、5待修复。历史清空和新日志问题仍在案，全表目标持续未完成。
+
+## 2026-10-10 助战候选资格拷贝优化，尚未发布
+
+跨23点窗口在23:01:16记录812角色预读27.343秒，无需加锁；完整45095行仍1锁超时，但新增5次context deadline，分别为3次refresh_assist_use_times及真人在线租约/持久房间读取各1次。证据联合修补跨23点窗口.json/log、跨23点请求超时摘录.json。只证明本次整点未空写全服，不能宣布全部卡顿消失。
+
+定位到validStrangerAssistProvider在最多1000名候选的资格检查末步调用snapshotFriendAssist，后者CloneProgress整份玩家档，虽然资格只需卡存在且非禁战。根工作树新增availableAssistCard复用原有两项检查，资格路径改为只读查卡；真正入选快照仍沿用原深拷贝和契印逻辑，双向黑名单、同服、好友排除及事务内重新验证不变。现有Assist/Stranger专项通过，session63990 exit0。
+
+BenchmarkAssistCandidateValidation在3000材料夹具、20次对照下：原快照资格每次3539075ns、776597B/11948分配，新资格85ns、0B/0分配。证据助战候选拷贝开销对照.log，session55570 exit0。这不是线上压测；仍存在查询最多1000份完整存档的问题。本优化不在225602学会候选内，尚需后续全仓、实库及发布，不能拿学会候选证据覆盖。
+
+225602学会候选已全仓/vet/双平台及85项PG PASS、0 SKIP、5辅助PASS，session99500 exit0。23:02:49开始组合发布，session84224仍执行；先轮询同一session，再独立核验报告归档及私有备份同步。学会候选SHA为3455caebe790ad46868e301b32dd3c188c6e5144a9c1ae0905aa42ccedee3fe5；热更保持1010，不含更新资源候选和助战新优化。
+
+## 2026-10-10 更新差量缺陷取证与学会推荐类型候选
+
+上一轮有具体发布与表格回填，属于进展。本轮修正out/tools/gen_npkfilelist_md5.py：按清单大小和MD5选择Documents、APK缓存或APK内资源；对codec>=62按已验证规则还原实际偏移；拒绝未知编码、重复编号、越界和重叠，整批成功才写输出。旧大包整包跳过逻辑已删除，命令现必须显式--output。没有改正式清单或资源。
+
+运行python out/tools/gen_npkfilelist_md5.py --output out/evidence/qq-bugs-20261010/完整逐文件校验候选.json，16包105734条、4836436字节、MD5 cf1c0302ff7d74aac4c59e03d577f275；script12条与旧表完全一致，两个场景包自动选择匹配清单的APK缓存。生成器边界测试2项通过，覆盖编码偏移、损坏索引拒绝、哈希优先选源和无匹配拒绝。工具不会上传或改NPK。
+
+原生test_complete_patch_table_native.py执行全部真实索引：完整表消除缺键，但15包105722条编码偏移仍被原版_check_file直接放入下载队列并越界；索引还原后队列偏移全有效。check_patch_resource_ranges.py对每包一个小块实际GET Range，16项全部206、Content-Range及MD5一致；char1原编码偏移对照返回416。候选尚缺原生写包及Android完整启动验证，不能直接发布，更不能认定就是该vivo手机故障原因。F42已回填这些事实，D42保持修复中，截图更新差量缺陷回填.png。ADB在线列表仍空。
+
+22:50:24当前PID143577完整19003行窗口仍为1锁超时、0context、0idle；没有随机看板或本人名次RPC日志，不能据此冒充手机回归。新增7条客户端异常中，学会推荐两类错误已定位：trial_score原生Int却发字典；boss_challenge_hps和boss_max_hps原生字典却发列表。leagueInfoWire候选修正这三项，不更改玩法积分与存档。实际Go回包经原生league_info逐字段、整对象、client_dump及on_get_recommend_leagues回调全部通过；图形刷新为夹具。证据学会推荐修补专项.log、学会推荐原生回调验收.log、学会字段类型原生.txt。初查里members/apply_map的列表报错来自JSON导出mobileproto.Map，实际Msgpack为空字典；最终原生测试明确恢复这两种导出形态，未修改服务器正确容器。
+
+已扩展既有真实PG并发建会测试，冷Service从三份真实主档查询推荐，核验三字段类型与内部公告隐藏。私有候选目录%LOCALAPPDATA%/hs-server/release-workspaces/20261010-225602，全仓/vet/双平台/实库正在session99500执行，尚未发布；线上仍223100版本。后续先轮询此session，完成后按既有组合发布流程。还记录到战斗速度推送对已销毁模型调用set_animator_speed的RuntimeError，以及一个统计域名连接错误，未通过吞异常伪称修复。
+
+## 2026-10-10 随机看板与本人名次联合修补已发布
+
+223100私有候选全仓Go、vet、双平台构建及85项真实PG PASS/0 SKIP/5辅助PASS通过；session92071组合发布、独立远端与原生运行时核验均exit0。游戏PID143577，SHA256为4bbb7a78fb8528c11cf658b109be527807c8f4f529fa491045b22e63f7c78fc6；热更PID91509、版本2026101010、SHA256为20706a97a45ae523f8ddfdb77b3a9b46716d64c1db5a13aafc6eea59c4942463。六报告及私有热更备份已同步，归档随机看板与本人名次联合发布/。当前无运行中发布或验收session。
+
+22:43:29新PID完整首窗口2776行，1次lock timeout、0次context deadline、0次idle超时；809角色一轮无需写锁，另一轮4变动角色写锁1.450秒，预读分别25.494秒及20.813秒。未跨23点，仍不可关闭性能故障。证据随机看板与本人名次首窗口.json/log。
+
+腾讯B46随机看板已改D46“已修复”，F46写明整数三模式、冷保存、原版Python2选择逻辑、85项实库及发布证据；E46保持待测试，因为没有Android人工画面验收。已回读自动保存，截图随机看板已修复回填.png。全表40项状态相应为13已修复、18修复中、4无法修复、5待修复；B42 vivo仍修复中，已填入口核验边界。全表目标未完成，不能仅凭本批上线结束。
+
+更新资源索引只读审计进一步确认：按旧生成器优先级读本地文件，14包与清单MD5和大小一致；scene/scenewd2的Documents小包不一致，但APK缓存两包分别完全匹配清单。13个编码偏移包的旧解析全部越界，按既有codec>=62偏移还原后越界均0；script12条无需还原。证据更新资源索引只读审计.json、更新场景源候选核对.json。下一步应以清单哈希选择资源源，并核实原生差量下载及重组对编码偏移的兼容，不能直接运行旧gen_npkfilelist_md5.py跳过逻辑，更不能用Documents小场景包覆盖正式资源。正式清单和资源本轮均未改动。
+
+## 2026-10-10 随机看板与本人名次联合发布执行中
+
+223100私有候选通过全仓Go、vet、双平台构建和85项真实PG PASS/0 SKIP/5辅助PASS；新增随机看板冷保存专项1.15秒、本人名次冷读取且不加载榜单专项0.68秒通过。22:38:06开始组合发布，session92071执行中，尚需独立远端及原生运行时核验、同步六报告与私有热更备份。最终游戏候选SHA256为4bbb7a78fb8528c11cf658b109be527807c8f4f529fa491045b22e63f7c78fc6，热更维持1010。
+
+22:38全表逐格复核至56行，40项非空：12已修复、19修复中、4无法修复、5待修复。证据全表2238复核.json；B42及B46新反馈均已标修复中，历史清空反馈仍在案。用户指定跳过仍仅四项，不扩大无法修复范围。
+
+vivo更新入口进一步只读核验：16个资源在清单端口和原生80端口32次HEAD全部200、长度一致、声明支持分段；两个入口的逐文件校验表长度与MD5均匹配。新工具check_patch_resource_entry.py只读取私有配置、不打印地址、不下载大资源，结果vivo资源入口核验.json。
+
+发现独立风险：现有逐文件校验表只有script，旧gen_npkfilelist_md5.py对大包索引越界采取跳过，并假设玩家本地同源。原生npk_patcher._check_file在差量分支直接索引fileid；test_patch_missing_md5_native.py用原版Python2函数及单条索引夹具复现缺char1表时KeyError，补单条夹具后可进入下载队列。证据更新缺失校验表原生复现.log及更新逐文件校验原生.txt。这不是vivo故障归因，也没有生成正式校验表。既有audit_external_resources.py掌握codec>=62的偏移还原，但需要进一步确认原生差量下载对编码偏移的兼容；不能只填MD5后宣称更新修好。没有修改正式清单或资源。
+
+## 2026-10-10 随机看板整数模式修补及本人名次验收
+
+腾讯表新增B46“幻书无法随机放在界面，提示错误”：原生面板发送0关闭、1全部、2收藏，旧服务端仅接受布尔值且不保存随机范围。候选新增GirlRandomType，兼容旧布尔存档；实际设置同事务保存模式与开关，先回推模式再回推开关与成功回调，冷登录同时投影。拒绝越界、字符串、小数和null。原生选择器保持无收藏时回退全部的原规则，不改变抽卡或奖励。
+
+本地专项覆盖模式切换、属性推送顺序、非法输入不改档、旧布尔兼容；实际Python2 board_girl_mgr选择逻辑验证0/1/2及空收藏回退。证据随机看板模式专项.log、随机看板原生选择验收.log。新增TestPostgresGirlRandomModesColdPersistence待正式实库验证；不是Android画面验收。表D46已改修复中，尚未上线不标已修复。
+
+222217本人名次候选全仓、vet、双平台及84项真实PG PASS/0 SKIP/5辅助PASS已通过，session62932 exit0；未发布且不含随机看板修补。下一正式候选合并两项后重新完整验收。B42 vivo停在检查更新：本机正式健康接口、两条清单入口与热更正文均200且清单JSON有效，仅能证明本机可达，不能推断vivo网络及资源解析正常。证据vivo更新入口只读检查.json，仍待定位。
+
+## 2026-10-10 空周期联合修补已发布
+
+220604私有候选全仓Go、vet、双平台构建及83项真实PG PASS/0 SKIP/5辅助PASS通过；session35421组合发布、独立游戏和原生核验均成功exit0。游戏PID141097、SHA256为6ec3227026048e24a1cb3312e424ba0546e698a6b13722ce62b7f4ded43858d4；热更保持2026101010、SHA256为20706a97a45ae523f8ddfdb77b3a9b46716d64c1db5a13aafc6eea59c4942463。六报告和私有备份已同步，归档空周期联合修补发布/。目前无运行中的发布或验收session。
+
+22:21:08新PID完整首窗口2024行：1次锁超时、0次context deadline、0次idle超时；805角色一轮预读无需加锁，另一轮6角色变动写事务1.729秒。尚未跨下一个整点，不能宣称整点持锁和并发卡顿全部消除。证据空周期联合修补首窗口.json/log。已发布的是竞技空日期及年兽空小时榜修补；根工作树的本人名次读取候选不在此包内，尚待后续完整验收与发布。全表状态本轮未提前关闭。
+
+## 2026-10-10 本人竞技名次读取候选，尚未发布
+
+已把query_sync_pvp_rank与query_sync_pvp_world_rank提前分流：先验证唯一回调参数，再调用原有SyncPvpRank存储接口，仅返回真实本人名次；不再先取1000条榜单及完整玩家进度。本服/世界过滤和同分OID排序仍由原存储负责，榜单列表接口维持原行为。
+
+新增personalRankOnlyStore在读取榜单或SocialAvatars时明确失败，实际Handle验证1102人同分情况下本服第2、世界第1102均正确，超过1000窗口也不截断；非法额外参数拒绝。专项及既有排行榜测试通过（session60387 exit0），证据本人竞技名次读取专项.log。此源码候选不在当前220604发布包内，尚需全仓及真实PG验证，不宣称已上线。
+
+空周期联合220604候选已完成83项真实PG PASS/0 SKIP/5辅助PASS，session71687 exit0。22:14:26开始正式组合发布与独立核验，活跃session35421；仍需轮询该session并归档正式报告、同步私有分发备份、采集新PID完整窗口。当前网页状态未改变。
+
+## 2026-10-10 空年兽小时榜与竞技周期联合候选
+
+22:12只读查询本候选远端test.log确认新增TestPostgresEmptyNianHourLeavesDormantRevisionUnchanged（0.46秒）及TestPostgresAsyncIdleCalendarColdEntryAndNextDayAward（0.94秒）均PASS；整套session71687仍在原生战斗验收，不能仅凭专项提前发布。发布前22:10:26完整31511行累计18锁超时、3次请求期限超时。入馆仍仅11条历史包装异常，末次21:56:29。期限失败包括refresh_assist_use_times两次与query_sync_pvp_rank一次。
+
+已定位下个明确性能缺口：sync_pvp_contract.go querySyncPVPRank所有方法先SyncPvpRankings(1000)，再SocialAvatars加载最多1000人完整存档；query_sync_pvp_rank/world_rank最终只返回SyncPvpRank的本人名次，前述榜单和完整存档无用。后续应先识别个人名次方法、校验唯一callback，再直接调用已有全量名次SQL；保留本服/世界过滤、同分OID排序与错误，不用前1000人估算本人名次。当前尚未改此路径。
+
+早期220239候选session31920已结束exit0：82项真实PG PASS、0 SKIP、5辅助PASS，新增竞技冷入口/离线revision/次日发奖专项1.11秒通过，归档竞技空周期首次实库/，此候选未发布。联合220604候选全仓Go、vet与双平台构建均通过（session39256已结束exit0），最终真实PG已启动session71687，日志私有候选out/empty-cycle-pg.log，仍在运行，先轮询同一session，不重启。当前源码与联合候选已包含防守初始化基线及空年兽小时榜修补，只有这份最终结果可用于发布。
+
+22:03:14对1010进程完整17183行窗口核查发现：22:01:15活动结算801角色全部写入、持锁11.152秒，累计18次lock timeout/1次context deadline/0次idle超时。源码freezeNianHourRanking每小时为不存在于entries的角色写入全零NianTotal且更新Hour，导致空榜也整服改档。
+
+候选保留首次空榜快照；已有空快照且仍无参与记录时不更新Hour。有旧名次离榜仍清零，真实零伤害参与仍在entries内、不能跳过。新增NianEmptyHourlySnapshotNoWriteAndEntryExit验证全进度JSON不变、小时内新成绩不提前入榜、下一整点真实零分入榜、离榜清零及后续空榜不再写。原年兽综合排行/空榜/真实零分专项与竞技/日周奖励联合测试通过，证据空榜与竞技周期联合专项.log。
+
+竞技候选补查到设置防守阵容与离线防守结果也初始化积分，已补齐这些写入口的首次日期基线；只读候选预览不改存档。新增PG专项实际Handle冷进入、离线未参赛revision跨21点不变、首日无补奖/次日一次发奖，以及真实周期维护跨小时空榜revision不变和首次零伤害入榜。第一次220239私有候选仍在session31920实库验收，仅含早期竞技改动，不可拿其结果发布当前联合候选；待完成后生成新候选。当前线上仍1010，尚无联合发布。
+
+## 2026-10-10 未参赛竞技空周期写入修补候选，尚未发布
+
+1010线上21:58:09完整窗口6409行仍为1次lock timeout、1次context deadline、0次idle超时。入馆异常共11条，最后一次21:56:29仍为历史reward_update:1504；不能以短时无新增代替Android打开验收。两项超时分别为refresh_assist_use_times与apply_friend，性能仍在案。
+
+本地候选social_periodic_rewards.go仅对AsyncPvp.Score非零者沿用原日周结算；零积分从未初始化者保留原有奖励日期，不再为跨21点空奖励写整服存档。回拨校验仍先执行，不删除旧日期。async_pvp_business.go两个实际入口先建立日期基线再初始化1000积分；零积分旧基线向当前推进，未来异常日期不覆盖，已有非零积分基线不改，避免补发休眠期奖励或吞掉正常待结算奖励。助战与活动账本不在本次变动中，所以不能宣称消除全部全服锁。
+
+新增async_calendar_idle_test.go覆盖空/旧日期全进度不变、实际Handle进入竞技、当日不补历史奖、次日正常发奖、已有积分重进不推进日期及未来日期拒绝。已有竞技/日周/失败回滚专项通过。首次测试因未初始化助战Active空map及用CloneProgress比较动态类型而失败，原日志未覆盖；修正夹具并按实际JSON存储比较，复验通过。证据未参赛竞技周期检查.log、未参赛竞技周期复验.log、未参赛竞技入口及周期验收.log、未参赛竞技最终专项.log。下一步补真实PG冷存档与首次入口验证，完整候选验收后再发布，当前线上仍1010。全表目标未完成。
+
+## 2026-10-10 入馆字典缓存1010已发布，客户端验收未完成
+
+私有候选214618全仓Go、vet、双平台构建与81项真实PG（0 SKIP、5辅助PASS）通过，session97551组合发布、独立游戏及原生核验均exit0。游戏PID138347，SHA256为294d25f5f2291ee6950a4ff938472e34c1a4d3900563eb90729662dcee6fcbb4；热更PID90992、版本2026101010、SHA256为20706a97a45ae523f8ddfdb77b3a9b46716d64c1db5a13aafc6eea59c4942463。六报告及私有分发备份已同步，归档入馆字典缓存修补发布/。当前没有运行中发布或验收session。
+
+21:55:44首窗口1544行，锁超时1次、context deadline 1次、idle超时0；799角色一轮无写、一轮9角色变动写锁1.704秒。21:56:33完整3732行仍相同超时计数。入馆异常仍有11条上报，reward_update调用点1479/1504，都是历史包装位置；当前1010清单runtime的调用点1516、startup的调用点1868。尚不能证明报错客户端已经执行1010，也不能仅凭旧栈位置断言全部问题消失。继续核对客户端补丁应用及实际打开，不关闭B45。证据入馆字典修补首窗口.json/log、入馆字典修补后续窗口.json/log、入馆1010首窗口异常聚合.json。
+
+修补使用原生box.load().to_list()恢复全领按日回包内层字典，同时迁移旧签到缓存；真实RPC和reward_item.update已复现旧KeyError并验证转换后渲染。图形控件为夹具，无Android手动点击结论。回归人数接口缺真实账本、性能锁竞争和全表其他待修问题仍在案。
+
+## 2026-10-10 入馆字典缓存根因及1010修补候选
+
+1010私有候选214618全仓、vet、双平台构建及真实PG81 PASS/0 SKIP/5辅助PASS通过；21:51:12开始组合发布，session97551执行中，尚未回填已上线。1009至21:50:12完整窗口16071行，4次锁超时；共94条入馆异常上报（包含旧新包装重复上报，不能当94次独立点击），末尾栈均指向奖励缓存取下标0。另发现get_avatar_back_total_num原生为无业务参数call_server，回调(ret,total_num)送activity_returning_total.on_get_total_num；当前服务端尚无回归人数账本，不能伪造零人数完成活动。原生证据回归人数入口原生.txt、回归人数回调原生.txt。
+
+1009私有候选213246全仓、vet、构建、81项真实PG（0 SKIP、5辅助PASS）、组合发布及独立游戏/原生核验均通过；游戏PID136594、SHA256为96fc5d9d5def797559c4a4fe3880e95d1aa7270e2f808a3b64050d07a47e44da，热更PID90776、版本2026101009、SHA256为6493d562221b75abade29c08575255e16b06803f6a820e5d27d86a84861d7901。六报告及私有备份同步，归档入馆末尾定位发布/。21:42:42新进程完整首窗口2024行有4次锁超时，其他两类超时0；790角色预读后5角色变动持锁1.569秒。仍不能关闭性能反馈。
+
+1009末尾栈已定位prepare/beginner_guide.py update:1149的bonus_data[0]为KeyError。实际Python2 rpc.revert_args对全领外层按日字典不递归恢复内层box，确实留下带__custom_type=box.box的普通字典；奖励行缓存取下标0复现同一错误。1010候选只对该已标记类型调用原生box.load().to_list()，同时修复新全领回调及旧缓存，不清奖励、不重抽、不修改已领状态。奖励对象与原列表继续兼容。原生真实奖励渲染14组、字典故障复现、修补渲染、新回包三形态与幂等安装通过，既有UI和展示回归通过。图形控件仍为夹具，未作Android入口验收。首次探针断言误把原生material字符串写成整数1，失败已保留，随后按原生结果修正测试。证据签到字典缓存修补原生验收.log、签到字典缓存既有回归.log、签到字典缓存展示回归.log；正式候选待验收发布。
+
+全表再次核对38项非空，12已修复、17修复中、4无法修复、5待修复；四项跳过原因已逐格核实，历史清空反馈继续在案，B45仍为点不进去且D45修复中。
+
+## 2026-10-10 入馆深层异常定位1009候选
+
+1008仅保留前8层栈，真实KeyError停在widgets.update_panel_info调用奖励行set_info，尚未暴露最内层。1009调整为保留末尾12层，仍只含相对文件、函数、行号和异常类型，不发送局部变量、参数、缓存键或异常文本；幂等安装通过独立版本2与原函数引用，深20层异常原生测试确认保留末尾故障点。现仅定位候选，不宣称修复入口。七天原生reward_item.update与真实bonus_utils/data/gui_utils在已领/未领两状态14组执行通过；图形控件与update_rarity尚为夹具，因此不能作为整个入馆UI通过。证据签到原生奖励渲染初查.py/log、入馆末尾异常栈原生验收.log。未修改奖励或存档。
+
+
+## 2026-10-10 字段差异及入馆定位1008已发布
+
+211313私有候选全仓Go、vet、双平台构建和真实PG81 PASS/0 SKIP/5辅助PASS通过；session54451组合发布、独立游戏与原生核验均成功。游戏PID134719，SHA256为13fb643e4b6083a32b0559cbe1c25dd19c621d566210f4ec19c609d9d3bf11ce；热更1008，PID90522，SHA256为48493a30a256b936c6c53a0e6d3ff06462bb10c166dbfa6625e9c0325359c6b0。六正式报告及私有分发备份已同步，证据字段差异与入馆定位发布/。首窗口21:23:57共1552行，1次锁超时、另两类超时0，785角色预览后一轮5人变化写锁1.355秒；未跨21点全量结算，不宣称消除性能故障。
+
+关键新证据：1008真实客户端上报beginner_init_error为KeyError，栈为init_show:783→update_select_tab:948→update_checkin_list:820→widgets.set_infos:279→update_list_items:291→update_panel_info:761；8层上限使更深奖励项栈未保留。已静态取证签到奖励列表实际异常原生.txt、签到奖励渲染原生.txt。七天原表预览全部产生存在的材料ID（501、13201、12203、10004、11、501、80002），见签到原生奖励预览初查.log；所以不能未经实际栈证据删除奖励或替换随机卡。仍需定位最内层KeyError，例如保留有界末尾栈/执行真实reward_item.update及缓存路径。1008并未修好入口。
+
+21:28实时B45已改为“入馆指南点不进去，之前点他会导致屏幕变暗，现在是点不进去”。已更新F45明确承认入口未解决和真实KeyError，D45保持修复中，E列未改，回读保存成功；截图入馆指南打不开实际异常回填.png。继续全表与历史移除条目，不能把场景保护或释放遮罩等同完成修复。当前无运行中验收/发布session。
+
+
+## 2026-10-10 周期字段差异写入候选，尚未发布
+
+1007新进程21:03:14完整窗口6075行累计21次lock timeout、3次context deadline exceeded；21点两轮均变动780角色，写阶段分别14.067秒与13.864秒。此前首窗口只有3人变化的1.34秒不能代表全量跨期负载。证据入馆指南后续完整窗口.json/log。
+
+候选social_patch.go将周期写阶段当前锁内重算结果与原始规范化进度逐顶层JSON字段比较，用state删除已消失键后合并变化键。原生大整数保留RawMessage，不经过浮点数；数组、null与omitempty删除分别保留语义。维持原avatars→progress锁顺序、xmin重读并发变化、跨角色同事务和失败整体回滚，未延长玩家超时、未拆分部分提交。非周期UpdateAllSocial保持整份写入。未知顶层兼容字段由差异写保留。仅减少写入传输/PG解析，仍不能宣称消除全服持锁。
+
+新增本地测试验证大整数、数组清空、null、字段删除及取消；真实PG专项验证周期收据、无关资产、未知字段及重复幂等；隔离24行对照仅报告耗时，断言差异/整份结果一致和显著缩小载荷。现仍待候选验收及实测性能，不据此关闭表内登录/抽卡/战斗卡顿。
+
+
+首次210711私有候选全仓Go、vet、双平台构建及真实PG81 PASS/0 SKIP/5辅助PASS通过；隔离24行整份写入838.878毫秒、差异670.537毫秒，单行载荷374036→22字节，单行差异生成7.793毫秒。顺序对照仅为此次样本，且写入耗时不含差异生成，不能当作生产端到端加速比例或解决14秒全服锁的证据。首次候选尚未发布，证据周期差异首次候选验收/。
+
+同窗口捕获54次beginner_init_failed，1007未覆盖全部入馆初始化故障。新增独立幂等包装器，只上报异常类型及最多8层相对代码文件/函数/行号，不上报局部变量、入参或异常文本；保留原异常。热更候选升2026101008，入馆原生和既有UI回归通过，证据入馆异常定位候选原生验收.log、入馆定位既有UI回归.log。合并候选需重新验收，当前线上仍1007。
+
+只读聚合统计进一步确认：当时785角色全部未解锁异步竞技、异步正积分为0、年兽记录非空为0；平均存档文本143476字节、磁盘24696字节。21点仍对780角色写入，后续应核对无参赛角色日历/空收据的批量更新与首次参赛基线，避免把“没参加”的全服档案反复改写；不能直接删历史账本或取消有参与者的奖励。证据周期参与范围只读统计.json，无玩家标识。
+
+天体结界原表441002激活规则为is_teammate_or_self、标签441001、数量-1；原生选择和process_active_magic_field在两个同坐标我方结界时分别产生两个激活演出和两次计数，敌方/异标签/范围外被排除。test_tianti_fields_native.py实际执行原生选择与激活函数，但几何和伤害演出为夹具，不是完整伤害或Android验证；不关闭“两结界按一个算”反馈，不改技能平衡。证据天体技能原表.json、天体结界调度原生.txt、天体双结界原生调度验收.log。
+
+完整引擎补充：test_tianti_fields_engine.py使用当前隔离CPython2原生server_battle，通过原生add_battle_magic_field在敌方同坐标布置两个441001结界；原生真实几何/阵营/标签选择同时保留两者，get_magic_field_action_play分别使敌方HP28198→27783→27368，各扣415。原场景另有既存结界，场上合计3个；没有把总数误写成仅2个。该测试绕过客户端连续施法创建路径，仍不证明Android反馈无效。原生宿主输出既有debug_logic/extensions可选模块提示，进程退出0且全部断言通过。证据天体双结界完整引擎验收.log；21:22已按B34描述核对并回填F34，D34待修复/E列未改，截图天体结界核查表格回填.png。54次入馆初始化失败涉及7角色，脱敏聚合入馆初始化失败范围.json。
+
+## 2026-10-10 入馆指南展示生命周期修补1007已发布
+
+原生init_show先显示UI外层并隐藏panel_beginner，0.1秒后的delay_show先读取当前scene.is_main_city_scene，再显示内容；当scene为None时，实际Python2闭包抛AttributeError，留下外层可见、内容隐藏。test_beginner_show_native.py用原生delay_show字节码复现；GUI、场景及调度是夹具，未宣称Android复现用户现场。基线证据入馆展示原生失败复现.log。
+
+ui_callback_repair_script.py新增仅作用于入馆指南原生delay_show的生命周期保护：只在场景为None时按100毫秒重试，最多20次，恢复后执行原闭包；关闭或重新打开会递增代次，旧闭包不得复活旧UI。保持原add_callback句柄及无关定时器行为，未改任务、签到条件或奖励。超过等待上限关闭自身UI并记录beginner_show_scene_timeout；原生初始化或展示其他异常先关闭半开界面，再原样抛出，并分别记录beginner_init_failed/beginner_show_failed，不吞错伪装成功。安装有独立版本标记，不重复包裹。该修补只覆盖已复现的生命周期故障，不证明用户全部暗屏都由此触发。
+
+候选原生验证覆盖缺场景失败基线、场景恢复、主城隐藏模型原动作、关闭/重开隔离、有界等待、安装幂等、无关回调及异常保留；既有test_ui_callback_repair_native回归通过。测试开发中Python2临时unbound method身份断言及缺__builtins__环境各失败一次，原日志已保留，修订的是测试环境。热更bridgeHotfixIndex及合并器升至2026101007，1.0.125/1.0.128冷启动和运行期正文均已合并、清单校验通过。204928私有候选全仓Go、vet、双平台构建通过，真实PG为79项PASS、0 SKIP及4项辅助PASS；session95151组合发布、独立游戏和原生运行时核验全部通过，现正式热更2026101007。游戏PID132083，SHA256为0ae779b31b8e196382ce5684e4f8e268d7f4a6384f34f42facf3a1e592360141；热更PID90261，SHA256为0f938b1f7f8f79a548e449738b44fb58dd4d819171ae48aefc253c75078ddd67。六份正式报告、私有分发备份已同步，归档入馆指南展示发布/。20:59:00采得新进程完整首窗口985行：购物和入场各1次lock timeout，另两类超时为0；779角色周期结算成功、3人变动写事务1.34秒。不能以独立发布核验通过覆盖这2次线上业务失败，登录/卡顿问题继续在案；证据入馆指南发布首窗口.json/log。候选证据入馆展示候选原生验收.log、入馆展示既有UI原生回归.log。MuMu实例选择仍待用户回复，不自行改用其他实例。
+
+21:00腾讯表按描述复核后，B45入馆指南仍为本条反馈；F45已回填1007上线、原生/实库验收及Android待复测边界，D45改为修复中并确认已自动保存，E列未改。截图入馆指南上线表格回填.png。当前38条非空为12已修复、17修复中、4无法修复、5待修复；历史移除条目继续在案。
+
+后续性能定位：social_all.go的UpdatePeriodicSocial在预读发现变化后，写阶段仍先锁全服avatars与avatar_progress，再执行结算和全服编码比较。本次首窗口两条业务锁超时与1.34秒周期写事务同秒，且玩家事务lock_timeout为1秒；这是明确竞争候选，尚未抓到这两次的实时阻塞链，不能写作已证实唯一根因。后续应研究保持跨角色结算原子性及防止旧快照覆盖的缩锁方案，不仅延长玩家超时。妄言新增原生证据为妄言布阵界面原生.txt、妄言场景入口原生.txt、妄言跳过布阵判定原生.txt：is_skip_edit依次检查副本固有skip_edit、活动自动与锁阵容组合、预设键记录，尚未定位用户本次触发分支，未放宽限制或改场景。
+
+## 2026-10-10 关闭契印自动分解入口已发布
+
+启程发布前旧进程126479的20:08—20:26完整窗口共25143行，remove_rune_auto_decompose_stars出现5次未实现拒绝。原生rune_mgr同名方法无业务参数，走call_server，线上参数仅callback_id；成功回调提示关闭并刷新card_rune_list。新增Service分派及removeRuneAutoDecomposeStars：必须Playing且只有有效回调，事务保存非nil空星级列表，先client_prop_changed同步rune_auto_decompose_stars=[]再返回整数RetSuccess。失败回调不伪造成功，不删除或分解任何契印；保留既有1至4星保存接口。nil表示未设置，空列表表示明确关闭，冷登录不能恢复默认开关。
+
+本地TestDisableRuneDecomposePersistsExplicitEmpty与既有偏好回归通过，覆盖保存后关闭、重复关闭、非法参数、资产不变及重登空列表；新增TestPostgresDisableRuneDecomposeColdPersistence已通过实库。203310私有候选全仓Go、vet、双平台构建通过，session83363真实PG已成功结束：79项PASS、0 SKIP及4项辅助PASS，关闭冷存档专项0.57秒通过。session45040组合发布、独立游戏及原生运行时核验已通过；游戏PID130715，热更仍2026101006。正式报告和私有备份已同步，归档关闭自动分解发布/。20:43:58完整新PID首窗口1506行三类超时均0，776角色周期两轮成功，5人变动写锁1.366秒；只证明短窗口，不关闭性能反馈。证据关闭自动分解发布首窗口.json/log。候选游戏SHA256为3fed0184e6fbaa82dd1edc0ec3e8c33f192d2281c82d95f3c61dc68cb63e012a。test_rune_disable_native.py实际执行原生need_auto_decompose，启用指定星级和关闭后所有星级均不命中的断言通过，证据关闭自动分解原生验收.log；不冒充Android操作。本批为日志明确缺口，未找到腾讯表独立同名条目，不据此关闭其他契印反馈。证据关闭自动分解本地检查.log、契印关闭自动分解原生.txt。
+
+战斗反馈初查：原生独立存储battle_type与从dungeons读取的dungeon_type；试炼荒庭活动3与异步竞技模式3重号，但尚未证明该分支造成怪物停滞。妄言活动207、原场景3003，未凭编号猜测修改场景或统一转换全部活动模式。入口、装配、初始化、加载原生反汇编及战斗模式使用位置.txt已保存。旧窗口仅1条DNS解析客户端异常，另2次布阵数量拒绝关联同一角色，但缺上行列表和当时关卡，不能等同2-1反馈；脱敏证据布阵数量拒绝关联.json。新增每日活跃红点原生判定同时检查每日、每周宝箱及完成未领任务；旧阈值回包修补已存在，不能把新反馈自动视为已解决。证据每日活跃红点初查.json。继续全表修复。
+
+
+第一天探索任务补充：原表new_task105—108对应base_target20101，target_type=6且参数为空，与每日1013相同；现有finishFreeStageSite只在首领节点完成整张探索图时发该事件，单个普通节点不计通关次数。已扩展TestQQBugExploreDailyCompletionClaimAndResultPush，实际走入场、节点结算、全图完成后断言四条第一天任务均累计1，并通过receive_new_task_bonus领取105；专项通过，证据第一天探索任务实际链检查.log。这是本地实际Handle链，尚无该反馈的Android/角色历史证据，不关闭反馈。新增测试在203310快照之后，未包含于该发布的79项实库；本次未改探索生产逻辑。布阵拒绝角色现时只读投影为36700021、未开始，与20:09/20:12失败时间不同，不能据此判定当时关卡或放宽布阵上限。
+
+
+20:43全表复核为38条非空：12已修复、16修复中、4无法修复、6待修复，快照关闭自动分解期间全表复核.json。42—44行已清空、45行改为入馆指南变暗；历史的试炼怪物、2-1读条、每日红点、第一天探索任务仍在案，不以清空关闭。本轮未改网页。MuMuManager官方info确认实例0/1/2均关闭，Android版本分别15/15/12，ADB无设备；已询问用户要启动哪个现有测试实例，等待选择，不重装或清数据。入馆指南原生init_show先显示外层并隐藏panel_beginner，再以0.1秒回调delay_show读取当前scene.is_main_city_scene后显示面板；scene缺失会在面板显示前中断。当时仅为生命周期风险；后续已执行原生闭包复现并形成1007候选，见顶部，仍缺该反馈Android现场证据。证据入馆指南初始化原生.txt及入馆指南延迟展示原生.txt。
+
+## 2026-10-10 启程一次性保底已发布，历史与客户端验收待补
+
+原表启程池3的1002—1011为第1—10抽一次性指定卡组规则，1007在第6抽提供7种典藏候选；现有抽卡路径未执行这十条规则。新增beginner_promise_catalog.json保留原表哈希与节点/卡种，beginner_promise.go在每抽选卡前检查未完成节点，按本次原池单卡权重筛选，最终卡入账后刷新全部已知规则。原生check_promise_rule、do_promise、get_onetime_promise_card、refresh_record由test_beginner_promise_native.py直接执行，节点、原候选权重、提前命中不重复触发及收据刷新均通过。客户端包没有发现原服务端调度调用者；本次依据可执行原生判定的count+1语义选择先判后刷，不宣称恢复了不可见的服务端源码。
+
+单抽与十连共用PromiseCardsRecord和卡池累计数，与材料扣费、新卡及获取历史在同一进度事务提交；空候选或零权重拒绝整次交易。旧档缺失记录仅为尚未到期节点接续Count，已到期缺失记录维持未知，不从当前持卡推定历史命中、不补造已领取、不自动补偿。已抽完旧启程池的历史争议尚未解决；循环精装规则20033及共享规则1060不属于本次十条一次性规则实现，不将本次补丁宣称全卡池保底均已恢复。
+
+本地TestBeginnerPromise覆盖分次单抽、连续十连、前六抽实际典藏、20抽上限、成本、记录、提前命中、旧档和失败回滚通过；实际Python2专项通过，证据启程保底本地检查.log、启程保底原生验收.log。新增真实PG专项要求五次单抽后新Store/Service/Connection冷登录，第六抽记录与实际典藏同时存在，继续十连及单抽至上限并验证失败请求不改存档。201437私有候选全仓Go、vet、Windows/Linux构建通过；缩短测试昵称后真实PG78项PASS、0 SKIP及4项辅助PASS，新启程冷登录专项1.51秒通过。游戏SHA256为4530f089b3f077be7624d9e62dc7650f64f9a6d0e2ba902791aa78eb7398f6ee，实库测试产物SHA256为c485018539729eef40902b05e26683ce823c00c51f1a106a264f9f525df46dfc。证据归档启程保底发布/；组合发布、独立游戏和原生运行时核验已通过，游戏PID128664，热更仍为2026101006。正式报告与私有分发备份已同步。20:27:06完整新进程首窗口1298行，三类超时均0，771角色两轮周期成功，其中3人变动写锁1.030秒；仅短窗口，不能据此关闭性能反馈。证据启程保底发布首窗口.json/log。仍缺Android点击及旧档历史补偿依据，腾讯表启程保留修复中；20:30回填已上线、78项实库和仍待Android/历史验收说明，回读和截图为启程上线表格回填.txt/png。
+
+
+腾讯表20:21表尾复核：启程第41行已从待修复改为修复中，F41写明根因、验证中及历史不可追溯边界，回读通过，截图启程保底修复中回填.png。新增42行试炼荒庭怪物不会行动、43行打完2-1退到界面无限90%读条且大退后无副本、44行每日活跃领取红点一直在、45行活动第一天探索任务无法完成，均继续在案，未改已修复。原文与状态保存于启程修补表尾新增.json。首次实库新增用例因昵称超长在取名阶段失败，77项其他实库与4辅助通过；原始报告保存在启程保底首次实库失败/。已只缩短测试昵称并重建，游戏产物不变，实库重跑session49031已成功结束，后续发布见上文。
+
+## 2026-10-10 幻书收集榜已发布，启动锁超时仍在案
+
+日志query_rank_list参数[2,0]对应原表rank[2]幻书收集榜，非山海活动；[6,0]为学会活跃榜。候选在既有ActivityRankAccounts接口内实现类型2，子榜只能为0，原生回推on_query_rank_list("2&0", infos)，score为单元素整数列表；列表上限100。按同服真实获取记录和旧档当前实际拥有卡去重，使用已有profile_catalog的82种可统计幻书，排除disable/not_in_stat、素材、未知及剧情变体。保留已分解但存在历史的卡；旧版已删除且从未记录的历史不凭空恢复。同分采用既有稳定OID次序，原生收集榜显示连续名次。无玩家或无合格卡返回真实空榜。
+
+数据库单条只读SQL在同一快照中计算全部分数、排名和个人名次，再限制页面；读取公开资料时保留已选头像框，已清除自定义头像为空。只传公开资料/分数，不把全服完整存档取回应用层，无行锁、无资产修改、不触发活动开放校验。内存与PG使用相同有效卡目录；查询必须在Playing状态。
+
+新增本地回归覆盖重复卡、历史卡、素材/未知排除、105角色分页和实际Handle的100条上限；PG专项覆盖同服/异服、冷Store、持锁期间可查询、个人名次不受页面截断、同分稳定、头像和版本不变。首次旧测试仍要求类型2必须拒绝，失败日志保存在收集榜旧拒绝断言失败.log；已替换为真实回包与计数断言，并保留类型6未实现拒绝。Rank/Profile本地检查通过。test_collection_rank_native.py实际执行本版Python2图鉴计数与榜单接收函数，证实已分解0份历史仍计种、体验/素材排除、同分连续名次、列表更新及空榜；结果收集榜原生验收.log，不能冒充Android点击。195539私有候选全仓Go、vet和双平台构建通过，77项真实PG、0 SKIP及4项辅助检查通过，组合发布和独立游戏核验通过，游戏PID126479，SHA256为1a65564e1a271cc55ed3393ddbbe524b6b734212b6064b0ae2e13ce3e0b57b60，热更仍为2026101006。首次原生核验因运行日志错误失败，原日志保留；后续原生环境、运行时、哈希及最近100行复核通过，不抹去首次失败。至20:08:19完整新进程窗口4620行有1次锁超时、0次请求期限超时和0次事务空闲超时：20:06:04副本705战斗观察检查点因锁等待延后，同秒周期事务处理768角色、变动4人、持锁1.499秒成功；时间相邻不是已证明的唯一因果。性能与玩法反馈继续修复中。证据归档out/evidence/qq-bugs-20261010/幻书收集榜发布/及收集榜发布首窗口.json/log，正式报告和私有分发备份已同步。本批没有表内单独收集榜行，不关闭其他BUG，也无Android点击验收。线上只读执行计划返回100条，执行572.976毫秒，无行锁，证据收集榜线上只读执行计划.json。
+
+另外核对了broadcast_random_cards为卡UUID列表的无回调上行，尚缺广播接收/频道契约，未用空成功吞掉；unlock_mid_age与set_mid_age_cards属于中世纪活动（不是展厅），后者走call_server回调并提交chapter_2_cards，前者无参、下行on_unlock_mid_age(Bool)。中世纪掉落队列、派驻加成及收取闭环未实现，不以仅补入口宣称活动完成。学会活跃榜缺真实活跃积分来源，继续记录缺口，不伪造排行。原生取证文件集中于qq-bugs-20261010既有证据目录。 最新腾讯表37条：12已修复、15修复中、4无法修复、6待修复。新40行妄言无忌战前不能调阵容且场景异常、新41行启程前十连无典藏却显示已领取，均纳入；历史被清空反馈继续在案。启程池为cards_random[3]，成本材料11×138、上限20，promise_rules含1002—1011；其中1007规定onetime_count=6及7张固定候选，全部rarity=4典藏。现有handleGachaContract除池1首次1001外未执行这些一次性规则，候选池3的guarantee=0，因此仅一般权重不能保证第6抽出典藏。原表证据启程十连保底原表.json，后续优先修此确定缺口。抽卡保底记录原生.txt已确认do_promise按原池权重过滤候选再抽样；check_promise_rule的稀有度、位置和指定卡种条件为或关系，稀有度为相等判断。一次性规则在count+1达到节点且finish_count不足时触发，refresh_record每抽递增计数、命中候选才递增完成次数，节点届满有原生收据完成规则。仍需核实调用者的选卡与刷新顺序后实现，这是收集榜发布时的历史状态；后续启程一次性保底已实现并发布，见上文，不从文案捏造概率。只读范围核查发现1个角色启程计数至少6次；其已有典藏来源未知，不能据此判为保底兑现或自动补偿。现有存档没有逐抽卡池收据，历史追溯边界保留，见启程保底线上只读范围.json。
+
+## 2026-10-10 学会局部事务已发布，继续全表修复
+
+19:06—19:19旧进程窗口的学会创建超时已定位为leagueRPC和雅努斯起战仍调用全服写事务。本批新增LeagueTransaction/LeagueAccounts与dbstore.UpdateLeagueSocial：写操作先获取当前schema的学会专属事务锁，串行维护同服名称和全局UID，再按OID顺序只锁本人、当前/目标学会主档及显式审批或任命目标；全服只读取关系与公开资料投影，完整背包和战斗存档仅加载上述角色。只读搜索/详情不获取行锁或专属锁。展示投影不能返回给连接替换完整存档，回调修改未锁定角色会使整笔事务回滚。沿用5秒请求期限、1秒锁等待和avatars先于progress的顺序，不修改创建成本、冷却、原生拒绝码或数据库全局配置。
+
+新增真实PG专项覆盖无关角色持锁时学会仍能完成、学会持锁时无关普通写入仍能完成、三角色回调失败/越界修改整体回滚、只读零写锁和SQL投影、同名并发仅一次成功且仅成功者扣费、异名并发UID唯一。既有学会审批、退会、移交、雅努斯和冷登录验收继续保留。193030私有候选全仓Go、vet及Windows/Linux正式构建通过；真实PG共76项PASS、0 SKIP，另4项辅助PASS。新增两项学会实库专项及既有审批、移交退会、雅努斯冷恢复均通过。组合发布、独立游戏与原生运行时核验均通过，游戏PID124470，SHA256 `47463ab9524a2cbc30e7ad24f5d2804a6fb50a819c5206c8f2b8a3f64b8ada13`，热更维持1006。归档`out/evidence/qq-bugs-20261010/学会局部事务发布/`，正式报告和私有分发备份已同步。首个完整新PID窗口1153行中三类超时均0，764角色两轮周期成功，其中写锁事务1.59秒、3人变动；这是短窗口，不能宣称高并发或全部卡顿反馈通过。证据`学会局部事务首窗口.json`。截至19:43:13新PID完整窗口5574行仍三类超时0，另存`学会局部事务完整窗口.json`。腾讯表B28登录、B32绿钥匙、B33十连均已补回本批修补与待客户端复测说明；D32/D33由待修复改为修复中，D28维持修复中，未改测试列或提前关闭。回读及截图为`学会修补表格回填.json/png`。生产只读EXPLAIN实测763角色学会投影执行184.016毫秒、规划2.108毫秒，无行锁；证据学会投影线上只读执行计划.json。旧窗口确认绿钥匙池2十连两次锁超时，另有query_rank_list参数[2,0]及[6,0]未实现，脱敏分类保存在学会修补相关旧日志分类.json；不能据此关闭全部抽卡故障。原表状态不提前关闭，用户指定的四项无法修复维持。
+
+## 2026-10-10 七日头像框同步已发布，学会全服锁待修
+
+19:06实时表B5:B43共39条：12已修复、13修复中、4按用户要求无法修复、10待修复；新增第42行“探索和活动剧情关卡进入战斗界面后无法交互”、第43行“登录7天领取出错”，均纳入本轮，不按旧行号回填。快照`腾讯表1906复核.json`。19:06日志另有query_rank_list类型拒绝及query_pass_team_rank未实现，已取证原生通关队伍回包结构；没有据此伪造历史队伍或推断它们就是表中战斗故障的根因。
+
+七日原表链为check_in_bonus[1]第7天→bonus220007→material80002（type9，target1004，永久头像框）。现有单领与一键领取能将1004持久入OwnedHeadBox，却仅下发材料、卡牌、契印、体力、知识和签到记录，遗漏owned_head_box，客户端领取成功时仍持有旧头像框状态。新增实际Handle回归先复现两条路径均失败（`七日头像框修复前.log`），候选在成功领奖回调前补同步原生owned_head_box；不改变七次实际登录条件、原奖励、持久收据和重复领取拒绝。
+
+新增验证覆盖七次日期推进、单领、一键领、帧状态必须先于回调及重复领取；真实PG用例逐日使用新服务/连接登录，领取后再次冷登录核对永久框1004、count=7和仅第七日收据，并检查重复请求明确拒绝。191304正式候选全仓Go、vet、双平台构建通过；74项真实PG零SKIP及4项辅助通过，组合发布和独立游戏、热更、原生核验均通过。游戏PID122419，SHA256 `4104c1440854fd32171d950bedd964ed8a65da919d736beb775919fc48435595`，热更仍1006；归档`七日头像框发布/`，正式报告与私有备份已同步。首窗口952行中周期预览761人，两轮成功，写事务1.28秒，三类超时均0。该遗漏尚未证明是用户“领取出错”的唯一根因，且原反馈已从原43行清空，本轮未改表格状态。无Android实例的验证边界保持。
+
+回填前再次读取发现协作表尾部变化：新39行为“藏书竞斗不能加载大退重进还在这个界面”，40—44行为空；此前入馆指南、中间位契印、3-7、无法交互和七日领取已不在旧位置。证据`七日回填前行变更.json`。它们仍是历史在案条目，不能按表中清空推断已解决；本轮不按旧43行写入状态。藏书竞斗反馈尚无角色标识，不能据该文字重置任意玩家存档。
+
+优先后续：19:06—19:19:32旧PID120329较长窗口有83条锁超时、21条请求期限超时，create_new_league失败16次；同时波及抽卡广播、家具、任务、锁技能、战斗和重连。源码leagueRPC所有方法在验证等级、参数、名称和费用前调用UpdateAllSocial，仍锁全服并读取完整进度；周期预览/并行编码不覆盖该非周期路径。证据`学会创建超时定位.json`及followup-191932/events.log。应为学会操作收窄读取/锁定范围，保证同服名称唯一、全局学会UID唯一、扣费及成员/主档原子性；不能仅通过延长请求超时或关闭学会功能掩盖问题。该次七日发布当时尚无学会修补，不能把当时首窗口零超时当作学会锁已解决。
+
+## 2026-10-10 周期存档并行编码发布与首窗口
+
+上一版本周期结算成功，但两轮全服锁分别持续4.06与3.54秒，仍触发5条前台锁超时。本轮先以既有446份存档约48.7MB规范化JSON做本地测量：串行编码447—488毫秒，四路编码125—153毫秒，独立深比较749—763毫秒，故不采用深比较替代。远端有8个逻辑核，游戏服务未设置CPU配额限制；本地比例不能直接证明远端时延改善。
+
+候选只并行周期纯计算结束后的JSON编码与差异比较，最多4个工作协程且不超过GOMAXPROCS；每个协程独占结果槽位，不修改Progress，全部退出后才能组装数据库批次及修改资料。只保留变化行编码结果，未变化行即释放，避免另存一份全服JSON。非周期操作保持单路编码；avatars→avatar_progress锁顺序、版本重读、全量重算与单事务原子提交不变。任何编码错误或上下文取消都拒绝整批输出并回滚，不部分入账。
+
+新增回归覆盖32角色并行结果顺序、嵌套进度变动、未变动不写入、取消及单行编码错误拒绝整批；真实PG新增8角色锁内编码故障回滚测试。证据存于`out/evidence/qq-bugs-20261010/存档比较基准.log`及周期并行编码日志。185418正式候选已通过全仓Go、vet、双平台构建及73项真实PG（零SKIP）和4项辅助验收，组合发布、独立游戏与原生核验均通过。游戏PID120329，SHA256 `f70d6aff3576431036906741a775eae3866db87208b39d1bccc63d0f0b85694e`；客户端仍为1006。证据归档`out/evidence/qq-bugs-20261010/周期并行编码发布/`，正式报告及私有备份已同步。完整新进程首窗口1271行：活动预览759人17.27秒无需加锁，PVP预览759人16.15秒、锁内1.16秒、2人变动且成功；锁超时、上下文超时、事务空闲超时均0。截至19:04:55完整新进程窗口1962行仍为上述三类超时0，证据`周期并行完整窗口.json`。它是短窗口且变动人数与前版不同，不表示所有高并发性能或卡顿反馈已通过。另已观察到18:50:35副本707胜利结算和客户端完成回调，证明该次3-7可完成，但不能证明调整阵容入口正常，仍不关闭此反馈。新增只读工具`out/tools/observe_periodic_release.py --expected-sha <64位候选哈希> --since "2026-10-10 HH:MM:SS" --label <证据名>`：先核运行进程哈希，再采该PID完整指定窗口，分别保存原始日志与中文统计；不以最近100行替代启动窗口。
+
+## 2026-10-10 后台独占版已发布，启动持锁问题继续修复
+
+116481新进程日志明确：18:33:00第一次全服预读在读取755个角色后，被PostgreSQL idle-in-transaction timeout终止；随后玩家PVP相关请求反复进入refreshPvpAwards，每次5秒解析约200—250个角色后因请求期限取消，18:35前已16条上下文超时。过去仅在总线忙时跳过，后台失败后总线空闲仍会被前台接管，故仅优化异步候选查询不能消除此链。
+
+新候选增加StartPeriodicMaintenance(ctx)，正式main在监听请求前调用，以原子标记一次性确立后台所有权；后台失败、取消或总线暂时空闲时，带玩家连接的refreshPvpAwards均不再启动全服事务。独立运行且未启动后台的测试服务保留同步结算入口，后台tryRefreshPvpAwards仍执行原计算并保留错误重试。周期存储事务只在本事务将idle_in_transaction_session_timeout设为120秒，与已有statement_timeout及外层总期限一致；只读快照加载完即提交，再执行纯计算，避免计算期间占着数据库事务。全局数据库配置不变。
+
+新增回归验证后台失败后连续玩家调用零全服结算、后台错误不吞掉且可重试；真实PG回归新增预览回调前已提交的断言，继续覆盖并发变更、xmin、新角色及整体回滚。183724候选全仓Go、vet、双平台构建通过，真实PG72项PASS、零SKIP及3项辅助通过，已完成组合发布。游戏PID118513，SHA256 `d863d53177aac6eaad45924c15092c1d4e449f9db416313d148bb2e02c871b17`；热更内容仍为1006。证据归档`out/evidence/qq-bugs-20261010/后台独占发布/`，四份正式报告与私有分发备份已同步。
+
+18:46:52与18:47:14两轮周期结算实际成功，各预读757个角色，耗时19.68/18.73秒，锁事务耗时4.06/3.54秒，变动2/4名角色。至18:49:48日志4277行，事务空闲超时0、上下文超时0，未再出现前台每5秒的全服扫描；但启动两次加锁窗口仍有5条锁超时，涉及战斗结果、退出、707检查点、引导及加载完成。独立原生首次核验因此失败，原文已保留；随后最近100行核验通过，不能用后续通过抹去启动失败。18:47:15以后3552行无上述三类超时，只是短窗口证据，性能条目继续修复中。下一步需缩短全服写事务内计算和JSON序列化时间，并保留并发资产及周期幂等语义。
+
+表新增“3-7无法调整阵容后开战，只能直接开战”（读取时第41行），已纳入全量跟踪；原表映射707/10238，未设置skip_edit，disable_team_preset=0，无固定出战角色。当前线上确有707检查点锁超时，但尚不能将它定为调整阵容失败的唯一根因，未回填已修复。新增条目及原表证据保存在同目录腾讯表新增3-7.json、3-7战斗原表.txt。中间位副套装规则选择仍待用户回复，未修改概率。
+
+
+## 2026-10-10 异步重进发布完成与新增中间位反馈
+
+182513候选已组合发布并通过游戏、独立热更与原生运行时核验：游戏PID116481，SHA256 `c1d1feabf03b29a7dccfb73c81bfe43a13db093bfc83ac711ef7672f706a0900`；热更PID88343，仍为1006且内容SHA256 `4c7e5245ae0803849a434af51fc933515869dffebc40b35ff344023bcdc3d5d3`。72项真实PG零跳过及3辅助通过，归档`out/evidence/qq-bugs-20261010/异步重进发布/`，正式报告与私有分发备份已同步。已保存候选直接重进、未解锁和刷新冷却拒绝均不再扫描全服。修补前统计755份进度约106.5MB文本，异步解锁及防守阵容计数均为0；该样本说明未解锁的入场请求也曾先读取全量。它不证明其他时刻无合格对手。
+
+当前表B5:B40共36条（快照`腾讯表1833复核.json`），新39行入馆指南点开变暗、40行中间位契印仅同套已继续纳入。中间位根因已经定位：568个rune_drops中564个副套装权重全零；shopWeightedSuit(optional=true)返回0，GenerateRuneWithMarks对位置1将ExtraSuit回填为Suit，因此此路径只能同套。4个明确副套装权重仍应保留。现有主套装空池采用已批准的运营池，未找到副套装独立抽取概率证据。已向用户提出具体选择：从现有批准池主副独立抽取（允许相同），或按用户选择说明原因标无法修复。尚未修改概率或历史契印，不提前执行待定规则。
+
+ADB仍无设备，127.0.0.1:7555连接失败；仅有MuMu后台服务不等于可用Android实例。18:22:42—18:30:48周期预读版本窗口11905行，锁超时0，上下文超时4（2次异步入场、1在线租约、1房间读取），不宣称全服无故障。用户指定跳过的4项仍保留无法修复，其他未通过反馈不回填已修复。
+
+
+## 2026-10-10 周期预读发布完成及异步重进候选
+
+技能锁补充证据：`out/tools/test_qq_skill_habit_native.py`实际执行本版Python2回推和AI选技能函数，技能1/2/3/自动、普通攻击回退、新战斗对象及原生异步全自动例外通过。它不包含Android点击、动画或实际重连装配，不能独自关闭表中两条技能锁反馈。回归输出在`out/evidence/qq-bugs-20261010/技能锁原生执行回归.log`。
+
+181544候选已组合发布并完成游戏、独立热更与原生运行时核验。游戏PID114730，SHA256 `a99d19cd966f708127218fd5811b380bd1e32713f00514e9f05071e71aba29e1`；热更PID88140，热更内容仍为1006、SHA256 `4c7e5245ae0803849a434af51fc933515869dffebc40b35ff344023bcdc3d5d3`。72项真实PG零跳过及3辅助通过，证据`out/evidence/qq-bugs-20261010/周期预读发布/`；正式报告及私有分发备份已同步。
+
+18:22:42—18:24:07新进程日志无锁超时和上下文超时，但没有出现有变动周期结算的耗时日志，不能据此声称已证明高峰持锁改善。进程86秒时RSS约262MiB，CPU为进程启动累计91.4%，不能当作瞬时稳态CPU。保留启动窗口日志，性能条目暂不关闭。后续源码给无变化预览也补汇总日志，便于区分无需加锁与结算尚未完成。
+
+另据18:10:19真实enter_asyn_pvp超时继续定位：原重进入口先读取最多1000名角色完整存档，然后才在自己的行锁内发现已有候选并直接复用。候选修补先读取自身当前行，验证解锁、时钟、刷新冷却与已有列表；仅确需新候选时回滚本次探测，在锁外查询，再在锁内重新校验和生成。对手查询失败不以旧连接快照或机器人代替；新对手规则不变。新增TestAsyncPvpSavedCandidatesAvoidGlobalRead验证首次真实读取、重进零全服读取、冷却拒绝零全服读取、存档清空后读取失败不返回旧列表、恢复后可生成。专项、全仓Go和vet通过；182513私有候选双平台构建及72项真实PG零跳过、3辅助通过，正在组合发布，不包含于181544产物。正式候选为`%LOCALAPPDATA%/hs-server/release-workspaces/20261010-182513`，尚待独立核验。
+
+
+## 2026-10-10 周期结算锁内全量存档重读修补候选
+
+1006启动日志确认51条锁超时，后续18:03:20—18:12窗口没有锁超时但仍有一次异步竞技超时；性能反馈不能关闭。当前补丁保留avatars→avatar_progress全局顺序行锁及单事务原子结算，只调整完整存档读取位置。周期只读预览保存独立的结算前Progress、规范化原文、revision及PostgreSQL xmin；进入写事务后重新读取并锁定最新角色资料及全体进度版本，版本变化/新角色才重新查询完整state。未变化的原始进度直接复用，再执行原结算回调；预览结果绝不直接入账。未递增业务revision的维护写入仍由xmin识别，当前等级/昵称使用锁内资料。
+
+缓存容器与预览修改完全独立；无变化仍不加锁。非周期UpdateAllSocial保持原完整读取方式。新增中文日志只记录角色总数、预读耗时、加锁事务耗时及成功标记，便于上线量化；仍需发布后验证持锁时间和峰值内存，不能仅凭代码声称性能问题已修复。
+
+候选目录`%LOCALAPPDATA%/hs-server/release-workspaces/20261010-181544`。全仓Go、vet与Windows/Linux构建通过；新增真实PG用例覆盖嵌套容器隔离、并发资料和未递增revision的进度更新、新角色加入，以及锁内只传输版本、仅重读变化和新增角色。最终真实PG72项PASS、零SKIP，另3项辅助PASS；新增预读并发回归及原周期回归均通过。已启动组合发布，尚待独立核验和线上持锁观测。本次仅服务端改动，客户端热更仍为2026101006；不回填性能条目。
+
+
+## 2026-10-10 用户指定跳过证据不足条目
+
+用户针对补充复现角色、活动节点及时间的请求明确回复“跳过，写明原因，选择无法修复”。据此将实时表中下列4项标为无法修复，并在F列处理说明中逐项写明当前证据不足；这属于用户接受的跳过项，不计入已修复。其他有明确根因或仍可独立推进的反馈继续修复。
+
+- 所有的活动，剧情卡死报错。：历史诊断（本轮恢复全量核查，不再跳过）：反馈未指明具体活动、剧情节点、复现角色和时间；缺少可对应的异常堆栈，无法定位“所有活动剧情卡死”的共同根因。
+- 进入同桌的你，活动后会有一个选择男女角色的环节，男角色怎么样不知道，我选了女角色，然后游戏卡住了：历史诊断（本轮恢复全量核查，不再跳过）：已检查同桌的你原生性别选择及剧情奖励入口，尚无对应角色、复现时间和报错堆栈，无法确认选择女角色后停在哪个节点。
+- 镇灵台—西关卡难度二90%概率卡死：历史诊断（本轮恢复全量核查，不再跳过）：尚无镇灵台—西难度二对应角色、复现时间及战斗日志，无法定位高概率卡死的触发条件。
+- 时空回廊无法进入战斗：历史诊断（本轮恢复全量核查，不再跳过）：缺少时空回廊具体层数、角色、复现时间及入场返回信息，无法区分关卡条件拒绝与客户端加载故障。
+
+本次已回读B/D/F验证，证据为`out/evidence/qq-bugs-20261010/按用户要求跳过条目.json`及同目录截图。实时表原39—42行内容已被其他协作者移除，38行现为抽卡后角色界面黑屏；旧行号不得继续回填，历史反馈仍保留在案。
+
+
+## 2026-10-10 1006正式发布与继续修复边界
+
+1006已组合发布，游戏与独立热更、原生运行时复核通过。游戏PID112184，热更PID87894；游戏SHA256 `df2217dcacefcdc3dc26a4f85be222353f030428e995f2c5bbbbf261c17fd826`，正式热更SHA256 `4c7e5245ae0803849a434af51fc933515869dffebc40b35ff344023bcdc3d5d3`。最终175423隔离候选全仓Go、vet、双平台构建、真实PostgreSQL71项PASS零SKIP及3项辅助通过，空阵容原生Python2回归通过。正式产物、首次失败和后续复核归档在`out/evidence/qq-bugs-20261010/1006发布/`，私有分发备份已按现网哈希同步。
+
+本批修复普通探索全零阵容锁队卡死、同步排行头像字段遗漏、好友搜索缺_id、活动条件13日期门槛。腾讯表按实时描述核对“探索忘记上角色就锁阵容自动会一直卡死报错”，D12已改为已修复并确认自动保存；测试列保持待测试，本机没有Android设备。回填截图`1006空阵容状态回填.png`。
+
+首次原生独立核验失败原因是启动期间多条数据库锁超时，涉及领取新任务奖励、签到、绿钥匙抽卡、战斗结算等。失败原文保留；随后采样15个业务会话均idle、无阻塞，独立复核通过。这不关闭启动及并发性能问题，不以复核窗口零错误覆盖启动失败。最新38条当前反馈及历史已移除条目继续跟踪，新馆主补给/通关十连、试炼荒庭及妄言无忌已纳入；全量目标尚未完成。
+
+
+## 2026-10-10 1006修复候选与新增原生证据
+
+上一轮完成1005发布及4条状态回填，本轮继续全量目标，尚未关闭剩余反馈。1006候选包含：
+
+- 普通探索空出战阵容：原生`battle_cards.check`接受全零槽位，锁队自动随后可空队开战。界面热修在调用原生开战前检测出战卡、原生固定NPC和剧情卡；普通探索三者皆空时只显示一次原生布阵页，补齐后继续原开战。援护不冒充出战卡，副本17教学固定角色保留。Python2实际原生函数与热修回归通过，证据`空阵容原生回归.log`。
+- 同步排行榜：SQL和内存排行遗漏头像/头像框/自定义头像，通用UI读`head_box_info[0]`崩溃。补查询投影和下发，尊重已选头像及清空自定义头像状态，不读取整份JSONB背包；新增真实PG冷查询及回退回归。
+- 好友搜索：原生213行按`info['_id']`构造friend，原返回只有eid。搜索列表补ObjectID类型的_id，其他资料接口不变。新日志已复现缺字段，真实Handle非空搜索回归通过。
+- 活动日期门槛：新日志两次进入21000104落雪之森·旅程被未知条件拒绝；原生条件13为活动天数不小于目标。补解析`210#3`，使用显式服务端时钟和已发布客户端相同的北京时间日历日/常驻封顶，保留601主线前置、未来未开/过期拒绝。15个原表副本使用该条件；普通/活动及任务塔入场均传递时钟，未配置时钟不隐式放行。
+
+最终候选在`%LOCALAPPDATA%/hs-server/release-workspaces/20261010-175423`，全仓Go和vet通过；最终构建/真实PG正在执行，尚未发布，不回填上述表格状态。上一份174912候选的71项实库通过不替代本最终候选验收。35条当前表及被移除的历史反馈仍全部跟踪。后续应继续落实家具、活动剧情、试炼荒亭、时空回廊、镇灵台、锁技能和性能问题，不能把没有新异常日志当成已修复。
+
+## 2026-10-10 腾讯表红点与同步对决冷重连契约
+
+日常/周常奖励数据库收据继续保存原表奖励行ID；`basicRewardProperties`仅下发对应`active_scale`阈值到`daily_bonus_active`、`weekly_bonus_active`。本版`mission_daily.check_mission_state`按阈值判断已领，原ID投影导致红点不消失。旧存档无需资产迁移，四连接竞争领取与冷登录去重纳入真实PG基础领奖回归。
+
+`revival_restore_pvp_enemy(infos)`是新增战斗桥下行方法，仅使用服务端已冻结的机器人/真人快照调用原生`Avatar.set_pvp_enemy_info`。顺序为装桥→建立战斗→恢复对手→加载队伍→prepare，修复冷重连跳过选队UI后`loading_pvp.set_sync_pvp_cards`读取缺失`enemy_cards`。不重新匹配，不重新触发选队计时器，不改变技能和计分；单原生权威不变。`out/tools/test_qq_pvp_reconnect.py`在本版Python2执行原生初始化及加载函数，先复现缺字段，再验证恢复和幂等。
+
+卡池计时器revision2检查实际方法标记，模块重建后恢复有界刷新；相同revision只保留一条检查链。此项不改池概率、消耗或开池资格。1005正式构建、全仓、真实PG70项零跳过、组合发布及独立复核已通过。首次启动锁超时失败证据仍保留；详细发布状态及客户端未验收边界见HANDOFF最新章节。
+
+## 2026-10-10 1004推荐好友与实际换装候选
+
+好友推荐增加FriendSummaryOnly只读投影：SQL保留等级、头像选择、头像清除、同步竞技积分与好友/黑名单，省去卡牌、契印、物品、邮件和其他玩法存档的传输及反序列化。候选仍同服UID对应OID顺序窗口1000、最多20条，本人/已有好友/双向黑名单/好友上限过滤保持原契约；摘要不能写回完整存档。实际PG检查摘要没有Cards/Materials，且头像、积分、黑名单仍保留。
+
+腾讯表22“升格解锁装帧”和25“实际换上装帧”分开验收；1002仅前者与语音/日常修补通过。1004由已授权协调聊天补change_card_dress，最终结果须以该版本正式回归与发布证据为准，不能把早期解锁修补当作实际换装已通过。
+
+## 2026-10-10 1002上线与1003周期锁等待修补
+
+1002已组合发布并独立核验通过：游戏PID102170，热更PID86708，游戏SHA256 `854f4f46ed80dc77cdfe90fba5f42a8c22cd3f369dd6e1098a8909aa1ef1a6f2`，正式热更SHA256 `d013a00c10f65e4ab72d29a19c0e68111999c0206ea44d43b8617cac3accf14b`。默认/正式全仓、vet、构建、真实PG68 PASS零SKIP及3辅助通过；证据repair1010/release1002。备份为两项目releases/completion-20261010-150356-930580，回滚须按组合报告逐文件哈希恢复游戏和热更，不能单独恢复二进制或动数据库。
+
+1002新PID首分钟1077行无客户端异常，但53次业务锁超时及真人租约/房间等待，不能关闭启动性能问题。15:08:00—15:09:29窗口1107行无客户端异常和战斗拒绝，仍有推荐好友超时1次、change_card_dress未实现3次及引导门槛拒绝1次。1003针对周期无变化时仍全服持锁：先以REPEATABLE READ只读事务读取一致快照并计算，无变化时直接完成；有变化丢弃预览，原FOR UPDATE事务重新读取、计算和原子保存。不把预览存档提交，不改变奖励规则。仅活动/PVP周期纯计算采用此路径，管理/学会社交操作保持单次事务语义。真实PG新增并发测试验证预览不阻塞玩家、重算不覆盖并发资产、锁内错误全部回滚。1003正在正式验收，尚未发布。
+
+## 2026-10-10 日志修复统一验收与第二轮复核
+
+第一轮runtime2026101001已组合发布：游戏PID98348、热更PID86318，游戏SHA256 `e808e14b2878694e189f221e026a6fb619d9ac8b77c1198c7e9755cb95493999`，正式热更SHA256 `aa1a3661369cf68d6d59d5690aaf35a8db236b8107fef7386e7ab03da30531ce`。默认/正式规则全仓、vet、双平台构建、真实PostgreSQL68项PASS零SKIP及3项辅助PASS、组合发布和独立远端核验通过。第一轮归档在out/evidence/player-bugs-20261009/repair1010/release1001。
+
+第一轮新PID日志14:15:17—14:23:18共5581行，11次登录刷新；仍出现13条客户端异常、27条战斗事件拒绝和启动期数据库锁/语句超时，不能记录为零故障。证据followup-142319。第二轮runtime2026101002修补实际战斗类装配方法、签到旧奖励盒缓存、抽卡random_id投影和聚焦下行；专项已过，最终流水线执行中，尚未发布。具体契约见SERVER.md本日章节。
+
+PVP继续采用服务端单原生权威，普通副本保持Android原生计算。HTTP旧日志缺目标、current/input不一致未复现、启动周期全服事务等待、尚未实现玩法与高层装备部分规则、腾讯55条客户端逐项验收仍不属于已关闭项。本机ADB无设备，本轮没有Android/MuMu实机验收。旧日期章节仅为历史，不代表当前版本。
+
+## 2026-10-10 日志修复接口与热更契约（runtime2026101001、1002）
+
+本轮原始日志为 `out/evidence/player-bugs-20261009/followup-105929/events.log`，分类见同目录 `日志分类.json`：同一旧PID71659共256645行，模型实体id异常34次、成就空控件6次、中文std::string异常2次，签到KeyError0/倍数费用空控件/好友列表越界各1次；另有HTTP错误31次及输入单位不一致2次。日志计数受客户端诊断限流影响，不代表全服实际发生总数。
+
+### 战斗桥和客户端异常
+
+普通桥与原生权威竞技桥在调用原生battle_fighting期间缓存同步产生的回合/输入事件及当时快照。原生成功返回后先发送started，再按原序发送缓存；原生抛错仍抛出，不假报成功或消耗事件序号。普通桥保持revision15并新增开战顺序标记；共享桥检测底层升级后重新包裹现行钩子；竞技工厂revision2升级时取回原生工厂，避免旧闭包重新选择旧子类。握手仍为版本1，不修改战斗规则和胜负。
+
+`battle_performance.create_entity` 模型替换后重新从entities[eid]取得新对象，再沿用原生朝向、属性、回调和eid断言；修复原生销毁旧模型后仍访问旧id。成就/好友/费用UI在控件已经销毁时跳过旧页面绘制，真实奖励仍展示；签到全领每日box先to_list再缓存，避免把奖励对象当列表索引。基础奖励失败消息转UTF-8字节，适配Python2/C++控件。补丁幂等，按需加载页面每5秒检查一次安装。
+
+`export_battle_bridge.py` 现在以现行内嵌脚本为维护源，只更新版本头及SHA；不得再从旧_ref导出覆盖修复。热更同时包含启动和运行期闭包，私有正式地址由prepare_private_release读取本机授权备份，与示例配置分离。
+
+### 原生RPC与持久化
+
+| 入口 | 原生契约与处理 |
+| --- | --- |
+| search_friend | 参数为回调、昵称、UID、服务器、有效标志；纠正旧服务器/昵称顺序 |
+| apply_friend | 接受原生默认hostnum=0、apply_src空字符串；来源长度上限100，同时兼容旧整数夹具。仍核验真实目标、留言、关系和黑名单 |
+| set_defence_cards | 回调加卡槽列表，保留0/None空槽位置；至少一张本人卡，重复/外来卡/非法形状拒绝，原归属和解锁校验保留 |
+| refuse_challenge | 原生忙碌发送回调、None、1；读取本人持久待处理邀请，在单事务移除双方邀请并写拒绝通知；重放不重复通知，其他空目标原因拒绝 |
+| set_auto_battle_habit / set_auto_support_habit | 写本人Card.Habit；下行sync_battle_method使用ObjId和card.card_habit对象，冷登录从每卡habit_mgr恢复，默认自动100、助战true |
+| set_card_favorites | 回调、本人card_id、Bool；存储CardFavorites并推送原生card_common_mgr.is_favorite，再回单整数ret |
+| set_game_score_flag | taptap/ios及非负来源编号，持久Str2IntListDict并去重；每渠道最多64来源，仅用于避免重复提示，不作为评分或发奖证明 |
+| set_focus_target | 目标字符串和整数类型；1002改为sync_battle_method(set_focus_target, 操作者ObjectID, 目标, 类型)，由原生player_input继续验活和禁选；结束后迟到输入忽略，权威竞技输入链未接线仍明确拒绝 |
+| request_chat_channel | 无参，恢复已存有效频道或默认1，经既有持久接口回on_change_channel |
+| query_phone_info | 无参，回成功码及login_type=0、空mobile_num，真实表示本服没有第三方手机号绑定 |
+| get_recommend_leagues | 无参，读取同服真实学会主档，过滤已解散/满员，沿用搜索UID升序最多100条；主档候选窗口1000，不加全服行锁，不返回内部公告、申请者或成员存档 |
+| close_asyn_pvp_ui | 无参关闭通知，不改变资产 |
+| home_enter_quit_log / share_click_log / notice_share / receive_package_check | 分别3/2/0/1参，只验证和记录方法及参数数，不据此发奖、认证或保存上报正文 |
+
+社交查询新增AssistOnly/LeagueOwnersOnly，SQL在LIMIT前过滤实际助战卡/学会主档，避免无资格角色占用候选窗口。UpdateSocial仍按OID锁定全部参与者并原子提交，仅对规范化Progress发生变化的角色写JSONB与revision；纯读取对手不触发在线全量回载。真实PG回归覆盖只读版本不增加、实际修改持久与失败回滚。
+
+### 第二轮1002的新增证据与兼容修补
+
+1001在线下行on_set_focus_target触发shadow_battle缺方法。反汇编确认真实入口是player_input.set_focus_target(eid,target_eid,target_type)，现经sync_battle_method传递本人ObjectID；24位十六进制目标恢复ObjectID，空字符串取消与原生槽位字符串保持原类型。仍拒绝未接输入日志的权威竞技，不把聚焦请求当战斗结算。
+
+抽卡内部旧档RandomCardRecord.PoolID继续使用pool_id保存，客户端random_card_record的存储字段实际为random_id，pool_id是只读表属性。登录单独投影random_id/random_count，抽卡成功在回调前同步真实计数和保底记录；不改抽卡概率、资产和旧档键。未知卡池旧记录不向客户端投影，内部保留。
+
+签到修补补上历史缓存迁移：reward_item.update绘制前仅把仍为Box的checkin_bonus.day_N转为to_list，不清领取记录、不改资产。BattleEntity异常补上组件装配边界：原生client_battle通过gen_class复制组件方法，补丁在组件之外更新仍指向原生battle_performance.create_entity的实际战斗类；不覆盖其他来源的方法。Python2原生函数与装配复制夹具覆盖旧异常、更新后返回实体、重复安装、旧缓存迁移、聚焦取消/无效目标和random_id零值复现。
+
+### 网络诊断与明确未完成边界
+
+诊断revision2保留原错误链、限频和去重，HTTP原生回调额外记录主机名/方法，不记录路径、查询串、头或正文。历史日志没有目标URL，不能把HTTP读超时/解析失败标为已修复；需新版本对应目标与客户端日志继续定位。两个current/input不一致事件也没有完成因果复现。
+
+尚未实现的回流、通关队伍榜、抽卡广播、外部GM桥凭据、中古、端午、竞猜、明星和勋章/分享奖励入口仍需各自真实规则及原生契约，不用空成功掩盖。资源缺失、部分商店门槛、高层装备原石/幸运规则及腾讯表全部客户端逐项验收保留。当前源码/函数回归与真实PG不等于Android全功能通过；发布与新PID日志结果见统一验收节。
+
+## 2026-10-10 腾讯表修复：装帧、语种和探索日常
+
+需求与全部55条追踪见 `out/REPAIR-TASKS.md` 的腾讯表章节。修改前已读取19份项目/参考Markdown（排除重复工作树），UTF-8校验及文件摘要见 `out/evidence/qq-bugs-20261010/md-read.json`。
+
+### 装帧契约
+
+原生cards表awaken_grade才是觉醒装帧解锁阈值。生成器 `out/tools/generate_card_appearance_catalog.py` 导出该字段；`effectiveCardAwakened` 保留已解锁值，否则根据卡牌Grade与正阈值计算。升格事务持久化Awakened，并在成功回调前推送card_mgr、材料和card_common_mgr；旧存档在登录/外观投影时兼容，不批量改写玩家资产。只解锁该卡固有觉醒装帧，付费/活动装帧仍走原拥有检查。原生4401阈值1，固有装帧440102。
+
+### 语音契约
+
+原生声音后缀表为0→空后缀、1→_ch、2→空后缀，0会选日文事件，不是非法索引；声音管理器先看card_common.card_vo再看global_set_vo。仅保存global_vo却继续投影card_vo=0会覆盖中配。新增Progress.GlobalSetVO，旧档优先沿用有效全局语种，否则按原生默认2。单卡显式设置优先，全局设置其次，并受原表可用语种约束。全局切换1/2保存最近默认并清除旧单卡覆盖；切换0保留最近默认和单卡选择。推送global_vo、global_set_vo及card_common_mgr后才成功回调，让客户端重建声音映射。story_vo保持独立。
+
+证据：`out/evidence/qq-bugs-20261010/voice.log`、`voice-language.log`、`global-voice.log`；`out/tools/test_qq_bug_voice_native.py` 加载真实Python2声音函数，复现旧值覆盖并验证中文、单卡日文、通用及剧情语音。通过函数验证不代表缺失BNK/WEM资源已补齐，也不代表真实设备音频播放通过。
+
+### 每日任务契约
+
+探索最终节点完成原先只推进type6带stageID参数的成就，遗漏每日1013的type6空参数目标；现同时推进通用目标一次。普通battle_observe的结算前后公共任务属性同步被跳过，故在remainingDungeonCompletionPushes加入basicRewardPushes，放在battle_result前，覆盖普通战斗和探索。重复结算与重复领取仍须幂等，未修改每日积分或伪造完成。
+
+### 验证与发布边界
+
+`internal/game/qq_bug_repair_test.go` 覆盖全局/单卡/旧档语种、50余张真实卡阈值和付费隔离、探索完整节点链、结算前推送、每日1013、领奖一次20分及冷序列化；专项PASS。`internal/game/dbstore/qq_bug_repair_test.go` 的TestPostgresQQBugVoiceAndAwakenColdPersistence覆盖真实升格扣费与装帧、语种切换、冷登录和重复升格拒绝；未配置数据库的本地运行不计作真实PG通过，由统一流水线真实执行。原生声音函数PASS，完整Go与真实PG最终结果由统一验收章补充。不会据此宣称全部日常均可满分或整表55条已修复。
+
+## 2026-10-09 全服周期结算调度与CPU修复
+
+### 故障链
+
+游戏传输层每连接100ms调用一次 `Service.Tick`，旧实现又从Tick、`BecomePlayer`及通用活动方法前置钩子进入活动/PVP周期结算。`dbstore.UpdateAllSocial` 会在一个事务内按OID顺序锁定全部 `avatars` 和 `avatar_progress`，对全服JSON进度结算后批量写回。547个角色时单次事务超过原5秒请求期限；取消后周期键不推进，下一连接/下一Tick立即重试，最多16个池连接同时排队。第一条修复上线后继续采样又确认第二条链：`finishLogin` 主动调用 `refresh_assist_use_times`，读取同服最多1000个完整进度构造陌生助战，失败后Tick逐秒重新执行登录收尾。两条链共同形成CPU、锁等待和登录/副本超时放大环。
+
+### 当前调度契约
+
+`Service.RunPeriodicMaintenance(ctx)` 是常驻入口：启动立即执行一次，此后每分钟调用 `RunPeriodicMaintenanceOnce(ctx)`。单轮先活动、成功后再PVP；两类结算共用 `periodicSettlementMu`，同进程最多一个全表事务。各自仍有周期总线锁及持久邮件/收据幂等，只有事务提交后才更新内存周期键；错误返回给调度器并在一分钟后重试。活动失败时本轮不再启动PVP全表事务。
+
+`UpdateAllSocial` 的外层期限和事务内 `statement_timeout` 均为120秒。玩家Tick只执行本角色日界和既有轻量时钟；登录和普通活动请求不启动全表事务。既有PVP业务若发现结算总线忙，立即沿用已提交周期状态，不等待占用玩家连接。后台已完成当前周期后，`refreshPlayerActivityCalendar` 可在登录时为新角色补单行日历；总线未就绪、正在执行或周期已变化则立即跳过，绝不回退到全表扫描。`finishLogin` 不再预热助战候选，只完成重连凭证、剧情/战斗恢复及 `on_refresh_login`；客户端进入助战界面时仍可显式调用 `refresh_assist_use_times` 获取最新名册。真人在线租约失败重试间隔由1秒改为5秒。
+
+### 验证与运行记录
+
+本地 `go test ./...`、`go vet ./...`、正式Windows/Linux构建通过。新增回归直接统计 `UpdateAllSocial`：Tick/登录/通用活动请求为0；后台首轮活动/PVP各1次；同周期不重复；PVP锁忙不排队；新角色登录只写自身；已解锁助战的登录收尾读取同服候选次数为0。真实PostgreSQL最终66 PASS、0 SKIP、3项辅助PASS，dbstore测试SHA256 `42f452b1e50718a5ca6c32eb7085c6b53d932bc8d3288753b8db3d51f0185856`。
+
+生产仅替换并重启 `hs-game`。最终PID `71659`，游戏SHA256 `a390b15eda987c13e5d626069d929ec47775802de50a8d6843de51e18d04cdc1`，备份 `/opt/hs-server/bin/backup-20261009-235414`；本轮修复前备份 `/opt/hs-server/bin/backup-20261009-233632`。启动首轮结算后578/578角色有日历、数据库无锁等待；2分34秒、12个连接时瞬时CPU样本6.7%/11%/6.9%。最近60秒context deadline、statement timeout和登录收尾延后均为0，同时有新登录刷新及10001/10002/505战斗建立。累计 `%CPU` 包含启动结算峰值，验收应使用连续瞬时样本、数据库活动与日志增量，不可只读累计平均。启动首轮结算仍会造成短暂CPU及普通后台查询超时峰值；长时并发和真实跨周期边界仍是独立验收门。
+
+本项目本机Go未加入全局PATH；构建与测试固定使用 `由HS_GO指定的Go工具链`，通过当前命令的 `HS_GO`、`GOCACHE`、`GOTMPDIR` 注入，不修改系统环境。
+
+## 2026-10-09 探索根因：活动枚举与战斗模式混用（0922已正式发布）
+
+0922已组合发布并独立核验通过：游戏PID46432、热更PID81731，游戏SHA256`f74139ab9d2f1fa6cde3a238e0a79bf839ff8b147203eea5b3d20393a757eaf4`、正式热更SHA256`33873fec554a2159d8edf4fc28fa350ea216771bf12df2838a29953a216bcd67`、PG产物SHA256`801b24a7c62d5d8a71ff44d3292cc7face810d200965a299315c52abe5da3435`。最终默认/正式全仓、vet、构建、真实PG66项PASS零SKIP及3辅助、只读预检、组合发布与两项独立核验通过，报告、正式产物和私有备份已同步到four-bugs/release22，旧版本备份保留。
+
+上线证据followup-202400/202541：同一探索会话在20:23:11进入原生on_battle_prepare且layout_visible=true，20:23:24执行开战；20:24:06及20:24:51均收到on_finish_stage_site和battle_result，随后20:25:01在10111开战。对应只读数据库快照完成节点数为2、当前战斗started=true、last_sequence=2。证据live-explore-chain.log和live-explore-session.json已归档。此为真实客户端上报、服务端结果及存档对应的两个节点证据，不是本机ADB或全部46条探索实机通关。
+
+同窗仍有其它业务超时、社交参数拒绝及卡牌成长界面迟到回调card_info为空的异常；不声明全服零异常，不将它们混作本次探索模式问题。以下候选施工和首轮失败记录为历史过程，由本节最终验收覆盖。
+
+0921诊断版本已组合发布并独立核验，PID43606/81398，游戏SHA256`3f5525d61c7ecb5ab62f4a9d1fdfdbfd5b4505ee2ae7e8f9d512a7ae9085d994`、正式热更SHA256`ab3a0f5b76cd921a66bfae0b757d0235fbc0ebfbb375c87fd77762a76661831c`；正式全仓、vet、构建、真实PG66项零SKIP及3辅助均通过。正式报告、产物、私有备份已同步，证据four-bugs/release21。下节0921候选状态由此覆盖。
+
+新PID窗口followup-195356在探索10102/20202捕获scene_loaded=true、pending_models=0、layout_visible=false、battle_status=null、battle_process=2，原生场景方法正常返回且无引导等待。空battle_status是观察值，不单独作为缺失状态指令的证明。随后静态反推确定：原生37C6CA84的ACTIVITY_TYPE_EXPLORE=2，而NORMAL_BATTLE=1、SYNC_PVP_BATTLE=2、ASYN_PVP_BATTLE=3、SYNC_PVP_RECORD=4、CONSIGN_TASK=5、CHALLENGE_BATTLE=6、SYNC_PVP_WATCH=7、GM_PVP_BATTLE=8。这是两组独立枚举。
+
+旧enterDungeon及reopenOrdinaryBattlePushes把dungeonCatalog.Type直接作为start_server_battle_ok第一个参数。探索因此被原生5FBB9C5E battle_mgr.handle_battle_entities_create按同步PVP模式识别，明确跳过start_battle_layout；这解释了实体加载/桥握手完成后仍没有布阵、重登仍恢复到同一卡点。Android目录含46条探索副本定义，本批修补共用普通副本首次进入和断线恢复，场景、battle_id、副本类型目录、胜负与奖励规则不变。
+
+0922两处普通加载仅在活动类型为探索2时转换为NORMAL_BATTLE=1，其余原活动模式保持。原生猜拳等特殊活动另有battle_type检查，未取得全部模式契约前不把所有活动统一成1。真实同步PVP及异步PVP专用入口仍发送2/3，冷登录已有专用匹配仍覆盖普通恢复为对应专用载荷。新诊断按data.dungeons[dungeon_id].dungeon_type辨认探索，不能再用battle_type==2判断；布阵实际入口为on_battle_prepare，修正旧诊断候选init_show的观察名称，升级时恢复所保存原函数、保留RPC元数据且不叠加旧包装。
+
+实际Python2执行原生handle_battle_entities_create已复现：模式2创建人物、怪物和领域后跳过布阵；模式1继续start_battle_layout。Go探索首节点首次进入/恢复模式及资产不变目标回归通过；真实PG原测试补入场模式检查、真实鉴权冷登录模式检查、原扣费与节点授权保持后继续胜利结算。正式流水线最终通过，结果见本节顶部，原生函数夹具本身不作为Android实机通关。
+
+0922首轮真实PG为65项PASS、1项失败、0SKIP，未发布。新增探索冷登录覆盖了旧pgActivityLogin助手未实际走过的分支：旧断言要求未完成战斗refreshes=0，与既有finishLogin和battle_recovery_test契约冲突。现有流程先恢复battle，最后唯一on_refresh_login移除登录遮罩，客户端login_battle_recovery revision10识别已恢复对象并避免重复恢复。实际Python2原生RPC/Asio调用、同UUID幂等及旧残留替换回归通过；助手改为检查恢复模式、唯一收尾及先后顺序，不修改生产登录逻辑。首轮失败报告保留在私有目录out/backups/explore22-first-pg，最终流水线重新绑定源码和产物后验收。
+
+## 2026-10-09 探索仍卡死：节点加载后停住（0921诊断候选）
+
+0920已正式上线并独立核验，游戏PID41274、热更PID81127；正式全仓、vet、构建、真实PG66项PASS零SKIP及3辅助通过。游戏SHA256为`335d43dd16cc619a8df67d891eddca19d738305e872df43f8eebd695d18b7ebd`，正式热更SHA256为`b765ba0e65a0d8fbc4fe639d476e8d23f3ced90dfcc136839287ef027f49e022`，PG产物SHA256为`6d08020d1641668ba872d62073e5a4b62069b08a464a03cffc47b6f6e4eddcda`，证据在four-bugs/release20。下节候选描述由本节正式验收覆盖，但不代表探索已修复。
+
+用户再次反馈探索进入卡死。本轮重新完整读取19份MD。0920全服窗口followup-193534关联到地图10101初始化结束、首节点战斗10102/20202建立、断线及重登恢复；快照followup-193620的54条探索战斗均为loaded=true、bridge_ready=true、started=false、last_sequence=1，其中10101有40条、10102有14条。单次存档只能证明当前停点，不能把全部历史会话认作本轮故障，也不能据此强制开战。
+
+原生B0D07550、5357E5D0、09DD7B8B只在初音入口/自动路线使用208布尔开关；3B69CDD4的布阵返回却会以任意当前副本类型调用set_explore_auto_agent(false)。因此日志中的“非初音自动探索拒绝”并不能证明普通探索入口根因，本批不放开未知自动功能。探索快照中的服务端内部倍率保持既有规则，不改玩家资产、节点、引导或战斗收据。
+
+0921补客户端观察点：Avatar探索进入及节点响应、普通探索场景on_scene_loaded/check_auto_battle_fighting、布阵init_show/start_battle和battle_fighting；记录地图、战斗状态、待加载模型数量、布阵可见性、自动状态及开战标志。异常记录完整末尾栈后继续抛出；原返回值原样保留，数值/布尔结果才写入诊断，不上报卡牌UUID、账号或设备。RPC方法通过原rpcmethod.func注册入口包装，保留装饰器和注册对象；幂等安装，延迟导入的类仍重试，自动检查每对象仅记录前4次，节点15秒快照只观察、不取消等待。探索地图旧版本闭包被精确解包，避免重复套层。
+
+实际Python2回归通过原生on_enter_free_stage函数、RPC注册入口、异常传播、布阵返回值、重复安装及轮询限量。首轮夹具把函数放在类属性触发绑定错误，已改为原注册器实例字段并重跑通过，不计作客户端问题。0921正式流水线进行中；这是补齐定位证据的版本，不声明玩家探索已通过。
+
+## 2026-10-09 失败回调与后台排队修补（候选0920）
+
+0919已组合发布并独立核验，游戏PID38566、热更PID80810，真实PG66项PASS零SKIP及3辅助。上线窗口`followup-185139`没有客户端异常上报，但仍有入场/开战调用超时；后窗`followup-190248`也有超时及一条布阵解析拒绝，不能宣称入口问题全部消失。角色快照已经看到一条低层装备胜利盒包含契印。数据库只读观察12个连接均idle、无事务阻塞，只能排除该观察时刻的持续数据库行锁，不能据此排除连接锁等待或其它时间的数据库负载。
+
+原生C13BDDDA.enter_dungeon的失败回调会调用外层callback(ret)及show_error_tips(ret)。原网关在Service.Handle错误时只记日志并丢弃回包。0920仅对已绑定Playing角色的`enter_dungeon`、`finished_storyline`补验证过的单整数失败回调：沿用正整数callback_id，返回875C5BCF的RET_UNKNOWN_ERROR=13；不回成功，不改资产或通关，不猜其它接口的回调形状。Service层错误和事务回滚契约保留。实际Python2原生入场函数验证ret13会执行外层回调；端到端网关帧验证编号和[13]。
+
+后台Tick此前持有本连接锁，随后排队等待另一个连接的全服周期结奖锁。新增`tryRefreshPvpAwards`只在后台使用TryLock：忙时跳过本轮且不推进周期键，释放后仍走同一串行事务和幂等收据。同步结奖调用保留原锁语义；过期Tick不再开启后台资产或日界事务。不会移除数据库行锁、扩大连接池、改变结奖算法或伪造结算成功。并发回归验证另一个连接持锁时本连接Tick仍可返回，释放后可继续结奖。
+
+探索及1-7/1-11仍缺确切客户端根因；19窗口活跃邮件/契印引导各26条且均有契印库存，“缺契印导致全部卡住”不获该快照支持。高层原石/幸运规则、601布局None及后窗单条布阵拒绝仍需追查。上述补丁不代替实机完整验收。
+
+## 2026-10-09 四项玩家反馈联合修补（正式0919）
+
+0919已发布并独立核验；正式报告归档`out/evidence/player-bugs-20261009/four-bugs/release19`。日志窗口`followup-175404`、原生字节码及核对产物保存在`out/evidence/player-bugs-20261009/four-bugs`。双倍失败体力返还也按冻结倍率翻倍，4401扣20后失败返18，券不由未取证规则额外返还。
+
+装备结算漏读`everyday_bonus`。新增`ordinaryDailyBonus`按北京时间周一至周日选数组，保留既有首通及失败分支。原生Python2核对装备30项共210种星期选择；一至四层12项共84种组合完成实际契印生成与跨日重试。五至十层18项涉及材料15契印原石或未取证幸运规则，仍未完成，不能自行编造保底或计为发奖验收。新增明确日志及完整盒接线检查，对这些未实现的每日盒保持0918常规奖励行为，避免本次接入导致原先可结算的高层变成事务拒绝；高层掉落仍是未修复项。旧奖励无有效可追溯收据，不批量补发。
+
+新增`set_dungeon_bonus_double(callback_id,dungeon_id,enabled)`，返回原生单整数IntRet，支持布尔及0/1开关。已完整接线的普通类型8低层装备、类型9材料选择持久化于`server_dungeon_bonus_double`并投影`dungeon_mgr[id].double`；高层未实现的每日盒拒绝开启双倍，避免多扣费用却无对应奖励。新战斗扣两倍体力及等于本次体力的材料29，与会话同事务提交；倍率冻结，重入不再扣费，中途修改选择不改变已支付战斗，失败奖励不翻倍。探索/竞技/活动独立倍率不由此接口覆盖；不支持1029、未首通解锁1030、目录错误1019、事务错误13均为原生错误码。原生`support_double`不能误作普通倍数的总开关。
+
+2-10战斗10222有第五剧情角色槽，原四槽解析拒绝。`battle_story_slots.json`记录原表SHA及九种五、六槽战斗的`my_avatar_list`；`parseBattleLayoutForDungeon`仅按副本上下文接受额外剧情空槽，第五/六槽放玩家UUID仍拒绝，普通/PVP仍四槽。剧情角色不入库存和自有经验接收列表。相同结构覆盖2-17、旧主线、妄言、初音；不是各关卡实机完整验收。
+
+新增无回调`on_unlock_system([system_name,...])`。服务端按原表验证名称及条件，整笔持久化后同步完整解锁容器；未知或未满足拒绝，客户端不能直接解锁。1-7为507纯剧情、后继508；1-11为511纯剧情、后继512；回归核对剧情提交、后继入口和授权补回，不据此宣称邮件/都市引导根因已确认。
+
+灵感`consume_power_material`失败消息改为UTF8字节数组，保留增量、消息双参，防止Python2 PRINT_ITEM中文编码异常。入口观察新增返回类型、联网状态；assemble返回None不再误记accepted=false，保留原生行为并能从0918包装闭包升级。0918日志存在2-10胜利、准备恢复及四槽解析拒绝，不能把全部None观察值当断网。
+
+探索、1-7/1-11的客户端引导等待仍缺确切异常归因，不强清引导或跳关。布阵None异常样本属于601/10211，不是610/10222，其玩家身份与布局键问题仍待复现。
+
+## 2026-10-09 常驻文案C++绑定兼容修补（正式0918）
+
+真实0917栈确认：原生main_line_chapter.init_show隐藏章节页后构造活动卡片，activity_item.init_show调用现有活动热更set_time_panel，其Unicode参数使uis.set_string抛出`cannot convert argument 1 to std::string`，初始化中断。活动后切回主线及主线入口空白可以共享这一异常，不等于关卡602在服务端锁定。
+
+`activity_schedule_script.py`的活动卡片和新手活动倒计时标题两处中文文案都改用`u'常驻开放'.encode('utf-8')`，满足Android Python2/C++ std::string字节串边界。运营常驻配置、活动日期、奖励和关卡门槛均保留，有限日期路径继续调用原生函数。全内嵌脚本同类set_string调用核对仅这两处。
+
+`test_activity_schedule_script.py`对145活动规则回归采用严格bytes控件夹具；`test_ui_callback_repair_native.py`使用实际Python2编译的日程函数、严格str控件输入夹具，验证Unicode旧错、UTF8中文回读、原生有限日期回退。原始栈与首轮夹具失败/修正后通过日志留在本地stage22。0918已发布、实库65项零跳过及3辅助通过、独立核验通过；后窗主线页面5次打开均结束、异常0次，含此前异常角色。正式哈希及客户端证据边界由交接和进度文件维护。
+
+## 2026-10-09 主线与战斗生命周期断点协议
+
+0916已发布并收到主线初始化失败断点。候选0917将主线`_hs_open_flow_revision`升至2，保存原函数并能从0916确切闭包名取回原函数，异常事件记录最多6000字符Python栈；原异常继续传播。新增`panel_double.update_double_button`空img_on保护：仅省略销毁控件绘制，不阻断原set_callback后续press_callback、不改变倍数/费用/服务端确认。原包方法和真实异常链保存在本地`stage22`，Python2验证正常绘制与空控件分支、主线异常栈通过；此修补与主线空白根因分开验收。
+
+0917已正式发布并核验；原生widgets.pyc的update_double_button复现空控件异常，修补后原生check_cost.set_callback仍执行press_callback。具体生产哈希、PID与实库验收见交接和进度文件；主线空白恢复仍待实际异常栈和UI证据。
+
+`ui_callback_repair_script.py`候选0916扩展既有`client_sa_log('hs_ui_flow', ...)`，增加`mainline_open_begin/end/error`、`enter_dungeon_begin/end/error`、`check_dungeon_begin/end/error`、`raw_clear_battle_begin/end/error`、`on_dungeon_finish_begin/end/error`及`dungeon_after_entry`。新增字段为`dungeon`、`has_battle`、`battle_dungeon`、`battle_process`、`model_ready`、`guide_waiting`、`story_waiting`、`scene_present`；入口/检查结束另有原生`accepted`，快照失败仅标`snapshot_unavailable`。
+
+以原生函数返回值和异常为准，不修改本地授权、结果界面或模型状态；入场被拒绝不安排计时。成功入场后15秒只记录状态，后发入场使旧计时失效，不执行超时修复。方法及主线界面分别版本化幂等安装，已装配类和后续按需加载界面继续由现有调度器安装。Python2回归覆盖保留阻断、返回值、异常、快照失败隔离及重复安装。
+
+主线2-2对应地点602、战斗10220。截图与全服记录尚未关联，0915有成功握手及胜利，不据此断言所有玩家正常。断点候选0916的正式发布信息由交接与进度文件维护；这批观察能力不等同于2-2空白根因已确认或修复。
+
+## 2026-10-09 活动返回主线的原生生命周期证据
+
+原生`common_logic/dungeon_check.check_enter_dungeon`在`Avatar.is_in_battle()`为真时直接返回`RET_DUNGEON_IN_BATTLE`，不会进入RPC。`entities/components/battle.is_in_battle`只判断`self.battle`是否存在；结果处理中`on_dungeon_result`还要调用此对象的`set_battle_result`，不能以服务端Finished为由立即删除客户端模型。原生`Avatar.clear_battle`调用`raw_clear_battle`后才调用`on_dungeon_clear`或指定返回回调。
+
+相关原包SHA256及静态方法证据已保存本地`out/evidence/player-bugs-20261009/activity-mainline`。本轮日志没有与用户反馈对应的主线拒绝；初音20831001未进入地图、引导等待及HTTP超时不可直接归因为本问题。需用活动名称、实际点击表现和角色操作关联确定断点；0915保持现网，本轮未添加强清状态或跳过门槛的补丁。
+
+## 2026-10-09 第十四批：关卡完成同步与重复进入契约
+
+2-3对应原生地点603“半身”，关卡603为纯剧情，604为战斗10231。原生`dungeon_check.check_dungeon_finished`读取客户端`dungeon_mgr[id].finished`。`storyDungeonExtra`现在先返回RPC回调，再推送持久化完成条目，最后发送结算结果；保留原有首次奖励判断，重复剧情进入仍同步保存状态，不创建战斗实体。
+
+`finishLogin`保留剧情桶推送，将助战刷新推送追加到其后，再执行登录刷新。普通及活动准备逻辑对同连接、同UUID重复请求只返回回调，保留已加载/开始标志；学会守护专用重新布阵例外保留，PVP原生权威路线不变。
+
+`out/tools/audit_all_stage_contracts.py`以原生导出表核对服务端目录、地点归属、前置引用和章节索引，输出逐关结构证据：1461关、219地点、11组章节索引，零引用差异。`out/tools/test_all_stage_native_progress.py`直接使用原生Python2解锁函数，复现603仅有内部完成记录时604不可解锁，验证同步finished后的恢复及207项地点前置索引；章节条件为测试夹具，不覆盖真实章节门槛。
+
+`internal/game/all_stage_progress_test.go`逐项验证43个启用主线/支线剧情节点的同步顺序与冷投影、167个战斗节点重复进入保留模型。`internal/game/dbstore/all_stage_progress_test.go`对603/604执行真实持久化、重复进入、退出和助战解锁后的冷登录验证。本批已发布runtime2026100915，真实PG65项PASS零SKIP及3项辅助检查通过，组合发布与独立远端核验通过；完整发布信息由统一交接与进度证据维护。目录和协议回归不等于Android逐关通关。
+
 ## 公开源码同步与文档入口（2026-10-09）
 
 本次公开交付基线为runtime2026100914，包含第十二/十三批的材料使用、锁卡、退出结果、夏日回调与引导诊断源码，以及对应测试和运维工具。README已整理为公开项目入口，说明上游来源、main派生分支、技术架构、配置、构建、分层验证、已知限制及反馈要求；GitHub介绍与问题反馈模板同步维护。

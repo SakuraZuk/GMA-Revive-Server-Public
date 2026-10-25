@@ -7,10 +7,6 @@ func (s *Service) refreshDailyState(ctx context.Context, c *Connection) ([]Push,
 	if s.Now().Unix() < c.nextDailyRetry {
 		return nil, nil
 	}
-	if err := s.refreshActivityAwards(ctx, c); err != nil {
-		c.nextDailyRetry = s.Now().Unix() + 60
-		return nil, err
-	}
 	day := socialDay(s.Now())
 	if c.lastDailyCheckDay == "" {
 		c.lastDailyCheckDay = day

@@ -1,13 +1,11 @@
 package game
 
 import (
-	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
 	"log"
-	"net"
 	"net/http"
 	"strings"
 )
@@ -25,6 +23,7 @@ func AdminHandler(service *Service, token string) http.Handler {
 	mux := http.NewServeMux()
 	registerMailAdmin(mux, service)
 	registerPlayerAdmin(mux, service)
+	registerOpsAdmin(mux, service)
 	mux.HandleFunc("POST /admin/runes/grant", func(w http.ResponseWriter, r *http.Request) {
 		var request struct {
 			AvatarOID string   `json:"avatar_oid"`
@@ -98,16 +97,15 @@ func AdminHandler(service *Service, token string) http.Handler {
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
-		host, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil || !net.ParseIP(host).IsLoopback() {
-			http.Error(w, "管理接口仅允许本机回环访问", http.StatusForbidden)
-			return
-		}
 		if serveAdminUI(w, r) {
 			return
 		}
-		if len(token) < 32 || subtle.ConstantTimeCompare([]byte(r.Header.Get("Authorization")), []byte("Bearer "+token)) != 1 {
-			http.Error(w, "管理令牌无效", http.StatusUnauthorized)
+		if r.Method == http.MethodPost && r.URL.Path == "/admin/session" {
+			mux.ServeHTTP(w, r)
+			return
+		}
+		if !adminAuthorized(r, token, service) {
+			http.Error(w, "管理登录已失效", http.StatusUnauthorized)
 			return
 		}
 		mux.ServeHTTP(w, r)

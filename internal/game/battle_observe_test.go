@@ -433,3 +433,123 @@ func TestStoryDungeonSettlesWithoutBattle(t *testing.T) {
 		t.Fatal("剧情节点未推进通关", selected.Progress.ClearedDungeons)
 	}
 }
+
+// 现网反馈“完成战斗无法获得幻书好感度”：结算界面按get_card_intimacy与战前
+// 快照的差值显示+N。本服政策为胜利后出战卡好感+1（上限MaxIntimacy），通过
+// card_common_mgr推送在battle_result前到达客户端。
+func TestBattleWinGrantsFightingCardsIntimacy(t *testing.T) {
+	ctx := context.Background()
+	accounts := NewFixtureAccounts(nil)
+	service := New(accounts, nil)
+	now := time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
+	service.Now = func() time.Time { return now }
+	c, av := newBattleConnection(t, ctx, accounts, service)
+	if _, err := accounts.UpdateProgress(ctx, av.OID, func(p *Progress) error {
+		p.Cards = append(p.Cards, Card{UUID: "deadbeefcafe000000000001", CardID: 4403})
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	rules, err := loadIntimacyCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	start := func() string {
+		args := []json.RawMessage{json.RawMessage(`9`), json.RawMessage(`10001`), json.RawMessage(`{}`)}
+		if _, err := service.Handle(ctx, c, "enter_dungeon", args); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := service.Handle(ctx, c, "load_entity_finish", nil); err != nil {
+			t.Fatal(err)
+		}
+		startArgs := []json.RawMessage{json.RawMessage(`{"fighting_cards":["deadbeefcafe000000000001",0],"support_cards":[],"storyline_cards":[]}`)}
+		if _, err := service.Handle(ctx, c, "battle_fighting", startArgs); err != nil {
+			t.Fatal(err)
+		}
+		selected, ok := c.SelectedAvatar()
+		if !ok || selected.Progress.Battle == nil {
+			t.Fatal("战斗会话未建立")
+		}
+		uuid := selected.Progress.Battle.UUID
+		observeBattleEvent(t, ctx, service, c,
+			fmt.Sprintf(`{"battle_uuid":%q,"sequence":1,"kind":"ready","data":{"version":1}}`, uuid))
+		observeBattleEvent(t, ctx, service, c, fmt.Sprintf(
+			`{"battle_uuid":%q,"sequence":2,"kind":"started","data":{"units":[`+
+				`{"eid":"1","role":4403,"hex":[0,0,0],"kind":"ally","hp":283,"max_hp":283},`+
+				`{"eid":"2","role":202,"hex":[1,0,-1],"kind":"enemy","hp":31,"max_hp":31}]}}`, uuid))
+		return uuid
+	}
+	win := func(sequence int) []Push {
+		winners := fmt.Sprintf(`["%x"]`, av.OID)
+		return observeBattleEvent(t, ctx, service, c, fmt.Sprintf(
+			`{"battle_uuid":%q,"sequence":%d,"kind":"result","data":{"winner_eids":%s}}`, start(), sequence, winners))
+	}
+	pushes := win(3)
+	commonIndex, resultIndex := -1, -1
+	for i, item := range pushes {
+		if item.Method == "client_prop_changed" && len(item.Args) == 1 {
+			if pair, ok := item.Args[0].([]any); ok && len(pair) == 2 && pair[0] == "card_common_mgr" {
+				commonIndex = i
+			}
+		}
+		if item.Method == "battle_result" {
+			resultIndex = i
+		}
+	}
+	if commonIndex < 0 || resultIndex < 0 || commonIndex > resultIndex {
+		t.Fatal("胜利结算缺少battle_result前的card_common_mgr推送", pushes)
+	}
+	selected, _ := c.SelectedAvatar()
+	if selected.Progress.Intimacy[4403] != 1 {
+		t.Fatal("胜利后出战卡好感未增加", selected.Progress.Intimacy)
+	}
+	// 重复胜利继续累计；空槽不产生好感。
+	win(3)
+	selected, _ = c.SelectedAvatar()
+	if selected.Progress.Intimacy[4403] != 2 {
+		t.Fatal("第二次胜利好感未累计", selected.Progress.Intimacy)
+	}
+	// 失败不发好感。
+	args := []json.RawMessage{json.RawMessage(`9`), json.RawMessage(`10001`), json.RawMessage(`{}`)}
+	if _, err := service.Handle(ctx, c, "enter_dungeon", args); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.Handle(ctx, c, "load_entity_finish", nil); err != nil {
+		t.Fatal(err)
+	}
+	startArgs := []json.RawMessage{json.RawMessage(`{"fighting_cards":["deadbeefcafe000000000001"],"support_cards":[],"storyline_cards":[]}`)}
+	if _, err := service.Handle(ctx, c, "battle_fighting", startArgs); err != nil {
+		t.Fatal(err)
+	}
+	selected, _ = c.SelectedAvatar()
+	lossUUID := selected.Progress.Battle.UUID
+	observeBattleEvent(t, ctx, service, c,
+		fmt.Sprintf(`{"battle_uuid":%q,"sequence":1,"kind":"ready","data":{"version":1}}`, lossUUID))
+	observeBattleEvent(t, ctx, service, c, fmt.Sprintf(
+		`{"battle_uuid":%q,"sequence":2,"kind":"started","data":{"units":[]}}`, lossUUID))
+	observeBattleEvent(t, ctx, service, c, fmt.Sprintf(
+		`{"battle_uuid":%q,"sequence":3,"kind":"result","data":{"winner_eids":["2"]}}`, lossUUID))
+	selected, _ = c.SelectedAvatar()
+	if selected.Progress.Intimacy[4403] != 2 {
+		t.Fatal("战败不应发放好感", selected.Progress.Intimacy)
+	}
+	// 满好感不再增长，也不再推送。
+	if _, err := accounts.UpdateProgress(ctx, av.OID, func(p *Progress) error {
+		p.Intimacy = map[int]int{4403: rules.MaxIntimacy}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	pushes = win(3)
+	for _, item := range pushes {
+		if item.Method == "client_prop_changed" && len(item.Args) == 1 {
+			if pair, ok := item.Args[0].([]any); ok && len(pair) == 2 && pair[0] == "card_common_mgr" {
+				t.Fatal("满好感不应触发card_common_mgr推送", pushes)
+			}
+		}
+	}
+	selected, _ = c.SelectedAvatar()
+	if selected.Progress.Intimacy[4403] != rules.MaxIntimacy {
+		t.Fatal("满好感被突破", selected.Progress.Intimacy)
+	}
+}

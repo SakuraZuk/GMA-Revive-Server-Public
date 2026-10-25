@@ -423,6 +423,9 @@ func (s *Service) mailRPC(ctx context.Context, c *Connection, method string, arg
 				return errors.New("邮件附件尚未领取")
 			}
 			delete(p.ShortMailInfo, id)
+			if err := promoteBattleOverflowMailbox(p); err != nil {
+				return err
+			}
 			return advanceMailRevision(p)
 		default:
 			return errors.New("邮件方法未实现")

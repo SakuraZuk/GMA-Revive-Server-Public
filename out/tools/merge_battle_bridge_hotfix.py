@@ -86,6 +86,7 @@ def extension_script():
     diagnostic = (ROOT / 'internal/game/client_diagnostic_script.py').read_text(encoding='utf-8')
     summon_timer = (ROOT / 'internal/game/summon_timer_script.py').read_text(encoding='utf-8')
     ui_repair = (ROOT / 'internal/game/ui_callback_repair_script.py').read_text(encoding='utf-8')
+    model_lifecycle = (ROOT / 'internal/game/model_lifecycle_script.py').read_text(encoding='utf-8')
     record = (ROOT / 'internal/game/native_record_bridge_script.py').read_text(encoding='utf-8')
     authority = (ROOT / 'internal/game/native_authority_bridge_script.py').read_text(encoding='utf-8')
     return (bridge + '\n\n# HS_ACTIVITY_SCHEDULES_BEGIN\n' + activity + '\n# HS_ACTIVITY_SCHEDULES_END\n'
@@ -95,6 +96,7 @@ def extension_script():
             + '\n\n# HS_CLIENT_DIAGNOSTIC_BEGIN\n' + diagnostic + '\n# HS_CLIENT_DIAGNOSTIC_END\n'
             + '\n\n# HS_SUMMON_TIMER_BEGIN\n' + summon_timer + '\n# HS_SUMMON_TIMER_END\n'
             + '\n\n# HS_UI_CALLBACK_REPAIR_BEGIN\n' + ui_repair + '\n# HS_UI_CALLBACK_REPAIR_END\n'
+            + '\n\n# HS_MODEL_LIFECYCLE_BEGIN\n' + model_lifecycle + '\n# HS_MODEL_LIFECYCLE_END\n'
             + '\n\n# HS_HUMAN_BRIDGE_BEGIN\n' + human + '\n# HS_HUMAN_BRIDGE_END\n'
             + '\n\n# HS_NATIVE_RECORD_BEGIN\n' + record + '\n# HS_NATIVE_RECORD_END\n'
             + '\n\n# HS_NATIVE_PVP_AUTHORITY_BEGIN\n' + authority + '\n# HS_NATIVE_PVP_AUTHORITY_END\n')
@@ -127,7 +129,7 @@ def main(startup_only=False, runtime_only=False):
     for version, script in list(startup.items()):
         startup[version] = compose_startup(bridge)
     runtime = catalog.setdefault("runtime", {})
-    runtime["index"] = max(int(runtime.get("index", 0)), 2026100914)
+    runtime["index"] = max(int(runtime.get("index", 0)), 2026101304)
     runtime["script"] = compose_runtime(bridge)
     CATALOG.write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print("已合并战斗桥：版本=%s runtime.index=%s" % (sorted(startup), runtime["index"]))

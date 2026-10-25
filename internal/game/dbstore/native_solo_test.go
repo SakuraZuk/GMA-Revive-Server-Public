@@ -152,7 +152,17 @@ func pgNativeSoloDuel(t *testing.T, asynchronous bool) {
 	svc = pgSocialService(t, New(store.pool))
 	svc.Now = func() time.Time { return now }
 	c = pgSocialLogin(t, svc, infos[0], ownOID)
-	pgSocialCall(t, svc, c, "client_need_recover_battle")
+	loading := pgSocialCall(t, svc, c, "client_need_recover_battle")
+	foundRebuild := false
+	for _, item := range loading {
+		if item.Method == "start_server_battle_ok" {
+			extra := item.Args[3].(map[string]any)
+			foundRebuild = extra["hs_recover_previous_uuid"] == uuid && extra["hs_recover_rebuild"] == true
+		}
+	}
+	if !foundRebuild {
+		t.Fatal("真实PG冷恢复未授权重建旧原生对象")
+	}
 	p = read()
 	if p.Battle.UUID != uuid || p.Battle.NativeSolo.Native.Journal.Head != head || p.Materials[26].Count != ticket {
 		t.Fatal("真实PG冷恢复改Journal/UUID或重复扣票")

@@ -106,9 +106,8 @@ func main() {
 		log.Printf("本机业务演练接口监听 %s", cfg.DebugBind)
 	}
 	if cfg.AdminBind != "" {
-		host, _, err := net.SplitHostPort(cfg.AdminBind)
-		if err != nil || !net.ParseIP(host).IsLoopback() || len(cfg.AdminToken) < 32 {
-			log.Fatal("管理接口必须绑定回环 IP，且 HS_GAME_ADMIN_TOKEN 至少32字节")
+		if _, _, err := net.SplitHostPort(cfg.AdminBind); err != nil || len(cfg.AdminToken) < 32 {
+			log.Fatal("HS_GAME_ADMIN_BIND 必须是 host:port，且 HS_GAME_ADMIN_TOKEN 至少32字节")
 		}
 		admin := &http.Server{Addr: cfg.AdminBind, Handler: game.AdminHandler(svc, cfg.AdminToken), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 30 * time.Second}
 		go func() { log.Fatal(admin.ListenAndServe()) }()
@@ -117,6 +116,9 @@ func main() {
 	if rsaKey == nil {
 		log.Printf("HS_GAME_RSA_KEY 未配置：session_key 将按明文 SessionKey 解析（仅限联调）")
 	}
+	maintenanceCtx, stopMaintenance := context.WithCancel(context.Background())
+	defer stopMaintenance()
+	svc.StartPeriodicMaintenance(maintenanceCtx)
 	mgr := session.NewManager(cfg.MaxSessions)
 	log.Printf("游戏服务监听 %s，会话上限 %d，加密=%v", cfg.GameBind, cfg.MaxSessions, rsaKey != nil)
 	for {

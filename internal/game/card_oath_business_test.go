@@ -186,10 +186,13 @@ func TestUpgradeUsesAndroidGradeMaterialsAndAtomicFailure(t *testing.T) {
 				t.Fatal(err)
 			}
 			pushes, err = svc.Handle(ctx, c, "upgrade_card", args)
-			if err != nil || businessPushCount(pushes) != 3 {
+			if err != nil || businessPushCount(pushes) != 4 {
 				t.Fatal(err, pushes)
 			}
 			p := c.SelectedAvatarUnsafe().Progress
+			if p.Cards[0].Awakened != 1 || socialCallback(t, pushes)[0] != RetSuccess {
+				t.Fatal("原生升格觉醒与成功回调未同步")
+			}
 			if p.Cards[0].Grade != example.grade+1 || p.Materials[100].Count != 0 || p.Materials[example.item].Count != 0 || p.Materials[12].Count != 0 {
 				t.Fatal("升品成本或品阶错误")
 			}

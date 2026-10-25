@@ -11,7 +11,7 @@ def _install_hs_login_battle_recovery():
     if avatar_module is None:
         raise RuntimeError('entities.Avatar 尚未加载')
     avatar_type = avatar_module.Avatar
-    if getattr(avatar_type, '_hs_login_battle_recovery_revision', 0) >= 10:
+    if getattr(avatar_type, '_hs_login_battle_recovery_revision', 0) >= 12:
         return
 
     original_refresh = getattr(avatar_type, '_hs_login_battle_recovery_original', avatar_type.on_refresh_login)
@@ -70,8 +70,14 @@ def _install_hs_login_battle_recovery():
         previous_uuid = extra.get('hs_recover_previous_uuid') if isinstance(extra, dict) else None
         current = getattr(self, 'battle', None)
         new_uuid = args[2] if len(args) >= 3 else parameters.get('_2', parameters.get('battle_uuid'))
+        # 同UUID的重复握手不能再次调用原生创建器(assert not self.battle)。
+        # 显式恢复重建仍释放旧对象；不同UUID且没有恢复授权仍保留原生拒绝。
+        if (current is not None and new_uuid is not None
+                and str(getattr(current, 'id', '')) == str(new_uuid)
+                and not (isinstance(extra, dict) and extra.get('hs_recover_rebuild'))):
+            return None
         if previous_uuid and current is not None:
-            if str(getattr(current, 'id', '')) == str(new_uuid):
+            if str(getattr(current, 'id', '')) == str(new_uuid) and not extra.get('hs_recover_rebuild'):
                 return None
             # 原生2034D84C入口释放模型/回调并置空battle；不会调用通关或发奖。
             # 服务器恢复标记授权替换当前未结会话；多次失败重连后，客户端
@@ -110,7 +116,7 @@ def _install_hs_login_battle_recovery():
     avatar_type._hs_login_battle_recovery_preload_original = original_preload
     avatar_type._hs_login_battle_recovery_load_original = original_load_finished
     avatar_type._hs_login_battle_recovery_guide_original = original_do_guide
-    avatar_type._hs_login_battle_recovery_revision = 10
+    avatar_type._hs_login_battle_recovery_revision = 12
 
 
 def _start_hs_login_battle_recovery():

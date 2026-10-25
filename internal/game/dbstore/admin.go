@@ -3,6 +3,7 @@ package dbstore
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"hs-server/internal/game"
 	"time"
 )
@@ -42,6 +43,9 @@ func (s *Store) adminPlayerTransaction(ctx context.Context, oid []byte, f func(*
 		return game.Avatar{}, err
 	}
 	defer rollback(tx)
+	if _, err = tx.Exec(ctx, `SET LOCAL lock_timeout = '1s'`); err != nil {
+		return game.Avatar{}, err
+	}
 	var av game.Avatar
 	query := `SELECT avatar_oid,uid,hostnum,nickname,level,gender,nickname_set,head_id,head_box_id,custom_head_image_url,created_at FROM avatars WHERE avatar_oid=$1`
 	if f != nil {
@@ -88,3 +92,35 @@ func (s *Store) adminPlayerTransaction(ctx context.Context, oid []byte, f func(*
 }
 
 var _ game.AdminAccounts = (*Store)(nil)
+
+func (s *Store) LoadOpsConfig(ctx context.Context) (map[string]json.RawMessage, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	rows, err := s.pool.Query(ctx, `SELECT kind,state FROM ops_config`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]json.RawMessage{}
+	for rows.Next() {
+		var kind string
+		var raw []byte
+		if err = rows.Scan(&kind, &raw); err != nil {
+			return nil, err
+		}
+		out[kind] = json.RawMessage(raw)
+	}
+	return out, rows.Err()
+}
+
+func (s *Store) SaveOpsConfig(ctx context.Context, kind string, raw json.RawMessage) error {
+	if kind != "notices" && kind != "broadcasts" && kind != "gacha_schedules" {
+		return errors.New("运营配置类型无效")
+	}
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	_, err := s.pool.Exec(ctx, `INSERT INTO ops_config(kind,state,updated_at) VALUES($1,$2::jsonb,now()) ON CONFLICT(kind) DO UPDATE SET state=EXCLUDED.state,updated_at=now()`, kind, string(raw))
+	return err
+}
+
+var _ game.OpsConfigAccounts = (*Store)(nil)

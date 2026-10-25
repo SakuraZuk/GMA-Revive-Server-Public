@@ -16,7 +16,8 @@ guis = types.ModuleType('guis')
 guis.gui_utils = types.SimpleNamespace(get_pool_open_close_time=lambda pool: windows[pool])
 sys.modules['guis'] = guis
 sys.modules['utils'] = utils
-sys.modules['game3d'] = types.SimpleNamespace(delay_exec=lambda *args: None)
+watchers = []
+sys.modules['game3d'] = types.SimpleNamespace(delay_exec=lambda *args: watchers.append(args))
 player = types.SimpleNamespace(get_card_pool_time=lambda pool: 0, server_open_time=now - 100000,
     compute_card_pool_index=lambda *args: (_ for _ in ()).throw(AssertionError('不能搜索恒定索引')))
 sys.modules['gworld'] = types.SimpleNamespace(get_player=lambda: player)
@@ -31,6 +32,7 @@ class UI:
         scheduled.append(seconds)
         return types.SimpleNamespace(cancel=lambda: scheduled.append('取消'))
     def ask_refresh(self): pass
+    def start_refresh_timer(self): raise AssertionError('不应执行原生无界搜索')
 sys.modules['guis.summon_card.summon_new_card'] = types.SimpleNamespace(summon_new_card=UI)
 code = Path(sys.argv[1]).read_text(encoding='utf-8')
 # 真实本版模块路径，不能让夹具在错误的utils包下造出gui_utils。
@@ -74,4 +76,13 @@ assert scheduled[-1] == 50, scheduled
 original = UI.start_refresh_timer
 exec(compile(wrapped, '重复热更', 'exec'), {}, {})
 assert UI.start_refresh_timer is original
+assert len(watchers) == 1, '重复热更叠加检查链'
+# 模拟客户端重建模块类，不能继承旧类标记后跳过实际函数修补。
+class Reloaded(UI):
+    def start_refresh_timer(self): raise AssertionError('重建后的原生搜索未修补')
+sys.modules['guis.summon_card.summon_new_card'].summon_new_card = Reloaded
+watchers.pop()[1]()
+Reloaded().start_refresh_timer()
+assert getattr(Reloaded.start_refresh_timer, '_hs_summon_timer_revision', 0) == 2
+assert len(watchers) == 1
 print('卡池恒定索引、关闭时间、未来开启、失效时间、取消及重复安装验证通过')

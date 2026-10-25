@@ -11,6 +11,40 @@ import (
 	"hs-server/internal/game"
 )
 
+func TestPostgresIdleActivityCalendarRolloverPreservesVersion(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	now := time.Now()
+	if err := game.SetActivitySchedules(game.DefaultPermanentActivitySchedules(now.AddDate(0, 0, -2))); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = game.SetActivitySchedules(nil) })
+	identity, err := store.Register(ctx, game.ClientInfo{Account: "空榜跨日不改档", Password: "pw", Hostnum: 10001})
+	if err != nil {
+		t.Fatal(err)
+	}
+	oid := identity.Avatars[0].OID
+	svc := pgActivityService(t, store, func() time.Time { return now })
+	if err = svc.RunPeriodicMaintenanceOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
+	var before, after []byte
+	var revisionBefore, revisionAfter int64
+	if err = store.pool.QueryRow(ctx, `SELECT revision,state FROM avatar_progress WHERE avatar_oid=$1`, oid).Scan(&revisionBefore, &before); err != nil {
+		t.Fatal(err)
+	}
+	now = now.Add(24 * time.Hour)
+	if err = svc.RunPeriodicMaintenanceOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err = store.pool.QueryRow(ctx, `SELECT revision,state FROM avatar_progress WHERE avatar_oid=$1`, oid).Scan(&revisionAfter, &after); err != nil {
+		t.Fatal(err)
+	}
+	if revisionBefore != revisionAfter || !bytes.Equal(before, after) {
+		t.Fatalf("未参赛跨日仍写玩家存档，版本%d -> %d", revisionBefore, revisionAfter)
+	}
+}
+
 func TestPostgresActivityCalendarAtomicDailyMountainReloadAndRetry(t *testing.T) {
 	// 专测默认未启用政策的周Pending收据；正式周奖事务另有Remaining专项。
 	t.Setenv("HS_REMAINING_GAMEPLAY_POLICY", "")
@@ -48,6 +82,9 @@ func TestPostgresActivityCalendarAtomicDailyMountainReloadAndRetry(t *testing.T)
 		c := pgActivityLogin(t, svc, info)
 		cs, oids = append(cs, c), append(oids, oid)
 	}
+	if err := svc.RunPeriodicMaintenanceOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
 	// 初见只建立基线；不能用当前成绩重建历史日奖。
 	for _, oid := range oids {
 		p := pgHumanRead(t, store, oid).Progress
@@ -70,7 +107,7 @@ func TestPostgresActivityCalendarAtomicDailyMountainReloadAndRetry(t *testing.T)
 		before = append(before, raw)
 	}
 	now = now.Add(2 * time.Second)
-	if _, err := svc.Handle(ctx, cs[0], "query_rank_list", pgSocialArgs(8, 1)); err == nil {
+	if err := svc.RunPeriodicMaintenanceOnce(ctx); err == nil {
 		t.Fatal("邮箱容量故障仍完成全服七日奖")
 	}
 	for i, oid := range oids {
@@ -82,7 +119,9 @@ func TestPostgresActivityCalendarAtomicDailyMountainReloadAndRetry(t *testing.T)
 	if _, err := store.UpdateProgress(ctx, oids[1], func(p *game.Progress) error { p.ShortMailInfo = nil; return nil }); err != nil {
 		t.Fatal(err)
 	}
-	pgSocialCall(t, svc, cs[0], "query_rank_list", 8, 1)
+	if err := svc.RunPeriodicMaintenanceOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
 	for i, oid := range oids {
 		p := pgHumanRead(t, store, oid).Progress
 		r := p.Activities.Calendar.Mountain[1]
@@ -96,6 +135,9 @@ func TestPostgresActivityCalendarAtomicDailyMountainReloadAndRetry(t *testing.T)
 		}
 	}
 	now = time.Date(2026, 10, 21, 23, 59, 59, 0, zone)
+	if err := svc.RunPeriodicMaintenanceOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
 	pgSocialCall(t, svc, cs[0], "query_rank_list", 10, 20200001)
 	for i, oid := range oids {
 		p := pgHumanRead(t, store, oid).Progress
@@ -109,6 +151,9 @@ func TestPostgresActivityCalendarAtomicDailyMountainReloadAndRetry(t *testing.T)
 	reloaded := pgActivityService(t, New(store.pool), func() time.Time { return now })
 	info := game.ClientInfo{Account: "活动周期真实1", Password: "pw", Hostnum: 10001}
 	c := pgActivityLogin(t, reloaded, info)
+	if err := reloaded.RunPeriodicMaintenanceOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
 	pgSocialCall(t, reloaded, c, "query_rank_list", 8, 1)
 	for _, oid := range oids {
 		if p := pgHumanRead(t, store, oid).Progress; len(p.ShortMailInfo) != 1 {
@@ -133,6 +178,9 @@ func TestPostgresActivityCalendarAtomicDailyMountainReloadAndRetry(t *testing.T)
 	if p := pgHumanRead(t, store, oids[0]).Progress; p.AchievementLoginDay != "2026-10-22" {
 		t.Fatal("周四首次登录未完成真实跨日刷新")
 	}
+	if err := reloaded.RunPeriodicMaintenanceOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
 	pgSocialCall(t, reloaded, c, "query_rank_list", 10, 20200001)
 	for i, oid := range oids {
 		p := pgHumanRead(t, store, oid).Progress
@@ -148,6 +196,9 @@ func TestPostgresActivityCalendarAtomicDailyMountainReloadAndRetry(t *testing.T)
 	}
 	reloaded = pgActivityService(t, New(store.pool), func() time.Time { return now })
 	c = pgActivityLogin(t, reloaded, info)
+	if err := reloaded.RunPeriodicMaintenanceOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
 	pgSocialCall(t, reloaded, c, "query_rank_list", 10, 20200001)
 	for i, oid := range oids {
 		raw, _ := json.Marshal(pgHumanRead(t, store, oid).Progress)

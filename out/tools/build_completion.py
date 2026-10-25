@@ -1,4 +1,4 @@
-"""执行正式Windows/Linux游戏及真实库测试构建，记录源码与产物哈希。"""
+"""执行正式Windows/Linux游戏、独立热更及真实库测试构建，记录源码与产物哈希。"""
 import hashlib, json, subprocess, sys
 from datetime import datetime
 from pathlib import Path
@@ -30,7 +30,9 @@ def main():
         encoding='cp936';body=result.stdout.decode(encoding)
     log.write_text(body,encoding='utf-8')
     after=source_hashes(); code=result.returncode if before==after else 125
-    artifacts=['out/bin/windows/gameserver.exe','out/bin/linux-amd64/gameserver','out/bin/linux-amd64/dbstore.test']
+    artifacts=['out/bin/windows/gameserver.exe','out/bin/windows/hotfixserver.exe',
+               'out/bin/linux-amd64/gameserver','out/bin/linux-amd64/hotfixserver',
+               'out/bin/linux-amd64/dbstore.test']
     report={'开始时间':start,'结束时间':datetime.now().isoformat(),'退出码':code,'命令':'deploy/build-game.cmd','日志':str(log),
             '命令输出编码':encoding,'源码构建期间一致':before==after,'源码哈希':before,'产物哈希':{p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in artifacts if (ROOT/p).exists()}}
     (ROOT/'out/completion-build.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')

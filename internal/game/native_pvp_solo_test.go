@@ -26,6 +26,20 @@ func enableSoloTestRuntime(t *testing.T, s *Service) {
 	s.nativePvpResource = "bed95c22e6e6adf4ccf01cabb5156b4888ccc5744f0e192d24501e6df3c19ef3"
 }
 
+func assertNativeRecoveryLoad(t *testing.T, out []Push, uuid string) {
+	t.Helper()
+	for _, item := range out {
+		if item.Method == "start_server_battle_ok" {
+			extra := item.Args[3].(map[string]any)
+			if extra["hs_recover_previous_uuid"] != uuid || extra["hs_recover_rebuild"] != true {
+				t.Fatal("恢复未授权释放旧对象，原生创建与prepare会断言", item)
+			}
+			return
+		}
+	}
+	t.Fatal("恢复未下发完整加载链")
+}
+
 func TestNativeSoloPvpActualDuelRecoveryAndForgeryRollback(t *testing.T) {
 	for _, kind := range []string{"异步真人防守", "异步机器人", "同步机器人"} {
 		t.Run(kind, func(t *testing.T) {
@@ -68,7 +82,7 @@ func TestNativeSoloPvpActualDuelRecoveryAndForgeryRollback(t *testing.T) {
 				call("send_pvp_cards", 0)
 			}
 			uuid := c.SelectedAvatarUnsafe().Progress.Battle.UUID
-			call("client_need_recover_battle")
+			assertNativeRecoveryLoad(t, call("client_need_recover_battle"), uuid)
 			if c.SelectedAvatarUnsafe().Progress.Battle.UUID != uuid {
 				t.Fatal("冻结前恢复改变原UUID")
 			}
@@ -152,7 +166,7 @@ func TestNativeSoloPvpActualDuelRecoveryAndForgeryRollback(t *testing.T) {
 			ticket := c.SelectedAvatarUnsafe().Progress.Materials[26].Count
 			head = nativeSoloRoom(c).Native.Journal.Head
 			s.closeNativeAuthority(uuid)
-			call("client_need_recover_battle")
+			assertNativeRecoveryLoad(t, call("client_need_recover_battle"), uuid)
 			if nativeSoloRoom(c).UUID != uuid || nativeSoloRoom(c).Native.Journal.Head != head || c.SelectedAvatarUnsafe().Progress.Materials[26].Count != ticket {
 				t.Fatal("恢复改变UUID、Journal或重复扣票")
 			}

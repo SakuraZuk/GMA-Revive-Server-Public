@@ -73,3 +73,10 @@ CREATE TABLE IF NOT EXISTS native_battle_records (
  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS native_battle_records_owner_idx ON native_battle_records(avatar_oid,updated_at DESC);
+
+-- 运营后台配置：公告、全服邮件与卡池排期。进程内存为主，数据库在重启后回载。
+CREATE TABLE IF NOT EXISTS ops_config (
+    kind TEXT PRIMARY KEY CHECK(kind IN ('notices','broadcasts','gacha_schedules')),
+    state JSONB NOT NULL CHECK(jsonb_typeof(state)='array'),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

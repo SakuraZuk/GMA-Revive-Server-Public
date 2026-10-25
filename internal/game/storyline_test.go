@@ -13,7 +13,7 @@ func TestStorylineRPCPersistenceAndNoAssetAuthority(t *testing.T) {
 	accounts := NewFixtureAccounts(nil)
 	s := New(accounts, nil)
 	c, av := newBattleConnection(t, ctx, accounts, s)
-	if err := s.updateProgress(ctx, c, func(p *Progress) error { return nil }); err != nil {
+	if err := s.updateProgress(ctx, c, func(p *Progress) error { p.UnlockSystems["assist"] = 1; return nil }); err != nil {
 		t.Fatal(err)
 	}
 	before := CloneProgress(c.SelectedAvatarUnsafe().Progress)

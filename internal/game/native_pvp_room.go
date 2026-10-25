@@ -499,6 +499,13 @@ func (s *Service) absorbNativeHumanBattleEvent(ctx context.Context, c *Connectio
 	if settled || aborted {
 		s.closeNativeAuthority(r.UUID)
 	}
+	if settled {
+		log.Printf("PVP客户端权威末态已核验，真人结算事务完成")
+	}
+	if envelope.Kind == "ready" {
+		pushes, err := s.advancePvpLoadBarrier(ctx, c)
+		return true, pushes, err
+	}
 	return true, nil, nil
 }
 
@@ -552,6 +559,7 @@ func (s *Service) nativeObservePlayback(ctx context.Context, r *HumanPvpRoom, b 
 		}
 		if nativeAllClientsStarted(r) && !r.Native.Activated {
 			r.Native.Activated = true
+			log.Printf("PVP客户端原生开战已核验，权威播放屏障激活，客户端数=%d", len(nativeRecipients(r)))
 			if r.Native.Update.Result != nil {
 				return nil
 			}
@@ -593,7 +601,21 @@ func (s *Service) nativeObservePlayback(ctx context.Context, r *HumanPvpRoom, b 
 	if kind == "result" {
 		winners = nativeClientWinners(envelope.Data)
 	}
+	// MapPlayback明确不向客户端投递场地自主空转。旧桥仍上报这一原生命令，
+	// 它是观察事件，不能消耗或替代任何权威FIFO命令；但要保留连续事件序号。
+	if kind == "command" && nativeLocalFieldIdle(r, client, envelope.Data) {
+		return nil
+	}
 	if err := client.Checkpoint.Observe(client.Generation, envelope.Sequence, kind, nativeClientEID(envelope.Data), nativeClientCommand(envelope.Data), winners); err != nil {
+		name := "无效命令"
+		if command, ok := envelope.Data["command"].([]any); ok && len(command) > 0 {
+			if value, ok := command[0].(string); ok && len(value) <= 48 && value != "" && strings.IndexFunc(value, func(ch rune) bool {
+				return ch != '_' && !(ch >= 'a' && ch <= 'z')
+			}) == -1 {
+				name = value
+			}
+		}
+		log.Printf("PVP播放确认拒绝，事件=%s 命令=%s 原因=%v", kind, name, err)
 		return err
 	}
 	r.Native.Clients[id] = client
@@ -601,6 +623,33 @@ func (s *Service) nativeObservePlayback(ctx context.Context, r *HumanPvpRoom, b 
 		r.Native.WindowDeadline = s.Now().Unix() + nativeDeadlineSeconds(r.Native.Update)
 	}
 	return nil
+}
+
+// 仅原生权威已经证明的场地实体、magic_field_idle可作为本地观察。
+// 原版command_magic_field_idle(self,user,action_info)不使用action_info；
+// 接收一个原生占位参数及旧桥空参数形式，绝不执行客户端上报的参数。
+// 普通卡、未映射实体、未知命令和伪造参数仍走严格FIFO拒绝。
+func nativeLocalFieldIdle(r *HumanPvpRoom, client NativePvpClient, data map[string]any) bool {
+	command, ok := data["command"].([]any)
+	if !ok || len(command) != 2 || command[0] != "magic_field_idle" {
+		return false
+	}
+	args, ok := command[1].([]any)
+	if !ok || len(args) > 1 {
+		return false
+	}
+	eid := nativeClientEID(data)
+	if eid == "" {
+		return false
+	}
+	for _, units := range [][]nativeengine.UnitSnapshot{r.Native.InitialUnits, r.Native.Update.State.Units} {
+		for _, unit := range units {
+			if (unit["kind"] == "field" || fmt.Sprint(unit["native_type"]) == "4") && client.Mapping[fmt.Sprint(unit["eid"])] == eid {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func nativeRecipients(r *HumanPvpRoom) []string {

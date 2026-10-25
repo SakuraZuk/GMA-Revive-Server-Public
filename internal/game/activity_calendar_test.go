@@ -9,6 +9,52 @@ import (
 	"time"
 )
 
+func TestActivityCalendarIdleRolloverAndFirstParticipation(t *testing.T) {
+	t.Setenv("HS_REMAINING_GAMEPLAY_POLICY", "local-20261008-v1")
+	now := time.Date(2026, 10, 10, 12, 0, 0, 0, shanghaiZone)
+	s, _, _ := activityCalendarFixture(t, now)
+	oid, _ := SocialOID("000000000000000000000099")
+	av := &Avatar{OID: oid, Hostnum: 1, Info: AvatarInfo{Level: 20}, Progress: NewProgress(20, now)}
+	rows := map[string]*Avatar{hexOf(oid): av}
+	day, week := activityCutoffs(now)
+	if err := s.settleActivityCalendar(rows, now, day, week); err != nil {
+		t.Fatal(err)
+	}
+	before, _ := json.Marshal(av.Progress)
+	now = now.Add(24 * time.Hour)
+	day, week = activityCutoffs(now)
+	if err := s.settleActivityCalendar(rows, now, day, week); err != nil {
+		t.Fatal(err)
+	}
+	after, _ := json.Marshal(av.Progress)
+	if string(before) != string(after) {
+		t.Fatalf("未参赛角色跨日仍改档或生成空收据：%s -> %s", before, after)
+	}
+	av.Progress.Activities.Nian = map[int]ActivityProgress{}
+	bc := &ActivityBattleContext{DungeonID: 20200001, PreparedAt: now.Unix(), Statistics: &ActivityBattleStatistics{Damage: 0}}
+	if err := recordNianBattleDamage(&av.Progress, bc, now); err != nil {
+		t.Fatal(err)
+	}
+	cal := av.Progress.Activities.Calendar
+	if cal.NianDay != day.Format("2006-01-02") || cal.NianWeek != week.Format("2006-01-02") || !av.Progress.Activities.Nian[bc.DungeonID].Ranked {
+		t.Fatal("首份真实零伤害参赛没有原子接续当前账本")
+	}
+	// 有真实成绩后不能被首次初始化逻辑跨过尚未结算的周期。
+	firstDay := cal.NianDay
+	if err := prepareFirstNianRanking(&av.Progress, now.Add(24*time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if cal.NianDay != firstDay {
+		t.Fatal("已有成绩的待结周期被跳过")
+	}
+	av.Progress.Activities.Nian = nil
+	av.Progress.Activities.NianHistory = nil
+	cal.NianDay = "2026-11-01"
+	if err := prepareFirstNianRanking(&av.Progress, now); err == nil {
+		t.Fatal("首次参赛允许账本时间回拨")
+	}
+}
+
 func activityCalendarFixture(t *testing.T, now time.Time) (*Service, *FixtureAccounts, *Connection) {
 	t.Helper()
 	previous := configuredActivities.Load()

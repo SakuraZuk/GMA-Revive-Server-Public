@@ -14,7 +14,7 @@ commands = (
     "cat /etc/os-release; command -v apt-get; command -v runuser; df -h /opt; apt-cache policy postgresql-15 postgresql-16; ps -eo comm | grep -E 'postgres|pg_ctl'",
     "systemctl is-active hs-game hs-sdk hs-login; ss -lntup | head -40",
     "command -v psql; command -v postgres; command -v docker; ls /usr/lib/postgresql 2>/dev/null; systemctl list-units --type=service --all | grep -E 'postgres|hs-'",
-    "systemctl cat hs-game | sed -E 's#(HS_DATABASE_URL=).*#\\1[已隐藏]#'; ls -l /opt/hs-server/bin /opt/hs-server/data",
+    "systemctl cat hs-game | sed -E 's#(Environment(File)?=.*(DATABASE_URL|PASSWORD|TOKEN|SECRET)[^=]*=).*#\\1[已隐藏]#'; ls -l /opt/hs-server/bin /opt/hs-server/data",
     "journalctl -u hs-game -n 12 --no-pager",
 )
 if len(sys.argv)>1:

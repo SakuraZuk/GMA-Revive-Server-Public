@@ -36,6 +36,11 @@ func (s *Store) UpdateProgress(ctx context.Context, oid []byte, update func(*gam
 		return game.Progress{}, err
 	}
 	defer rollback(tx)
+	// 全服周期结算按 OID 顺序锁全部角色。玩家请求若在其后排队到请求期限，
+	// 连接一直不释放，池被占满后后续请求连锁超时。锁不到立即失败，客户端重试。
+	if _, err = tx.Exec(ctx, `SET LOCAL lock_timeout = '1s'`); err != nil {
+		return game.Progress{}, err
+	}
 	var level int
 	// 所有写入顺序统一为avatars再avatar_progress，避免与管理/双玩家事务互锁。
 	if err = tx.QueryRow(ctx, `SELECT level FROM avatars WHERE avatar_oid=$1 FOR UPDATE`, oid).Scan(&level); err != nil {

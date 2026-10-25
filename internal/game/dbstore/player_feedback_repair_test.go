@@ -69,7 +69,7 @@ func TestPostgresPlayerFeedbackAscendReturnAndReportedDrawPools(t *testing.T) {
 	pgRemainingRPC(t, svc, c, "set_explore_auto_agent", 84, 208, true)
 	pgRemainingRPC(t, svc, c, "change_dungeon_skip_edit_state", 85, 4102, true)
 	preferences := read()
-	if preferences.CardVoices[4401] != 1 || preferences.GirlRandomEnable == nil || *preferences.GirlRandomEnable || !preferences.ExploreAutoAgent[208] || !preferences.DungeonSkipEditState[4102] {
+	if preferences.CardVoices[4401] != 1 || preferences.GirlRandomEnable == nil || *preferences.GirlRandomEnable || !preferences.ExploreAutoAgent[208] || !preferences.DungeonSkipEditState[900000001] {
 		t.Fatal("原生偏好实际RPC未在实库持久")
 	}
 	if _, err := svc.Handle(ctx, c, "decompose_cards", pgSocialArgs(2, []string{card.UUID})); err != nil {

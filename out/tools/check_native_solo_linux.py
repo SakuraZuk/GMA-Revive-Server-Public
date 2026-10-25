@@ -45,11 +45,17 @@ client=connect()
 try:
  for dest,digest in hashes.items():
   if run(client,'sha256sum '+shlex.quote(dest)).split()[0]!=digest:raise ValueError('Linux专项上传SHA不符')
+ # SFTP断线重传可能留下旧写句柄；复制到新inode后原子替换，执行文件不共享上传写句柄。
+ for source,dest in files:
+  if source.suffix=='.test':
+   activated=dest+'.activated'
+   run(client,'cp '+shlex.quote(dest)+' '+shlex.quote(activated)+' && mv -f '+shlex.quote(activated)+' '+shlex.quote(dest))
+   if run(client,'sha256sum '+shlex.quote(dest)).split()[0]!=hashes[dest]:raise ValueError('Linux专项执行副本SHA不符')
  run(client,'tar -xzf '+shlex.quote(remote+'/resources.tar.gz')+' -C '+shlex.quote(remote)+' && cp -a '+shlex.quote(base+'/python2')+' '+shlex.quote(remote+'/python2')+' && mkdir -p '+shlex.quote(remote+'/workspace/internal/game')+' && chmod 700 '+shlex.quote(remote+'/nativeengine.test')+' '+shlex.quote(remote+'/game-native.test'),timeout=60)
  env_remote='HS_NATIVE_PVP_TEST_PYTHON3=/usr/bin/python3 HS_NATIVE_PVP_TEST_PYTHON2='+shlex.quote(remote+'/python2/run-python2')+' HS_NATIVE_PVP_TEST_WORKER='+shlex.quote(remote+'/workspace/internal/nativepvp/battle_native_worker.py')+' HS_NATIVE_PVP_TEST_DIRECTORY='+shlex.quote(remote+'/workspace/internal/nativepvp/runtime/native_engine')+' HS_NATIVE_PVP_TEST_RESOURCE_SHA256=bed95c22e6e6adf4ccf01cabb5156b4888ccc5744f0e192d24501e6df3c19ef3'
  # run-python2入口按自身目录定位，复制不引用旧工作树。
  logs=[]
- for binary,pattern in [('nativeengine.test','Test'),('game-native.test','TestNativeSolo|TestNativePvpRoom')]:
+ for binary,pattern in [('nativeengine.test','Test'),('game-native.test','TestNativeSolo|TestNativePvpRoom|TestNativePvpLocalFieldIdle')]:
   command='cd '+shlex.quote(remote+'/workspace/internal/game')+' && '+env_remote+' '+shlex.quote(remote+'/'+binary)+' -test.run '+shlex.quote(pattern)+' -test.v -test.count=1 -test.timeout=90s'
   logs.append(run(client,command,timeout=110))
  command='cd '+shlex.quote(remote+'/workspace')+' && HS_NATIVE_PVP_PYTHON2='+shlex.quote(remote+'/python2/run-python2')+' /usr/bin/python3 out/tools/test_remaining_activity_native.py'

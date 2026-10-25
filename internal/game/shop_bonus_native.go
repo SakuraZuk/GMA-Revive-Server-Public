@@ -18,6 +18,13 @@ type shopItemLibrary struct {
 // 调用者必须处于玩家事务。D44DBBA7的固定、随机材料/契印、素材库共用解释器。
 // 未知解锁、幸运保底、没有明确套装池的契印拒绝，不能以预览奖励代替。
 func grantNativeBonus(p *Progress, id int, amount int64, level int, now time.Time) (map[string]any, error) {
+	if p.battleRewardSession != nil {
+		return grantFrozenBattleBonus(p, id, amount, level, now)
+	}
+	return grantNativeBonusRaw(p, id, amount, level, now)
+}
+
+func grantNativeBonusRaw(p *Progress, id int, amount int64, level int, now time.Time) (map[string]any, error) {
 	changes := map[int]int64{}
 	cards := []string{}
 	before := map[string]bool{}

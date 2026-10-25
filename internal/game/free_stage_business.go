@@ -191,6 +191,8 @@ func finishFreeStageSite(p *Progress, s *FreeStageState, node int, now time.Time
 	if site.Type == 4 {
 		s.State = 3
 		advanceAchievementEvent(p, 6, s.ID, now)
+		// 章节成就需要具体地图；日常1013的原表参数为空，不能用地图ID替代。
+		advanceAchievementAmount(p, 6, nil, 1, now)
 	}
 	return nil
 }

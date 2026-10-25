@@ -257,4 +257,7 @@ func TestSyncPvpWeeklyBonusAtomicOverflow(t *testing.T) {
 	if err != nil || socialCallback(t, pushes)[0] != nil {
 		t.Fatal("重复领取未拒绝")
 	}
+	if msg, ok := socialCallback(t, pushes)[1].([]byte); !ok || string(msg) != "该周胜奖励已领取" {
+		t.Fatal("原版Python2失败PRINT_ITEM需要中文UTF-8字节", pushes)
+	}
 }

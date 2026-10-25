@@ -51,6 +51,12 @@ func TestPostgresStorylineConcurrentColdLogin(t *testing.T) {
 	if before.FreeYuanbao != after.FreeYuanbao || !reflect.DeepEqual(before.ClearedDungeons, after.ClearedDungeons) || !reflect.DeepEqual(before.UnlockSystems, after.UnlockSystems) {
 		t.Fatal("剧情记录不能授权奖励、通关或解锁")
 	}
+	if _, err := store.UpdateProgress(ctx, identity.Avatars[0].OID, func(p *game.Progress) error {
+		p.UnlockSystems["assist"] = 1
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
 	service := pgActivityService(t, New(store.pool), time.Now)
 	connection := game.NewConnection()
 	connection.SetDeviceID("剧情实库冷登录设备")

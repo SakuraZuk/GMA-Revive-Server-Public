@@ -44,7 +44,7 @@ func activityData(table string, id int) activityRow {
 func (r activityRow) integer(key string) int { var n int; _ = json.Unmarshal(r[key], &n); return n }
 func (r activityRow) ids(key string) []int   { var n []int; _ = json.Unmarshal(r[key], &n); return n }
 func (r activityRow) flag(key string) bool   { var n bool; _ = json.Unmarshal(r[key], &n); return n }
-func (r activityRow) conditions(key string, p Progress, level int) error {
+func (r activityRow) conditions(key string, p Progress, level int, clock ...time.Time) error {
 	var x [][][]json.RawMessage
 	if len(r[key]) == 0 {
 		return nil
@@ -52,7 +52,7 @@ func (r activityRow) conditions(key string, p Progress, level int) error {
 	if json.Unmarshal(r[key], &x) != nil {
 		return errors.New("活动条件结构无效")
 	}
-	ok, err := shopConditions(x, p, level)
+	ok, err := shopConditions(x, p, level, clock...)
 	if err != nil {
 		return err
 	}
@@ -206,8 +206,18 @@ func activityOpen(p Progress, id, level int, now time.Time) (int, error) {
 	if !w.Permanent && now.Unix() > w.End {
 		return 0, runeReject("RET_FAILED", "活动已结束")
 	}
-	if err := r.conditions("unlock_condition", p, level); err != nil {
+	if err := r.conditions("unlock_condition", p, level, now); err != nil {
 		return 0, err
+	}
+	return activityDayNumber(id, now), nil
+}
+
+// 与已发布客户端activity_schedule_script的北京时间日历日和常驻封顶一致。
+func activityDayNumber(id int, now time.Time) int {
+	r := activityData("activity_type", id)
+	w := activitySchedule(id)
+	if len(r) == 0 || !w.Enabled || w.Begin <= 0 || now.Unix() < w.Begin || (!w.Permanent && (w.End <= w.Begin || now.Unix() > w.End)) {
+		return -1
 	}
 	z := time.FixedZone("北京时间", 8*3600)
 	a := time.Unix(w.Begin, 0).In(z)
@@ -233,7 +243,7 @@ func activityOpen(p Progress, id, level int, now time.Time) (int, error) {
 			}
 		}
 	}
-	return day, nil
+	return day
 }
 
 // 用户授权全部活动常驻；时间阶段沿用原表时长封顶，节点自身禁用和解锁条件仍校验。
@@ -586,7 +596,7 @@ func prepareActivityDungeon(p *Progress, dungeonID, level int, now time.Time) (*
 	if r.flag("_dungeon_disable") {
 		return nil, errors.New("活动副本已停用")
 	}
-	if err := r.conditions("unlock_condition", *p, level); err != nil {
+	if err := r.conditions("unlock_condition", *p, level, now); err != nil {
 		return nil, err
 	}
 	if days := r.ids("activity_open_days"); len(days) > 0 && !containsInt(days, day) {
@@ -623,6 +633,12 @@ func prepareActivityDungeon(p *Progress, dungeonID, level int, now time.Time) (*
 }
 
 func settleActivityDungeon(p *Progress, b *BattleSession, win bool, tasks []int, now time.Time) (map[string]any, error) {
+	return withBattleOverflowMail(p, b, now, func() (map[string]any, error) {
+		return settleActivityDungeonAssets(p, b, win, tasks, now)
+	})
+}
+
+func settleActivityDungeonAssets(p *Progress, b *BattleSession, win bool, tasks []int, now time.Time) (map[string]any, error) {
 	bc := b.ActivityContext
 	if bc == nil {
 		return nil, nil

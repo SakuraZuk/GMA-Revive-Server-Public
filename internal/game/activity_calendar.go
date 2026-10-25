@@ -92,20 +92,8 @@ func mountainRankCompetitionOpen(pid int, now time.Time) bool {
 	cutoff := mountainRankCutoff(pid)
 	return cutoff > 0 && now.Unix() < cutoff
 }
-func (s *Service) refreshActivityAwards(ctx context.Context, c *Connection) error {
-	store, ok := s.Accounts.(SocialAccounts)
-	if !ok {
-		return nil
-	}
-	value, _ := activityAwardBuses.LoadOrStore(s, &activityAwardBus{})
-	bus := value.(*activityAwardBus)
-	bus.mu.Lock()
-	defer bus.mu.Unlock()
-	// 必须在串行锁内取时刻；排队较早的请求不代表服务器真的回拨。
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	now := s.Now()
+
+func activityAwardKey(now time.Time) (string, time.Time, time.Time) {
 	day, week := activityCutoffs(now)
 	key := day.Format("2006-01-02") + "/" + week.Format("2006-01-02")
 	if remainingPolicyEnabled() {
@@ -118,13 +106,72 @@ func (s *Service) refreshActivityAwards(ctx context.Context, c *Connection) erro
 			key += fmt.Sprintf("/%d:%d:%t", pid, season, now.Unix() >= end)
 		}
 	}
+	return key, day, week
+}
+
+// refreshPlayerActivityCalendar 只在后台已完成当前周期结算后补齐本角色。
+// 结算器尚忙或周期已变化时立即跳过，绝不从登录路径退化成全表扫描。
+func (s *Service) refreshPlayerActivityCalendar(ctx context.Context, c *Connection) error {
+	store, ok := s.Accounts.(SocialAccounts)
+	if !ok {
+		return nil
+	}
+	value, exists := activityAwardBuses.Load(s)
+	if !exists {
+		return nil
+	}
+	bus := value.(*activityAwardBus)
+	if !bus.mu.TryLock() {
+		return nil
+	}
+	defer bus.mu.Unlock()
+	key, _, _ := activityAwardKey(s.Now())
+	if bus.key == "" || bus.key != key {
+		return nil
+	}
+	return s.refreshActivityAwardsLocked(ctx, c, store, bus)
+}
+
+func (s *Service) refreshActivityAwards(ctx context.Context, c *Connection) error {
+	store, ok := s.Accounts.(SocialAccounts)
+	if !ok {
+		return nil
+	}
+	value, _ := activityAwardBuses.LoadOrStore(s, &activityAwardBus{})
+	bus := value.(*activityAwardBus)
+	bus.mu.Lock()
+	defer bus.mu.Unlock()
+	return s.refreshActivityAwardsLocked(ctx, c, store, bus)
+}
+
+func (s *Service) tryRefreshActivityAwards(ctx context.Context) (bool, error) {
+	store, ok := s.Accounts.(SocialAccounts)
+	if !ok {
+		return true, nil
+	}
+	value, _ := activityAwardBuses.LoadOrStore(s, &activityAwardBus{})
+	bus := value.(*activityAwardBus)
+	if !bus.mu.TryLock() {
+		return false, nil
+	}
+	defer bus.mu.Unlock()
+	return true, s.refreshActivityAwardsLocked(ctx, nil, store, bus)
+}
+
+func (s *Service) refreshActivityAwardsLocked(ctx context.Context, c *Connection, store SocialAccounts, bus *activityAwardBus) error {
+	// 必须在串行锁内取时刻；排队较早的请求不代表服务器真的回拨。
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	now := s.Now()
+	key, day, week := activityAwardKey(now)
 	if now.Unix() < bus.lastTime {
 		return errors.New("活动排行周期时钟回拨")
 	}
-	if bus.key == key && c.SelectedAvatarUnsafe().Progress.Activities.Calendar != nil {
+	if bus.key == key && (c == nil || c.SelectedAvatarUnsafe().Progress.Activities.Calendar != nil) {
 		return nil
 	}
-	if bus.key == key {
+	if bus.key == key && c != nil {
 		// 新角色或旧连接快照缺日历时，先只锁本角色回载/初始化。
 		// 没有任何排行成绩和历史的角色不需要扫描并锁住全服背包。
 		needsGlobal := errors.New("该角色已有排行历史，必须全服结算")
@@ -147,26 +194,25 @@ func (s *Service) refreshActivityAwards(ctx context.Context, c *Connection) erro
 			return err
 		}
 	}
-	rows, err := store.UpdateAllSocial(ctx, func(v map[string]*Avatar) error { return s.settleActivityCalendar(v, now, day, week) })
+	if !s.periodicSettlementMu.TryLock() {
+		return nil
+	}
+	defer s.periodicSettlementMu.Unlock()
+	rows, err := updatePeriodicSocial(ctx, store, func(v map[string]*Avatar) error { return s.settleActivityCalendar(v, now, day, week) })
 	if err != nil {
 		return err
 	}
 	bus.key, bus.lastTime = key, now.Unix()
-	acceptSocialRows(c, rows)
+	s.acceptPeriodicRows(c, rows)
 	return nil
 }
 
 func activityCalendarHasRankHistory(p Progress) bool {
-	if len(p.Activities.NianHistory) != 0 {
+	if nianRankingHasHistory(p) {
 		return true
 	}
 	has := func(d ActivityProgress) bool {
 		return d.Ranked || d.RankAt != 0 || d.RankHard != 0 || d.RankDamage != 0
-	}
-	for _, d := range p.Activities.Nian {
-		if has(d) {
-			return true
-		}
 	}
 	if m := p.Activities.Mountain; m != nil {
 		for _, d := range m.Dungeons {
@@ -183,6 +229,40 @@ func activityCalendarHasRankHistory(p Progress) bool {
 		}
 	}
 	return false
+}
+
+func nianRankingHasHistory(p Progress) bool {
+	if len(p.Activities.NianHistory) != 0 {
+		return true
+	}
+	has := func(d ActivityProgress) bool {
+		return d.Ranked || d.RankAt != 0 || d.RankHard != 0 || d.RankDamage != 0
+	}
+	for _, d := range p.Activities.Nian {
+		if has(d) {
+			return true
+		}
+	}
+	return false
+}
+
+// 未参赛者不逐日刷新空榜账本；首份有效参赛成绩在同一改档事务建立当前基线。
+// 已有真实成绩或小时历史的旧档不得借此推进日期、跳过待结奖励。
+func prepareFirstNianRanking(p *Progress, now time.Time) error {
+	if nianRankingHasHistory(*p) {
+		return nil
+	}
+	day, week := activityCutoffs(now)
+	dayKey, weekKey := day.Format("2006-01-02"), week.Format("2006-01-02")
+	if p.Activities.Calendar == nil {
+		p.Activities.Calendar = &ActivityCalendar{}
+	}
+	cal := p.Activities.Calendar
+	if cal.NianDay > dayKey || cal.NianWeek > weekKey {
+		return errors.New("首次年兽参赛账本日期回拨")
+	}
+	cal.NianDay, cal.NianWeek = dayKey, weekKey
+	return nil
 }
 func activityRankBonus(table string, rank int) (int, error) {
 	if rank < 1 {
@@ -355,6 +435,7 @@ func (s *Service) settleActivityCalendar(v map[string]*Avatar, now, day, week ti
 	for _, id := range ids {
 		av := v[id]
 		p := &av.Progress
+		initializeCalendar := p.Activities.Calendar == nil
 		if p.Activities.Calendar == nil {
 			p.Activities.Calendar = &ActivityCalendar{}
 		}
@@ -371,104 +452,108 @@ func (s *Service) settleActivityCalendar(v map[string]*Avatar, now, day, week ti
 		if cal.Mountain == nil {
 			cal.Mountain = map[int]ActivityRankReceipt{}
 		}
-		if cal.NianDay != "" && cal.NianDay < dayKey {
-			previous, err := time.ParseInLocation("2006-01-02", cal.NianDay, shanghaiZone)
-			if err != nil {
-				return errors.New("年兽日榜账本日期无效")
-			}
-			complete := previous.AddDate(0, 0, 1).Format("2006-01-02") == dayKey
-			for _, did := range []int{20200001, 20200002, 20200003} {
-				record := ActivityRankReceipt{Cutoff: day.Unix(), ObservedAt: now.Unix(), Closed: true}
-				if !complete || dayMissing[did][av.Hostnum] {
-					record.Missing = "缺少历史日榜截止快照"
-				} else if entry, exists := dayRanks[did][id]; exists {
-					openDay, err := activityOpen(*p, 328, av.Info.Level, day)
-					if err == nil && containsInt(activityData("monster_nian_dungeon", did).ids("open_days"), openDay) {
-						record.Rank, record.Score = entry.Rank, entry.Score
-						// 原生monster_nian_rank_reward明确日奖不含周三；仍保留截止名次供核查。
-						if day.Weekday() == time.Wednesday {
-							record.Reason = "原生日奖不含周三，仅记录截止名次"
-							cal.NianDaily[did] = record
-							continue
+		// 没有任何年兽排行成绩的角色保留原账本，不随日期写空收据。
+		// 山海账本仍在后面的独立流程处理，不用年兽参赛条件跳过其他活动。
+		if initializeCalendar || nianRankingHasHistory(*p) {
+			if cal.NianDay != "" && cal.NianDay < dayKey {
+				previous, err := time.ParseInLocation("2006-01-02", cal.NianDay, shanghaiZone)
+				if err != nil {
+					return errors.New("年兽日榜账本日期无效")
+				}
+				complete := previous.AddDate(0, 0, 1).Format("2006-01-02") == dayKey
+				for _, did := range []int{20200001, 20200002, 20200003} {
+					record := ActivityRankReceipt{Cutoff: day.Unix(), ObservedAt: now.Unix(), Closed: true}
+					if !complete || dayMissing[did][av.Hostnum] {
+						record.Missing = "缺少历史日榜截止快照"
+					} else if entry, exists := dayRanks[did][id]; exists {
+						openDay, err := activityOpen(*p, 328, av.Info.Level, day)
+						if err == nil && containsInt(activityData("monster_nian_dungeon", did).ids("open_days"), openDay) {
+							record.Rank, record.Score = entry.Rank, entry.Score
+							// 原生monster_nian_rank_reward明确日奖不含周三；仍保留截止名次供核查。
+							if day.Weekday() == time.Wednesday {
+								record.Reason = "原生日奖不含周三，仅记录截止名次"
+								cal.NianDaily[did] = record
+								continue
+							}
+							bonus, err := activityRankBonus("monster_nian_daily_rank", record.Rank)
+							if err != nil {
+								return err
+							}
+							record.Bonus = bonus
+							if bonus > 0 {
+								if err = s.issueActivityRankMail(p, bonus, fmt.Sprintf("nian:%s:%s:%d", id, dayKey, did), now); err != nil {
+									return err
+								}
+								record.Issued = true
+							}
 						}
-						bonus, err := activityRankBonus("monster_nian_daily_rank", record.Rank)
+					}
+					cal.NianDaily[did] = record
+				}
+			}
+			cal.NianDay = dayKey
+			// 周三周奖采用已批准本服综合公式；缺失历史快照仍保留待处理收据。
+			if cal.NianWeek != "" && cal.NianWeek < weekKey {
+				previous, err := time.ParseInLocation("2006-01-02", cal.NianWeek, shanghaiZone)
+				if err != nil {
+					return errors.New("年兽周榜账本日期无效")
+				}
+				record := ActivityNianWeek{Cutoff: week.Unix(), Pending: "三分榜名次综合公式与空榜惩罚未取证"}
+				if previous.AddDate(0, 0, 7).Format("2006-01-02") == weekKey {
+					for i, did := range []int{20200001, 20200002, 20200003} {
+						if weekMissing[did][av.Hostnum] {
+							record.Pending = "截止后的best已覆盖旧值，缺历史周榜快照"
+							record.Ranks = [3]int{}
+							record.Damage = [3]int64{}
+							break
+						}
+						if entry, ok := weekRanks[did][id]; ok {
+							record.Ranks[i] = entry.Rank
+							record.Damage[i] = entry.Score[0]
+						}
+					}
+				} else {
+					record.Pending = "缺少历史周榜截止快照"
+				}
+				if remainingPolicyEnabled() && previous.AddDate(0, 0, 7).Format("2006-01-02") == weekKey && !totalWeekMissing[av.Hostnum] {
+					record.Pending = ""
+					if total, ok := totalWeek[id]; ok {
+						record.Ranks = total.SubRanks
+						for i, did := range []int{20200001, 20200002, 20200003} {
+							if score, exists := nianScoreBefore(*p, did, week.Unix()+1, week.AddDate(0, 0, -7).Unix()); exists {
+								record.Damage[i] = score.Damage
+							}
+						}
+						record.TotalRank = total.Rank
+						record.Score = total.Score
+						record.Joined = total.Joined
+						record.Pending = ""
+						bonus, err := activityRankBonus("monster_nian_total_rank", total.Rank)
 						if err != nil {
 							return err
 						}
 						record.Bonus = bonus
 						if bonus > 0 {
-							if err = s.issueActivityRankMail(p, bonus, fmt.Sprintf("nian:%s:%s:%d", id, dayKey, did), now); err != nil {
+							if err = s.issueActivityRankMail(p, bonus, fmt.Sprintf("nian-week:%s:%s", id, weekKey), now); err != nil {
 								return err
 							}
 							record.Issued = true
 						}
 					}
 				}
-				cal.NianDaily[did] = record
-			}
-		}
-		cal.NianDay = dayKey
-		// 周三周奖采用已批准本服综合公式；缺失历史快照仍保留待处理收据。
-		if cal.NianWeek != "" && cal.NianWeek < weekKey {
-			previous, err := time.ParseInLocation("2006-01-02", cal.NianWeek, shanghaiZone)
-			if err != nil {
-				return errors.New("年兽周榜账本日期无效")
-			}
-			record := ActivityNianWeek{Cutoff: week.Unix(), Pending: "三分榜名次综合公式与空榜惩罚未取证"}
-			if previous.AddDate(0, 0, 7).Format("2006-01-02") == weekKey {
-				for i, did := range []int{20200001, 20200002, 20200003} {
-					if weekMissing[did][av.Hostnum] {
-						record.Pending = "截止后的best已覆盖旧值，缺历史周榜快照"
-						record.Ranks = [3]int{}
-						record.Damage = [3]int64{}
-						break
-					}
-					if entry, ok := weekRanks[did][id]; ok {
-						record.Ranks[i] = entry.Rank
-						record.Damage[i] = entry.Score[0]
-					}
+				cal.NianWeeks[weekKey] = record
+				for did, d := range p.Activities.Nian {
+					d.RankDamage, d.RankAt = 0, 0
+					d.RankCards = nil
+					d.Ranked = false
+					p.Activities.Nian[did] = d
 				}
-			} else {
-				record.Pending = "缺少历史周榜截止快照"
-			}
-			if remainingPolicyEnabled() && previous.AddDate(0, 0, 7).Format("2006-01-02") == weekKey && !totalWeekMissing[av.Hostnum] {
-				record.Pending = ""
-				if total, ok := totalWeek[id]; ok {
-					record.Ranks = total.SubRanks
-					for i, did := range []int{20200001, 20200002, 20200003} {
-						if score, exists := nianScoreBefore(*p, did, week.Unix()+1, week.AddDate(0, 0, -7).Unix()); exists {
-							record.Damage[i] = score.Damage
-						}
-					}
-					record.TotalRank = total.Rank
-					record.Score = total.Score
-					record.Joined = total.Joined
-					record.Pending = ""
-					bonus, err := activityRankBonus("monster_nian_total_rank", total.Rank)
-					if err != nil {
-						return err
-					}
-					record.Bonus = bonus
-					if bonus > 0 {
-						if err = s.issueActivityRankMail(p, bonus, fmt.Sprintf("nian-week:%s:%s", id, weekKey), now); err != nil {
-							return err
-						}
-						record.Issued = true
-					}
+				if remainingPolicyEnabled() {
+					clearNianHistoryThrough(p, week.Unix())
 				}
 			}
-			cal.NianWeeks[weekKey] = record
-			for did, d := range p.Activities.Nian {
-				d.RankDamage, d.RankAt = 0, 0
-				d.RankCards = nil
-				d.Ranked = false
-				p.Activities.Nian[did] = d
-			}
-			if remainingPolicyEnabled() {
-				clearNianHistoryThrough(p, week.Unix())
-			}
+			cal.NianWeek = weekKey
 		}
-		cal.NianWeek = weekKey
 		for pid := 1; pid <= 7; pid++ {
 			cutoff := mountainRankCutoff(pid)
 			if cutoff == 0 {

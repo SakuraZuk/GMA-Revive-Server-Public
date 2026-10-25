@@ -281,6 +281,50 @@ func TestGateHandshakeAndLogin(t *testing.T) {
 	if len(replies) != 0 {
 		t.Fatalf("引导状态上报不应回包：%d", len(replies))
 	}
+	// 入场与剧情事务失败也须按原生单整数回调应答，不能只记日志。
+	for _, item := range []struct {
+		method string
+		id     int64
+		ret    string
+		values map[string]any
+	}{
+		{"enter_dungeon", 601, "[1019]", map[string]any{"_0": int64(601), "_1": int64(12345678), "_2": map[string]any{}}},
+		{"finished_storyline", 602, "[13]", map[string]any{"_0": int64(602), "_1": ""}},
+	} {
+		params = mobileproto.EncodeMsgpackMap(item.values)
+		em = mobileproto.EncodeEntityMessage(g.avatarID, item.method, params, true)
+		out := g.handleFrame(svc, conn, nil, mobileproto.Frame{Command: mobileproto.CmdEntityMessage, Payload: em})
+		if len(out) != 1 {
+			t.Fatal("失败未返回单个回调", item.method, len(out))
+		}
+		message, err := mobileproto.DecodeEntityMessage(out[0].Payload)
+		if err != nil || message.MethodName() != "call_client_callback" {
+			t.Fatal("失败回调协议错误", err)
+		}
+		raw, err := mobileproto.DecodeMsgpackToJSON(message.Parameters)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var fields map[string]json.RawMessage
+		var callback int64
+		if err = json.Unmarshal(raw, &fields); err != nil {
+			t.Fatal(err)
+		}
+		if err = json.Unmarshal(fields["_0"], &callback); err != nil || callback != item.id || string(fields["_1"]) != item.ret {
+			t.Fatal("失败回调编号或IntRet错误", string(raw), err)
+		}
+	}
+}
+
+func TestNativeEntryFailureCallbackDoesNotGuessOtherContracts(t *testing.T) {
+	for _, item := range []struct {
+		method string
+		arg    string
+	}{{"battle_fighting", "1"}, {"enter_dungeon", "0"}, {"enter_dungeon", "-1"}, {"finished_storyline", "\"1\""}} {
+		if out := nativeEntryFailureCallback(item.method, []json.RawMessage{json.RawMessage(item.arg)}); len(out) != 0 {
+			t.Fatal("猜测未验证失败回调", item, out)
+		}
+	}
 }
 
 // TestGateRC4RoundTrip 验证手写 RC4 与标准测试向量一致（RFC 6229 风格冒烟）。

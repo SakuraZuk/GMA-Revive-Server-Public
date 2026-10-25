@@ -223,6 +223,7 @@ func (s *Service) collectionResidentRPC(ctx context.Context, c *Connection, args
 	}
 	now := s.Now()
 	var reward Mail
+	before := CloneProgress(c.SelectedAvatarUnsafe().Progress)
 	err := s.updateProgress(ctx, c, func(p *Progress) error {
 		if err := ensureCollection(p, now); err != nil {
 			return err
@@ -262,6 +263,6 @@ func (s *Service) collectionResidentRPC(ctx context.Context, c *Connection, args
 		return nil, err
 	}
 	out := []Push{materialManagerPush(c), cardMgrPush(c), runePush(c), knowledgePush(c)}
-	out = append(out, collectionPushes(c.SelectedAvatarUnsafe().Progress, now, false)...)
+	out = append(out, collectionRewardPushes(before, c.SelectedAvatarUnsafe().Progress, now)...)
 	return append(out, push("Avatar", "on_player_get_house_random_reward", RetSuccess, mailAttachmentBox(reward))), nil
 }

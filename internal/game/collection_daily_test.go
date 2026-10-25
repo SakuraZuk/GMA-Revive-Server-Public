@@ -38,6 +38,19 @@ func TestCollectionDailyRewardPriorityDayAndRollback(t *testing.T) {
 	if e != nil || !reflect.DeepEqual(pushes[len(pushes)-1].Args[0], []int{RetSuccess}) || c.SelectedAvatarUnsafe().Progress.Materials[4].Count != old+368000 {
 		t.Fatal("每日多房奖励或回包错误", e)
 	}
+	availability := false
+	for _, item := range pushes {
+		if item.Method == "client_prop_changed" {
+			field := item.Args[0].([]any)[0].(string)
+			availability = availability || field == "house_daily_reward"
+			if field == "restroom_info" || field == "restroom_grid_info" || field == "furniture_info" {
+				t.Fatal("每日领奖重复刷新未变化的房间或家具", field)
+			}
+		}
+	}
+	if !availability {
+		t.Fatal("领奖后未同步每日可领取状态")
+	}
 	pushes, e = s.collectionDailyRPC(ctx, c, nil)
 	if e != nil || reflect.DeepEqual(pushes[len(pushes)-1].Args[0], []int{RetSuccess}) || c.SelectedAvatarUnsafe().Progress.Materials[4].Count != old+368000 {
 		t.Fatal("当日重复领奖成功", e)

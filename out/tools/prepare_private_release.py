@@ -74,6 +74,6 @@ body = (stage/'deploy/data/hotfix.json').read_text(encoding='utf-8')
 if re.search(r'192\.0\.2\.(10|20)', body):
     raise ValueError('正式候选仍包含公开示例地址')
 report = {'状态':'私有正式目录准备完成','工作目录':str(stage),'源码目录':str(root),
-          '热更版本':candidate['runtime']['index'], '边界':'尚未构建、实库验收或发布；地址不写回公开源码'}
+          '热更版本':json.loads(body)['runtime']['index'], '边界':'尚未构建、实库验收或发布；地址不写回公开源码'}
 (root/'out/private-release-workspace.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 print(json.dumps({'状态':report['状态'],'热更版本':report['热更版本']},ensure_ascii=False))

@@ -46,23 +46,35 @@ func (s *Service) setVoice(ctx context.Context, c *Connection, method string, ar
 		return nil, errors.New("语音设置参数必须是整数")
 	}
 	if value != 1 && value != 2 && !(method == "set_global_vo" && value == 0) {
-		return []Push{Callback(cb, []any{false, "语音设置无效"})}, nil
+		return []Push{Callback(cb, []any{false, []byte("语音设置无效")})}, nil
 	}
 	if err := s.updateProgress(ctx, c, func(p *Progress) error {
 		if method == "set_global_vo" {
+			previous := effectiveGlobalVoice(*p)
 			p.GlobalVO = value
+			p.GlobalSetVO = previous
+			if value == 1 || value == 2 {
+				p.GlobalSetVO = value
+				// 全局切换必须同步当前卡语种，原生成功回调随后重建声音映射。
+				p.CardVoices = map[int]int{}
+			}
 		} else {
 			p.StoryVO = value
 		}
 		return nil
 	}); err != nil {
-		return []Push{Callback(cb, []any{false, "语音设置保存失败"})}, nil
+		return []Push{Callback(cb, []any{false, []byte("语音设置保存失败")})}, nil
 	}
 	field := "story_vo"
 	if method == "set_global_vo" {
 		field = "global_vo"
 	}
-	return []Push{push("Avatar", "client_prop_changed", []any{field, value}), Callback(cb, []any{true, ""})}, nil
+	out := []Push{push("Avatar", "client_prop_changed", []any{field, value})}
+	if method == "set_global_vo" {
+		p := c.SelectedAvatarUnsafe().Progress
+		out = append(out, push("Avatar", "client_prop_changed", []any{"global_set_vo", effectiveGlobalVoice(p)}), push("Avatar", "client_prop_changed", []any{"card_common_mgr", cardCommonMgrPropertiesWithProgress(p)}))
+	}
+	return append(out, Callback(cb, []any{true, ""})), nil
 }
 
 func (s *Service) setNicknameGender(ctx context.Context, c *Connection, args []json.RawMessage) ([]Push, error) {

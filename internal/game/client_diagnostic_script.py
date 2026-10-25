@@ -7,8 +7,22 @@ def _install_hs_client_diagnostic():
     import logging
     import traceback
     import gworld
-    if getattr(logging, '_hs_client_diagnostic_revision', 0) >= 1:
+    revision = getattr(logging, '_hs_client_diagnostic_revision', 0)
+    if revision >= 2:
         return
+    original = sys.excepthook
+    if revision == 1:
+        # 只替换本项目旧诊断器；恢复其保存的原异常链，避免热升级重复上报。
+        for handler in list(logging.getLogger().handlers):
+            if handler.__class__.__name__ == 'DiagnosticHandler':
+                logging.getLogger().removeHandler(handler)
+        code = getattr(original, 'func_code', getattr(original, '__code__', None))
+        cells = getattr(original, 'func_closure', getattr(original, '__closure__', None))
+        if code is not None:
+            for name, cell in zip(code.co_freevars, cells or ()):
+                if name == 'original':
+                    original = cell.cell_contents
+                    break
     state = {'sending': False, 'window': 0, 'count': 0, 'seen': {}}
 
     def report(message):
@@ -37,13 +51,34 @@ def _install_hs_client_diagnostic():
     class DiagnosticHandler(logging.Handler):
         def emit(self, record):
             try:
-                report(self.format(record))
+                message = self.format(record)
+                if 'HTTPClient - callback: err=' in message:
+                    # 原生HTTPClient只打印错误枚举；handler为partial(_callback,key,request)。
+                    # 只采集主机名和方法，不采集路径、查询串、请求头或正文中的身份信息。
+                    frame = sys._getframe()
+                    try:
+                        for unused in range(16):
+                            if frame is None:
+                                break
+                            owner = frame.f_locals.get('self')
+                            args = getattr(getattr(owner, 'handler', None), 'args', ())
+                            if frame.f_code.co_name == 'callback' and len(args) >= 2:
+                                request = args[1]
+                                host = getattr(request, 'host', '')
+                                method = getattr(request, 'method', '')
+                                import re
+                                if re.match(r'^[a-zA-Z0-9.:-]{1,253}$', host) and method in ('GET','POST','HEAD','PUT','DELETE','OPTIONS'):
+                                    message = 'HTTP目标 host=%s method=%s\n%s' % (host, method, message)
+                                break
+                            frame = frame.f_back
+                    finally:
+                        del frame
+                report(message)
             except Exception:
                 pass
 
     handler = DiagnosticHandler(logging.ERROR)
     logging.getLogger().addHandler(handler)
-    original = sys.excepthook
     def exception_hook(kind, value, trace):
         try:
             report(''.join(traceback.format_exception(kind, value, trace)))
@@ -51,7 +86,7 @@ def _install_hs_client_diagnostic():
             pass
         return original(kind, value, trace)
     sys.excepthook = exception_hook
-    logging._hs_client_diagnostic_revision = 1
-    print('HS_CLIENT_DIAGNOSTIC_READY 1')
+    logging._hs_client_diagnostic_revision = 2
+    print('HS_CLIENT_DIAGNOSTIC_READY 2')
 
 _install_hs_client_diagnostic()

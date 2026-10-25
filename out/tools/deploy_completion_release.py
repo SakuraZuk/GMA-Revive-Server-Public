@@ -1,11 +1,23 @@
 """统一发布游戏、日程及两台主机热更；任一提交失败恢复整批项目文件。"""
-import argparse,hashlib,json,re,shlex,subprocess,sys
+import argparse,hashlib,ipaddress,json,re,shlex,subprocess,sys
 from datetime import datetime
 from server_ops import ROOT,connect,run,audit,upload_resumable,reap_holders
 from deploy_hotfix_bridge import connect as connect_hotfix,audit as audit_hotfix
 from build_completion import source_hashes
 
 def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def validate_distribution_addresses(text):
+    """正式分发禁止使用公开示例网段，提交前重复执行此门槛。"""
+    reserved = [ipaddress.ip_network(value) for value in
+                ('192.0.2.0/24', '198.51.100.0/24', '203.0.113.0/24', '2001:db8::/32')]
+    for value in re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b|2001:db8:[0-9a-f:]*', text, re.I):
+        try:
+            address = ipaddress.ip_address(value)
+        except ValueError:
+            continue
+        if any(address in network for network in reserved):
+            raise ValueError('正式发布配置含文档示例地址，必须使用仓库外私有工作目录')
 
 def validate_database(build):
     expected=build.get('产物哈希',{}).get('out/bin/linux-amd64/dbstore.test')
@@ -28,6 +40,24 @@ def read_bound(path, hashes):
     if hashes.get(key)!=hashlib.sha256(raw).hexdigest():
         raise ValueError('构建绑定输入已改变：'+key)
     return raw.decode('utf-8-sig').replace('\r\n','\n')
+
+def validate_regression_checks(build):
+    """失败或旧候选的默认/正式规则、vet和原生验证必须阻断发布。"""
+    local=json.loads((ROOT/'out/remaining-local-verification.json').read_text(encoding='utf-8'))
+    checks=local.get('项目检查',[])
+    if (local.get('状态')!='通过' or local.get('源码核验期间一致') is not True or
+            local.get('源码SHA256')!=build['源码哈希'] or len(checks)!=3 or
+            {row.get('名称') for row in checks}!={'默认全仓','正式规则全仓','整仓vet'}):
+        raise ValueError('当前候选缺少一致的默认/正式规则全仓及vet验收')
+    for row in checks:
+        log=(ROOT/row['日志']).resolve()
+        if (not log.is_relative_to((ROOT/'out').resolve()) or row.get('退出码')!=0 or
+                not log.is_file() or digest(log)!=row.get('日志SHA256')):
+            raise ValueError('全仓回归失败或日志哈希不一致：'+row['名称'])
+    native=json.loads((ROOT/'out/native-solo-linux-verification.json').read_text(encoding='utf-8'))
+    if (native.get('状态')!='通过' or native.get('源码专项期间一致') is not True or
+            native.get('源码哈希')!=build['源码哈希'] or native.get('SKIP数量')!=0):
+        raise ValueError('当前候选缺少无跳过且源码一致的Linux原生验收')
 
 def validate_rune_pools(pools, catalog, tables):
     """必需编号直接取原生构建表；运营提案不参与正式发布条件。"""
@@ -53,12 +83,17 @@ def validate_rune_pools(pools, catalog, tables):
     if missing: raise ValueError('原生全零契印池尚无获批准的正式规则，阻断发布：'+','.join(sorted(missing,key=int)))
 
 def validate_local():
+    validate_distribution_addresses((ROOT/'deploy/data/hotfix.json').read_text(encoding='utf-8'))
     build=json.loads((ROOT/'out/completion-build.json').read_text(encoding='utf-8'))
     if build.get('退出码')!=0 or build.get('源码哈希')!=source_hashes():
         raise ValueError('源码在正式构建后有变化，必须重新构建')
+    validate_regression_checks(build)
     game=ROOT/'out/bin/linux-amd64/gameserver'
     if build.get('产物哈希',{}).get('out/bin/linux-amd64/gameserver')!=digest(game):
         raise ValueError('正式Linux产物与构建记录不一致')
+    hotfix_server=ROOT/'out/bin/linux-amd64/hotfixserver'
+    if build.get('产物哈希',{}).get('out/bin/linux-amd64/hotfixserver')!=digest(hotfix_server):
+        raise ValueError('正式Linux独立热更服务产物与构建记录不一致')
     validate_database(build)
     # 原校验脚本使用assert；忽略PYTHONOPTIMIZE，确保发布门槛实际执行。
     subprocess.run([sys.executable,'-E',str(ROOT/'out/tools/verify_battle_bridge_hotfix.py')],cwd=ROOT,check=True)
@@ -114,8 +149,10 @@ def validate_local():
     if not native_text.startswith('# HS_NATIVE_PVP_AUTHORITY\n[Service]\n') or native_text.count('Environment=HS_NATIVE_PVP_')!=4:
         raise ValueError('PVP权威drop-in与项目定义不一致')
     files['/etc/systemd/system/hs-game.service.d/60-native-pvp.conf']=native_dropin
-    hotfix_files={'/opt/hs-hotfix/data/hotfix.json':hotfix}
+    hotfix_files={'/opt/hs-hotfix/data/hotfix.json':hotfix,
+                  '/opt/hs-hotfix/bin/hotfixserver':hotfix_server}
     expected={target:(build['产物哈希']['out/bin/linux-amd64/gameserver'] if target.endswith('/gameserver') else
+                     build['产物哈希']['out/bin/linux-amd64/hotfixserver'] if target.endswith('/hotfixserver') else
                      build['源码哈希'][local.relative_to(ROOT).as_posix()]) for target,local in dict(files,**hotfix_files).items()}
     if build['源码哈希']!=source_hashes(): raise ValueError('正式预检期间构建输入改变')
     return files,hotfix_files,expected
@@ -251,9 +288,9 @@ class Batch:
         self.assert_lock(); self.inspect()
         def install(client):
             # 字典顺序无关：配置先替换，游戏二进制最后替换。
-            for target in sorted(self.rows,key=lambda p:p.endswith('/gameserver')):
+            for target in sorted(self.rows,key=lambda p:p.endswith(('/gameserver','/hotfixserver'))):
                 self.assert_lock()
-                row=self.rows[target]; mode='755' if target.endswith('/gameserver') else '600'
+                row=self.rows[target]; mode='755' if target.endswith(('/gameserver','/hotfixserver')) else '600'
                 self.check_files(client,[target,row['临时文件']])
                 if run(client,'sha256sum '+shlex.quote(row['临时文件'])).split()[0]!=row['新SHA256']:
                     raise ValueError('提交前临时文件哈希改变')

@@ -360,6 +360,16 @@ func prepareMikuDungeon(p *Progress, bc *ActivityBattleContext, day, level int, 
 	for key := range androidActivities["miku_story"] {
 		sid, _ := strconv.Atoi(key)
 		if activityData("miku_story", sid).integer("dungeon_id") == bc.DungeonID {
+			// 原版地图入口先播放指定入场剧情并enter_dungeon，通关后才enter_miku_map。
+			// 仅该原表入口可初始化地图；开放日期和前置章节仍由openMikuMap核验。
+			for key := range androidActivities["miku_map"] {
+				mid, _ := strconv.Atoi(key)
+				if activityData("miku_map", mid).integer("miku_enter_map_dungeon_id") == bc.DungeonID {
+					if _, err := openMikuMap(p, mid, day, level); err != nil {
+						return err
+					}
+				}
+			}
 			mid, err := mikuStoryGate(p, sid)
 			if err != nil {
 				return err

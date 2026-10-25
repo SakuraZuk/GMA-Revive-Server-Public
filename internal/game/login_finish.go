@@ -26,15 +26,9 @@ func (s *Service) finishLogin(ctx context.Context, c *Connection) (result []Push
 		if len(c.SelectedAvatarUnsafe().Progress.PlayedStorylines) > 0 {
 			assistPushes = append(assistPushes, storylinePush(c.SelectedAvatarUnsafe().Progress))
 		}
-		if c.SelectedAvatarUnsafe().Progress.UnlockSystems["assist"] > 0 {
-			if _, supported := s.Accounts.(SocialAccounts); supported {
-				var err error
-				assistPushes, err = s.friendAssistRPC(ctx, c, "refresh_assist_use_times", nil)
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
+		// 助战名册由客户端进入助战界面时的refresh_assist_use_times刷新。
+		// 登录收尾不能扫描同服候选；旧实现每次失败重试都会再次读取全服JSONB，
+		// 在多人同时登录时放大CPU并让on_refresh_login持续超过5秒。
 		// 恢复事务失败不能提前吞掉后续登录收尾请求。
 		defer func() {
 			if resultErr == nil {
@@ -55,6 +49,19 @@ func (s *Service) finishLogin(ctx context.Context, c *Connection) (result []Push
 			recoveryPushes, err := s.clientNeedRecoverBattle(ctx, c, nil)
 			if err != nil {
 				return nil, err
+			}
+			if av.Progress.Battle.RewardPlanFrozen && unfinishedBattle {
+				if b := c.SelectedAvatarUnsafe().Progress.Battle; b == nil || !b.Finished {
+					return nil, context.DeadlineExceeded
+				}
+				// 冷登录没有本地battle；兑现收据后仅同步属性并进入主城。
+				filtered := recoveryPushes[:0]
+				for _, item := range recoveryPushes {
+					if item.Method != "battle_result" {
+						filtered = append(filtered, item)
+					}
+				}
+				return append(append(assistPushes, filtered...), push("Avatar", "on_refresh_login")), nil
 			}
 			if !unfinishedBattle {
 				return append(assistPushes, recoveryPushes...), nil

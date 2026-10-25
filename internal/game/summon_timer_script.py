@@ -13,7 +13,7 @@ def _install_hs_summon_timer():
     if module is None:
         return False
     cls = module.summon_new_card
-    if getattr(cls, '_hs_summon_timer_revision', 0) >= 1:
+    if getattr(cls.start_refresh_timer, '_hs_summon_timer_revision', 0) >= 2:
         return True
 
     def start_refresh_timer(self):
@@ -62,18 +62,24 @@ def _install_hs_summon_timer():
         if target_time is not None:
             self.refresh_callback = self.add_callback(target_time - now_time, self.ask_refresh)
 
+    start_refresh_timer._hs_summon_timer_revision = 2
     cls.start_refresh_timer = start_refresh_timer
-    cls._hs_summon_timer_revision = 1
-    print('HS_SUMMON_TIMER_READY 1')
+    cls._hs_summon_timer_revision = 2
+    print('HS_SUMMON_TIMER_READY 2')
     return True
 
 
 def _start_hs_summon_timer():
     import game3d
-
+    # UI按需加载或模块重建后可能换回原生类；成功一次不能停止安装检查。
+    # 同版本热更重复执行仅复用一条检查链，避免每次入场新建无限计时器。
+    if getattr(game3d, '_hs_summon_watch_revision', 0) >= 2:
+        _install_hs_summon_timer()
+        return
+    game3d._hs_summon_watch_revision = 2
     def attempt():
-        if not _install_hs_summon_timer():
-            game3d.delay_exec(1000, attempt)
+        ready = _install_hs_summon_timer()
+        game3d.delay_exec(5000 if ready else 1000, attempt)
     attempt()
 
 

@@ -292,8 +292,8 @@ func TestAdminStaticPageBoundary(t *testing.T) {
 		r.RemoteAddr = "192.0.2.1:9001"
 		w = httptest.NewRecorder()
 		h.ServeHTTP(w, r)
-		if w.Code != 403 {
-			t.Fatal("管理静态页开放公网")
+		if w.Code != 200 || w.Header().Get("Cache-Control") != "no-store" {
+			t.Fatal("管理静态页未对公网地址提供登录页", path, w.Code)
 		}
 	}
 }

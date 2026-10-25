@@ -37,6 +37,79 @@ func remainingActivityCallback(t *testing.T, pushes []game.Push, method string, 
 	return found
 }
 
+// 真实数据库冷重建验证尖叫屋动画候选与实际入账、选择收据保持一致。
+func TestPostgresHouseGhostFullReplyColdDuplicate(t *testing.T) {
+	store := testStore(t)
+	ctx := context.Background()
+	now := time.Unix(1800000000, 0)
+	info := game.ClientInfo{Account: "尖叫屋回包验收", Password: "pw", Hostnum: 1}
+	svc, c, av := repairPlayer(t, store, info, &now)
+	defer svc.Detach(c)
+	items := []int{18, 22, 1502}
+	for selected := 0; selected < 3; selected++ {
+		_, err := store.UpdateProgress(ctx, av.OID, func(p *game.Progress) error {
+			p.Collection.Facilities[6] = game.CollectionFacility{ID: 6, Level: 1}
+			p.Activities.House = &game.HouseFrageState{Pos: 4, Double: 1,
+				Sites: map[int]*game.HouseFrageSite{4: {ID: 4, Game: append([]int{}, items...)}}}
+			return nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		before, err := New(store.pool).QuickLogin(ctx, info)
+		if err != nil {
+			t.Fatal(err)
+		}
+		out, err := svc.Handle(ctx, c, "open_game_site", pgSocialArgs(71, selected))
+		if err != nil {
+			t.Fatal(err)
+		}
+		reply := out[len(out)-1].Args[1].([]any)
+		var mids []int
+		raw, _ := json.Marshal(reply[2])
+		if reply[0] != true || json.Unmarshal(raw, &mids) != nil || fmt.Sprint(mids) != fmt.Sprint(items) {
+			t.Fatal("尖叫屋回包缺少完整位置", reply)
+		}
+		cold, err := New(store.pool).QuickLogin(ctx, info)
+		if err != nil {
+			t.Fatal(err)
+		}
+		p := cold.Avatars[0].Progress
+		for index, mid := range items {
+			want := before.Avatars[0].Progress.Materials[mid].Count
+			if index == selected {
+				want += 2
+			}
+			if p.Materials[mid].Count != want {
+				t.Fatal("非选择项入账或选择项未入账", mid)
+			}
+		}
+		if p.Activities.House.Double != 0 {
+			t.Fatal("双倍次数未持久消费")
+		}
+		svc.Detach(c)
+		svc = pgActivityService(t, store, func() time.Time { return now })
+		c = pgActivityLogin(t, svc, info)
+		var revision int64
+		var state string
+		if err := store.pool.QueryRow(ctx, `SELECT revision,state::text FROM avatar_progress WHERE avatar_oid=$1`, av.OID).Scan(&revision, &state); err != nil {
+			t.Fatal(err)
+		}
+		out, err = svc.Handle(ctx, c, "open_game_site", pgSocialArgs(72, selected))
+		if err != nil || out[len(out)-1].Args[1].([]any)[0] != false {
+			t.Fatal("冷重登重复选择成功", err, out)
+		}
+		var afterRevision int64
+		var afterState string
+		if err := store.pool.QueryRow(ctx, `SELECT revision,state::text FROM avatar_progress WHERE avatar_oid=$1`, av.OID).Scan(&afterRevision, &afterState); err != nil {
+			t.Fatal(err)
+		}
+		if state != afterState || revision != afterRevision {
+			t.Fatal("重复选择改变实库存档或收据")
+		}
+	}
+}
+
 func remainingActivityJSONValue(value any) any {
 	switch v := value.(type) {
 	case mobileproto.Map:
@@ -118,6 +191,13 @@ func TestPostgresRemainingActivityFrozenTotalBeyondPageAndRollback(t *testing.T)
 			host = 10002
 		}
 		p := game.Progress{Activities: game.ActivityState{Calendar: &game.ActivityCalendar{NianTotal: &game.NianTotalSnapshot{Hour: 1800000000, Rank: i, Score: int64(i + 2), Joined: 1, SubRanks: [3]int{i, 1, 1}, Cards: []any{[]any{4401, 20}}}}}}
+		p.Materials = map[int]game.Material{12: {ID: 12, Count: 123456, Total: 123456}}
+		p.Cards = []game.Card{{UUID: fmt.Sprintf("%024x", i), CardID: 4401, Level: 20, Grade: 1}}
+		p.Battle = &game.BattleSession{UUID: fmt.Sprintf("%024x", i), DungeonID: 102}
+		p.SelectedHeadID = 4401
+		p.SelectedHeadBoxID = 1001
+		p.CustomHeadCleared = true
+		p.Activities.House = &game.HouseFrageState{}
 		raw, _ := json.Marshal(p)
 		account := fmt.Sprintf("本服总榜%d", i)
 		batch.Queue(`INSERT INTO accounts(account,password_hash) VALUES($1,$2)`, account, "隔离夹具")
@@ -133,6 +213,12 @@ func TestPostgresRemainingActivityFrozenTotalBeyondPageAndRollback(t *testing.T)
 	rows, rank, err := New(store.pool).ActivityRanking(ctx, 10, 0, own, 10001, 2)
 	if err != nil || rank != 1105 || len(rows) != 2 || rows[1].SubRanks != [3]int{2, 1, 1} {
 		t.Fatal("JSONB冻结总榜全量个人名次/分页/服隔离", rank, len(rows), err)
+	}
+	for _, row := range rows {
+		p := row.Avatar.Progress
+		if len(p.Cards) != 0 || len(p.Materials) != 0 || p.Battle != nil || p.Activities.House != nil || p.SelectedHeadID != 4401 || p.SelectedHeadBoxID != 1001 || !p.CustomHeadCleared || len(row.Cards) != 1 {
+			t.Fatal("冻结总榜传输了无关资产或遗漏公开外观/冻结阵容")
+		}
 	}
 }
 
@@ -166,9 +252,16 @@ func TestPostgresRemainingActivityWeeklyTotalMailAtomicAndRetry(t *testing.T) {
 		cs = append(cs, pgActivityLogin(t, svc, info))
 		oids = append(oids, oid)
 	}
+	if err := svc.RunPeriodicMaintenanceOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
 	scoreAt := time.Date(2026, 10, 20, 12, 0, 0, 0, zone).Unix()
 	for i, oid := range oids {
 		if _, err := store.UpdateProgress(ctx, oid, func(p *game.Progress) error {
+			// 本夹具直接写成绩，需一并写入正式首次参赛流程建立的日/周基线。
+			// 不能依赖未参赛角色每天生成空账本来隐式推进测试日期。
+			p.Activities.Calendar.NianDay = "2026-10-19"
+			p.Activities.Calendar.NianWeek = "2026-10-14"
 			p.Activities.Nian = map[int]game.ActivityProgress{20200001: {Ranked: true, RankDamage: int64(100 - i*10), RankAt: scoreAt, MaxDamage: 999}}
 			p.Activities.NianHistory = map[int]map[int64]game.NianScoreSnapshot{20200001: {scoreAt / 3600: {At: scoreAt, Damage: int64(100 - i*10)}}}
 			return nil
@@ -191,7 +284,7 @@ func TestPostgresRemainingActivityWeeklyTotalMailAtomicAndRetry(t *testing.T) {
 		before = append(before, raw)
 	}
 	now = time.Date(2026, 10, 21, 23, 59, 59, 0, zone)
-	if _, err := svc.Handle(ctx, cs[0], "query_rank_list", pgSocialArgs(10, 0)); err == nil {
+	if err := svc.RunPeriodicMaintenanceOnce(ctx); err == nil {
 		t.Fatal("周奖容量故障未阻止全服事务")
 	}
 	for i, oid := range oids {
@@ -203,7 +296,7 @@ func TestPostgresRemainingActivityWeeklyTotalMailAtomicAndRetry(t *testing.T) {
 	if _, err := store.UpdateProgress(ctx, oids[1], func(p *game.Progress) error { p.ShortMailInfo = nil; return nil }); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := svc.Handle(ctx, cs[0], "query_rank_list", pgSocialArgs(10, 0)); err != nil {
+	if err := svc.RunPeriodicMaintenanceOnce(ctx); err != nil {
 		t.Fatal(err)
 	}
 	after := [][]byte{}

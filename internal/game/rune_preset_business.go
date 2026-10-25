@@ -289,7 +289,10 @@ func (s *Service) runePresetRPC(ctx context.Context, c *Connection, method strin
 		}
 		return nil
 	}); err != nil {
-		return []Push{Callback(callback, []any{false, err.Error()})}, nil
+		// 客户端msgpack以encoding='utf-8'解码，raw字符串变成unicode；原生
+		// embed_rune_by_template失败分支把msg直接传给tips.set_string(std::string)，
+		// unicode会抛cannot convert。走bin类型让客户端得到str。
+		return []Push{Callback(callback, []any{false, []byte(err.Error())})}, nil
 	}
 	properties := runeTemplateProperties(c.SelectedAvatarUnsafe().Progress)
 	pushes := []Push{push("Avatar", "client_prop_changed", []any{"runes_templates", properties})}

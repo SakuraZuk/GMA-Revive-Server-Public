@@ -98,6 +98,9 @@ func (s *Store) loginWithPassword(ctx context.Context, account, password string,
 		return game.Identity{}, err
 	}
 	defer rollback(tx)
+	if _, err = tx.Exec(ctx, `SET LOCAL lock_timeout = '1s'`); err != nil {
+		return game.Identity{}, err
+	}
 	var hash string
 	if err = tx.QueryRow(ctx, `SELECT password_hash FROM accounts WHERE account=$1 FOR UPDATE`, account).Scan(&hash); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

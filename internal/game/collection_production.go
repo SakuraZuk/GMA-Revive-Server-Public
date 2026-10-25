@@ -144,6 +144,7 @@ func (s *Service) collectionProductionRPC(ctx context.Context, c *Connection, ar
 	}
 	var box map[string]any
 	var info []int64
+	before := CloneProgress(c.SelectedAvatarUnsafe().Progress)
 	e := s.updateProgress(ctx, c, func(p *Progress) error {
 		if e := ensureCollection(p, s.Now()); e != nil {
 			return e
@@ -193,6 +194,6 @@ func (s *Service) collectionProductionRPC(ctx context.Context, c *Connection, ar
 	}
 	p := c.SelectedAvatarUnsafe().Progress
 	out := []Push{materialManagerPush(c), cardMgrPush(c), runePush(c), knowledgePush(c)}
-	out = append(out, collectionPushes(p, s.Now(), false)...)
+	out = append(out, collectionRewardPushes(before, p, s.Now())...)
 	return append(out, push("Avatar", "on_gather_produce_material", RetSuccess, id, info, box)), nil
 }

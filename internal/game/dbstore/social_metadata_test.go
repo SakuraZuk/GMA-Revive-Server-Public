@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"strings"
+	"reflect"
 	"testing"
 	"time"
 
@@ -72,10 +72,16 @@ func TestPostgresSocialMetadataReloadCalendarAndRealTutorialEntry(t *testing.T) 
 	svc.Now = func() time.Time { return now }
 	c := pgSocialLogin(t, svc, info, named.OID)
 	selected, ok := c.SelectedAvatar()
-	if !ok || selected.Progress.Activities.Calendar == nil {
-		t.Fatal("实际BecomePlayer未经过活动日历回载")
+	if !ok {
+		t.Fatal("实际BecomePlayer未绑定角色")
 	}
 	assertMetadata(selected, 9)
+	if err := svc.RunPeriodicMaintenanceOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if persisted := pgHumanRead(t, store, named.OID); persisted.Progress.Activities.Calendar == nil {
+		t.Fatal("后台活动结算未持久化日历")
+	}
 	if selected.Progress.GuideTasks[1000].Status != 1 || selected.Progress.Battle != nil {
 		t.Fatal("实际新账号必须仍处于1000创建引导，不能预设可入场")
 	}
@@ -93,8 +99,8 @@ func TestPostgresSocialMetadataReloadCalendarAndRealTutorialEntry(t *testing.T) 
 		return result
 	}
 	beforeRejected := snapshot()
-	if _, err := svc.Handle(ctx, c, "enter_dungeon", pgSocialArgs(8, 10001, map[string]any{})); err == nil || !strings.Contains(err.Error(), "引导期间的副本与当前引导不匹配") {
-		t.Fatal("1000未完成时应按真实引导门槛拒绝10001", err)
+	if denied, denyErr := svc.Handle(ctx, c, "enter_dungeon", pgSocialArgs(8, 10001, map[string]any{})); denyErr != nil || len(denied) != 1 || !reflect.DeepEqual(denied[0].Args, []any{8, []any{1003}}) {
+		t.Fatal("1000未完成时应返回原版副本锁定码并保留真实门槛", denyErr, denied)
 	}
 	afterRejected := snapshot()
 	if !bytes.Equal(beforeRejected.avatar, afterRejected.avatar) || !bytes.Equal(beforeRejected.progress, afterRejected.progress) ||
@@ -116,9 +122,23 @@ func TestPostgresSocialMetadataReloadCalendarAndRealTutorialEntry(t *testing.T) 
 		guideAvatar.Progress.GuideTasks[1001].BeginLevel != 9 || guideAvatar.Progress.Battle != nil {
 		t.Fatal("实际RPC未持久完成1000/激活1001，或提前创建战斗")
 	}
-	priorDay := selected.Progress.Activities.Calendar.NianDay
+	// 明确加入排行成绩，让此元数据回载测试仍经过实际周期写入。
+	// 没有参赛成绩的普通角色现在不会因空榜跨日被全服重写。
+	if _, err = store.UpdateProgress(ctx, named.OID, func(p *game.Progress) error {
+		p.Activities.Nian = map[int]game.ActivityProgress{20200001: {ID: 20200001, Ranked: true, RankDamage: 1, RankAt: now.Unix()}}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	priorDay := pgHumanRead(t, store, named.OID).Progress.Activities.Calendar.NianDay
 	now = now.Add(24 * time.Hour)
-	// enter_dungeon本身再次触发全服活动结算回载，再进入真实10001创建引导。
+	if err := svc.RunPeriodicMaintenanceOnce(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Tick(ctx, c); err != nil {
+		t.Fatal(err)
+	}
+	// 后台活动结算完成并通知在线连接回载后，再进入真实10001创建引导。
 	entryPushes, err := svc.Handle(ctx, c, "enter_dungeon", pgSocialArgs(9, 10001, map[string]any{}))
 	if err != nil {
 		t.Fatal("已取名角色经全服回载后不能进入原生10001", err)

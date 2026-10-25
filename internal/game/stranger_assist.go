@@ -37,7 +37,7 @@ func validStrangerAssistProvider(own, peer Avatar, uuid string) error {
 	if peer.Progress.AssistCardUUID != uuid {
 		return errors.New("助战卡已被提供者更换")
 	}
-	_, err := snapshotFriendAssist(peer, uuid)
+	_, err := availableAssistCard(peer, uuid)
 	return err
 }
 

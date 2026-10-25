@@ -77,8 +77,10 @@ type testHumanLease struct {
 }
 type humanLeaseFixture struct {
 	*FixtureAccounts
-	leaseMu sync.Mutex
-	leases  map[string]testHumanLease
+	leaseMu       sync.Mutex
+	leases        map[string]testHumanLease
+	onlineReads   int
+	snapshotReads int
 }
 
 func (a *humanLeaseFixture) RefreshHumanPresence(ctx context.Context, oid []byte, token string, until int64) error {
@@ -96,6 +98,7 @@ func (a *humanLeaseFixture) RemoveHumanPresence(ctx context.Context, token strin
 func (a *humanLeaseFixture) HumanOnlineIDs(ctx context.Context, now int64) ([]string, error) {
 	a.leaseMu.Lock()
 	defer a.leaseMu.Unlock()
+	a.onlineReads++
 	out := []string{}
 	for _, lease := range a.leases {
 		if lease.until > now {
@@ -104,6 +107,118 @@ func (a *humanLeaseFixture) HumanOnlineIDs(ctx context.Context, now int64) ([]st
 	}
 	return out, ctx.Err()
 }
+
+func (a *humanLeaseFixture) HumanAvatarSnapshot(ctx context.Context, oid []byte, since int64) (Avatar, int64, bool, error) {
+	a.leaseMu.Lock()
+	a.snapshotReads++
+	revision := int64(a.snapshotReads)
+	a.leaseMu.Unlock()
+	av, err := a.FixtureAccounts.AdminPlayer(ctx, oid)
+	return av, revision, true, err
+}
+
+func TestHumanOnlineIDsCollapsesConcurrentGlobalReads(t *testing.T) {
+	base, all, store := socialTestWorld(t)
+	leased := &humanLeaseFixture{FixtureAccounts: store, leases: map[string]testHumanLease{}}
+	s := New(leased, nil)
+	s.Now = base.Now
+	s.attachPlayer(all[0])
+	leased.leases["remote"] = testHumanLease{id: hexOf(selectedOID(all[1])), until: base.Now().Unix() + 20}
+	var wg sync.WaitGroup
+	errs := make(chan error, 32)
+	for i := 0; i < 32; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ids, err := s.humanOnlineIDs(context.Background())
+			if err != nil || !ids[hexOf(selectedOID(all[0]))] || !ids[hexOf(selectedOID(all[1]))] {
+				errs <- fmt.Errorf("在线快照不完整 ids=%v err=%v", ids, err)
+			}
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		t.Fatal(err)
+	}
+	leased.leaseMu.Lock()
+	reads := leased.onlineReads
+	leased.leaseMu.Unlock()
+	if reads != 1 {
+		t.Fatalf("同一缓存窗口执行了%d次全局在线读取，期望1次", reads)
+	}
+}
+
+func TestHumanBackgroundReadsAreRateLimitedByState(t *testing.T) {
+	base, all, store := socialTestWorld(t)
+	leased := &humanLeaseFixture{FixtureAccounts: store, leases: map[string]testHumanLease{}}
+	s := New(leased, nil)
+	now := base.Now()
+	s.Now = func() time.Time { return now }
+	c := all[0]
+	s.attachPlayer(c)
+	for i := 0; i < 40; i++ {
+		_ = s.tickHumanPvp(context.Background(), c)
+		now = now.Add(100 * time.Millisecond)
+	}
+	leased.leaseMu.Lock()
+	reads := leased.snapshotReads
+	leased.leaseMu.Unlock()
+	if reads != 1 {
+		t.Fatalf("普通在线四秒内读取了%d次完整角色快照，期望1次", reads)
+	}
+	for name, tc := range map[string]struct {
+		progress Progress
+		want     int64
+	}{
+		"普通在线": {progress: NewProgress(1, now), want: 5000},
+		"匹配等待": {progress: func() Progress {
+			p := NewProgress(1, now)
+			p.SyncPvpMatch = &SyncPvpMatch{Status: syncPvpMatchWaiting}
+			return p
+		}(), want: 500},
+		"活跃房间": {progress: func() Progress {
+			p := NewProgress(1, now)
+			p.Social.HumanRoom = &HumanPvpRoom{Status: "playing"}
+			return p
+		}(), want: 250},
+		"已结算房间": {progress: func() Progress {
+			p := NewProgress(1, now)
+			p.Social.HumanRoom = &HumanPvpRoom{Status: "settled"}
+			return p
+		}(), want: 5000},
+		"已中止房间": {progress: func() Progress {
+			p := NewProgress(1, now)
+			p.Social.HumanRoom = &HumanPvpRoom{Status: "aborted"}
+			return p
+		}(), want: 5000},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if got := humanSnapshotPollInterval(tc.progress); got != tc.want {
+				t.Fatalf("轮询间隔=%dms，期望%dms", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestHumanPresenceAndSnapshotPollingAreSafelyStaggered(t *testing.T) {
+	p := NewProgress(1, time.Now())
+	for _, token := range []string{"00112233445566778899aabb", "ffeeddccbbaa998877665544"} {
+		delay := humanPresenceRefreshDelay(token)
+		if delay < 10 || delay >= humanPresenceLeaseSeconds-5 {
+			t.Fatalf("在线租约刷新间隔%d秒没有保留失败重试余量", delay)
+		}
+		poll := humanSnapshotPollDelay(p, token)
+		if poll < 5000 || poll >= 6000 {
+			t.Fatalf("普通在线快照错峰间隔=%dms，期望[5000,6000)", poll)
+		}
+	}
+	if humanPresenceRefreshDelay("00112233445566778899aabb") == humanPresenceRefreshDelay("ffeeddccbbaa998877665544") &&
+		humanSnapshotPollDelay(p, "00112233445566778899aabb") == humanSnapshotPollDelay(p, "ffeeddccbbaa998877665544") {
+		t.Fatal("不同连接没有形成任何稳定错峰")
+	}
+}
+
 func TestHumanPvpCrossServicePresenceMatchingAndLeaseExpiry(t *testing.T) {
 	base, all, store := socialTestWorld(t)
 	leased := &humanLeaseFixture{FixtureAccounts: store, leases: map[string]testHumanLease{}}
@@ -120,7 +235,8 @@ func TestHumanPvpCrossServicePresenceMatchingAndLeaseExpiry(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	now = now.Add(2 * time.Second)
+	// 跨实例在线表允许五秒缓存；新租约最迟在下一缓存窗口进入匹配。
+	now = now.Add(6 * time.Second)
 	if _, err := services[0].tickHumanMatch(context.Background(), cs[0]); err != nil {
 		t.Fatal(err)
 	}

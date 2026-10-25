@@ -13,6 +13,7 @@ import (
 	"errors"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"hs-server/internal/mobileproto"
@@ -25,7 +26,7 @@ var battleBridgeScript string
 var dungeonCatalogData []byte
 
 const (
-	bridgeHotfixIndex   = 2026100914
+	bridgeHotfixIndex   = 2026101305
 	bridgeProtocol      = 1
 	battleEventCommand  = "__battle_event__"
 	battleEventMaxJSON  = 512000
@@ -185,7 +186,33 @@ func (s *Service) absorbBattleEvent(ctx context.Context, c *Connection, rawArgs 
 		}
 		return nil, nil
 	}
-	err := s.updateProgress(ctx, c, func(p *Progress) error {
+	if ordinary && envelope.Kind == "result" {
+		b := c.SelectedAvatarUnsafe().Progress.Battle
+		if b == nil || b.Finished || b.UUID != envelope.BattleUUID {
+			c.pendingOrdinaryResult = nil
+			return nil, nil
+		}
+		candidate := cloneOrdinaryObservation(b)
+		if err := acceptBattleEvent(candidate, &envelope); err != nil {
+			return nil, nil
+		}
+		if b.RewardPlanFrozen {
+			original, _ := json.Marshal(b.RewardResult)
+			incoming, _ := json.Marshal(&envelope)
+			if string(original) != string(incoming) {
+				return nil, nil
+			}
+		}
+		if err := s.freezeOrdinaryBattleRewardPlan(ctx, c, &envelope); err != nil {
+			copy := envelope
+			copy.Data = cloneEventData(envelope.Data)
+			c.pendingOrdinaryResult = &copy
+			c.nextOrdinaryResultRetry = s.Now().UnixMilli() + 1000
+			log.Printf("战斗奖励收据冻结延后 原因=%v", err)
+			return nil, nil
+		}
+	}
+	applyEvent := func(p *Progress) error {
 		b := p.Battle
 		if b == nil || b.Finished {
 			return errors.New("没有进行中的战斗")
@@ -285,6 +312,9 @@ func (s *Service) absorbBattleEvent(ctx context.Context, c *Connection, rawArgs 
 				}
 			}
 			settle = settleClientBattle(p, b, &envelope, avatarEID, s.Now())
+			if err := ensureMainlineAutoEnhance(p); err != nil {
+				return err
+			}
 			settle.remainingCompletion = append(remainingDungeonCompletionPushes(*p, b), leagueProtectCompletionPushes(*p, b)...)
 			if extra := leagueProtectSettlementExtra(b); extra != nil {
 				settle.leagueExtra = map[string]any{"league_activity_battle_result": extra}
@@ -295,9 +325,21 @@ func (s *Service) absorbBattleEvent(ctx context.Context, c *Connection, rawArgs 
 			}
 		}
 		return nil
+	}
+	err := s.updateProgress(ctx, c, func(p *Progress) error {
+		if ordinary && envelope.Kind == "result" && p.Battle != nil {
+			_, err := withBattleOverflowMail(p, p.Battle, s.Now(), func() (map[string]any, error) {
+				return nil, applyEvent(p)
+			})
+			return err
+		}
+		return applyEvent(p)
 	})
 	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		// 普通客户端原生notify_finish发送成功后就停止重报。只有结果事务
+		// 明确回滚的短锁/死锁/串行化冲突可与请求取消一样保留原信封；
+		// 下一次Tick仍重读玩家行、校验UUID/序号和冻结奖励，不重抽或发两次。
+		if ordinary && envelope.Kind == "result" && (errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) || retryableBasicRewardStoreError(err)) {
 			copy := envelope
 			copy.Data = cloneEventData(envelope.Data)
 			c.pendingOrdinaryResult = &copy
@@ -321,17 +363,28 @@ func (s *Service) absorbBattleEvent(ctx context.Context, c *Connection, rawArgs 
 		}
 		if len(c.pendingDungeonArgs) != 0 {
 			pending := c.pendingDungeonArgs
+			boxCallback := c.pendingDungeonBoxCallback
+			// 本次入口无论成功还是失败都必须结束，不能留下无人推进的等待队列。
+			c.pendingDungeonArgs = nil
+			c.pendingDungeonBoxCallback = false
 			next, nextErr := s.enterDungeon(ctx, c, pending)
 			if nextErr != nil {
 				log.Printf("当前战斗已结算但下一副本建立失败 dungeon=%s 原因=%v", string(pending[1]), nextErr)
-				return pushes, nil
+				code := 13 // 原版 RET_UNKNOWN_ERROR；存储故障不伪造业务原因。
+				var rejected *runeBusinessError
+				if errors.As(nextErr, &rejected) {
+					if value, ok := androidShop.Errors[rejected.Name]; ok && value != RetSuccess {
+						code = value
+					}
+				}
+				if cb, ok := callbackArg(pending); ok {
+					next = []Push{Callback(cb, []any{code})}
+				}
 			}
-			c.pendingDungeonArgs = nil
-			if c.pendingDungeonBoxCallback {
+			if boxCallback {
 				if cb, ok := callbackArg(pending); ok {
 					next = summerDungeonCallback(next, cb)
 				}
-				c.pendingDungeonBoxCallback = false
 			}
 			pushes = append(pushes, next...)
 		}
@@ -339,6 +392,10 @@ func (s *Service) absorbBattleEvent(ctx context.Context, c *Connection, rawArgs 
 	}
 	if pvpResult != nil {
 		return syncPvpResultPushes(c, *pvpResult), nil
+	}
+	// 两种到达顺序共用实际加载屏障，不调用正式场景不存在的布阵UI。
+	if envelope.Kind == "ready" {
+		return s.advancePvpLoadBarrier(ctx, c)
 	}
 	return nil, nil
 }
@@ -637,6 +694,7 @@ type battleSettlement struct {
 	firstClear          bool
 	finishedTasks       []int
 	achievementsChanged bool
+	intimacyChanged     bool
 	fullBonus           map[string]any
 	settledAt           time.Time
 	remainingCompletion []Push
@@ -675,7 +733,7 @@ func (settle *battleSettlement) pushes(c *Connection) ([]Push, error) {
 		out = append(out, materialManagerPush(c))
 	}
 	if settle.fullBonus != nil {
-		out = append(out, materialManagerPush(c), cardMgrPush(c), runePush(c), knowledgePush(c), powerPush(c))
+		out = append(out, materialManagerPush(c), runeStonePush(c), cardMgrPush(c), runePush(c), knowledgePush(c), powerPush(c))
 		now := settle.settledAt
 		if now.IsZero() {
 			now = time.Now()
@@ -684,6 +742,10 @@ func (settle *battleSettlement) pushes(c *Connection) ([]Push, error) {
 		out = append(out, remainingGameplayPushes(c.SelectedAvatarUnsafe().Progress)...)
 		out = append(out, settle.remainingCompletion...)
 		out = append(out, activitySettlementPushes(c, now)...)
+		p := c.SelectedAvatarUnsafe().Progress
+		if p.Battle != nil && p.Battle.RewardOverflowMailed {
+			out = append(out, push("Avatar", "client_prop_changed", []any{"short_mail_info", mailProperties(p.ShortMailInfo, now.Unix())}))
+		}
 	}
 	if len(settle.unlocked) > 0 {
 		unlocks := map[string]any{}
@@ -700,6 +762,10 @@ func (settle *battleSettlement) pushes(c *Connection) ([]Push, error) {
 	if settle.achievementsChanged {
 		p := c.SelectedAvatarUnsafe().Progress
 		out = append(out, push("Avatar", "client_prop_changed", []any{"achves", achievementProperties(p)}), push("Avatar", "client_prop_changed", []any{"achv_value", achievementPoints(p)}))
+	}
+	if settle.intimacyChanged {
+		// 结算界面按get_card_intimacy-战前快照显示+N，走与送礼一致的card_common_mgr推送。
+		out = append(out, push("Avatar", "client_prop_changed", []any{"card_common_mgr", cardCommonMgrPropertiesWithProgress(c.SelectedAvatarUnsafe().Progress)}))
 	}
 	return append(out, push("Avatar", "battle_result", settle.outcome == "win", bonus, map[string]any{}, extra)), nil
 }
@@ -733,6 +799,7 @@ func settleClientBattle(p *Progress, b *BattleSession, envelope *battleEnvelope,
 	if outcome != "win" {
 		return settle
 	}
+	settle.intimacyChanged = grantBattleIntimacy(p, b.Layout)
 	settle.achievementsChanged = advanceAchievementEvent(p, 2, b.DungeonID, now)
 	advanceBasicRewardEvent(p, 4, []any{dungeonCatalog[b.DungeonID].Type}, 1, now)
 	cleared := false
@@ -755,6 +822,42 @@ func settleClientBattle(p *Progress, b *BattleSession, envelope *battleEnvelope,
 		}
 	}
 	return settle
+}
+
+// 本服政策：普通战斗胜利后每张出战幻书好感+1。原表cards_intimacy各级
+// win_value=0、win_factor=0.125，倍增基数无客户端证据可考，先按最小整数
+// 增益发放并压MaxIntimacy上限； intimacy_raise住客加成与每日上限同样缺
+// 证据，均不发放/不设限，待真实数据校准。
+func grantBattleIntimacy(p *Progress, layout *BattleLayout) bool {
+	if layout == nil {
+		return false
+	}
+	rules, err := loadIntimacyCatalog()
+	if err != nil {
+		return false
+	}
+	changed := false
+	for _, uuid := range layout.Fighting {
+		if uuid == "" {
+			continue
+		}
+		cardID, found := 0, false
+		for i := range p.Cards {
+			if strings.EqualFold(p.Cards[i].UUID, uuid) {
+				cardID, found = p.Cards[i].CardID, true
+				break
+			}
+		}
+		if !found || cardID <= 0 || p.Intimacy[cardID] >= rules.MaxIntimacy {
+			continue
+		}
+		if p.Intimacy == nil {
+			p.Intimacy = map[int]int{}
+		}
+		p.Intimacy[cardID]++
+		changed = true
+	}
+	return changed
 }
 
 func grantMaterials(p *Progress, rewards map[int]int) {
@@ -825,6 +928,15 @@ func (s *Service) clientNeedRecoverBattle(ctx context.Context, c *Connection, ar
 	}
 	if handled, pushes, err := s.resumeNativeSolo(ctx, c); handled {
 		return pushes, err
+	}
+	if b := c.SelectedAvatarUnsafe().Progress.Battle; b != nil && !b.Finished && b.RewardPlanFrozen && b.RewardResult != nil {
+		// 抽奖已提交的结果必须继续兑现，冷恢复不能改UUID或重新演算。
+		raw, _ := json.Marshal(b.RewardResult)
+		var saved map[string]any
+		if err := json.Unmarshal(raw, &saved); err != nil {
+			return nil, err
+		}
+		return s.absorbBattleEvent(ctx, c, []any{saved})
 	}
 	if b := c.SelectedAvatarUnsafe().Progress.Battle; b != nil && !b.Finished && c.ordinaryObservation != nil && b.UUID == c.ordinaryObservation.UUID && c.ordinaryObservation.BridgeStarted && s.Now().UnixMilli() >= c.ordinaryObservationAt && s.Now().UnixMilli()-c.ordinaryObservationAt < 60000 {
 		// 原生net_delay超时会在TCP仍连通时请求恢复；观察流仍在同一连接，
@@ -938,7 +1050,7 @@ func (s *Service) reopenOrdinaryBattlePushes(c *Connection, b *BattleSession) []
 		copyExtra["hs_recover_previous_uuid"] = b.RecoveredFrom
 		extra = copyExtra
 	}
-	out := []Push{push("Avatar", "on_query_hotfix_success", clientExtensionsScript(), bridgeHotfixIndex), push("Avatar", "start_server_battle_ok", dungeonCatalog[b.DungeonID].Type, b.DungeonID, ObjectID(b.UUID), extra)}
+	out := []Push{push("Avatar", "on_query_hotfix_success", clientExtensionsScript(), bridgeHotfixIndex), push("Avatar", "start_server_battle_ok", ordinaryBattleTransportType(dungeonCatalog[b.DungeonID].Type), b.DungeonID, ObjectID(b.UUID), extra)}
 	if len(layout.Fighting) > 0 || len(layout.Support) > 0 {
 		out = append(out, battleSync("set_last_fighting_cards", lastFightingWire(player, layout.Fighting, layout.Support)))
 	}

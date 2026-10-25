@@ -26,6 +26,10 @@ func ValidateActivityRank(kind, subID, host, limit int) error {
 		return errors.New("活动排行服务器或数量无效")
 	}
 	switch kind {
+	case 2:
+		if subID != 0 {
+			return errors.New("幻书收集榜没有子榜")
+		}
 	case 8:
 		if subID < 1 || subID > 7 {
 			return errors.New("山海排行关卡无效")
@@ -47,6 +51,10 @@ func ValidateActivityRank(kind, subID, host, limit int) error {
 }
 
 func activityRankValue(av Avatar, kind, subID int) (ActivityRankEntry, bool) {
+	if kind == 2 {
+		n := CollectionRankCount(av.Progress)
+		return ActivityRankEntry{Avatar: av, Score: []int64{int64(n)}}, n > 0
+	}
 	if kind == 10 && subID == 0 {
 		return FrozenNianTotalRank(av)
 	}
@@ -115,6 +123,9 @@ func (a *FixtureAccounts) ActivityRanking(ctx context.Context, kind, subID int, 
 }
 
 func (s *Service) activityRankRPC(ctx context.Context, c *Connection, method string, args []json.RawMessage) ([]Push, error) {
+	if c.phase != Playing {
+		return nil, errors.New("排行榜需要已登录角色")
+	}
 	if len(args) != 2 {
 		return nil, errors.New("活动排行参数数量无效")
 	}
@@ -127,6 +138,9 @@ func (s *Service) activityRankRPC(ctx context.Context, c *Connection, method str
 	} else if json.Unmarshal(args[0], &kind) != nil || json.Unmarshal(args[1], &subID) != nil {
 		return nil, errors.New("活动排行参数必须为整数")
 	}
+	if kind == rankSyncPvp {
+		return s.syncPvpRankList(ctx, c, subID)
+	}
 	av := c.SelectedAvatarUnsafe()
 	if len(av.OID) != 12 {
 		return nil, errors.New("活动排行需要登录角色")
@@ -134,18 +148,23 @@ func (s *Service) activityRankRPC(ctx context.Context, c *Connection, method str
 	if err := ValidateActivityRank(kind, subID, av.Hostnum, 1000); err != nil {
 		return nil, err
 	}
-	act := 203
-	if kind == 10 {
-		act = 328
-	}
-	if _, err := activityOpen(av.Progress, act, av.Info.Level, s.Now()); err != nil {
-		return nil, err
+	limit := 1000
+	if kind == 2 {
+		limit = 100 // Android rank[2]的榜单与展示上限均为100。
+	} else {
+		act := 203
+		if kind == 10 {
+			act = 328
+		}
+		if _, err := activityOpen(av.Progress, act, av.Info.Level, s.Now()); err != nil {
+			return nil, err
+		}
 	}
 	store, ok := s.Accounts.(ActivityRankAccounts)
 	if !ok {
 		return nil, errors.New("存储未提供全量活动排行")
 	}
-	rows, own, err := store.ActivityRanking(ctx, kind, subID, av.OID, av.Hostnum, 1000)
+	rows, own, err := store.ActivityRanking(ctx, kind, subID, av.OID, av.Hostnum, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -164,6 +183,35 @@ func (s *Service) activityRankRPC(ctx context.Context, c *Connection, method str
 		infos = append(infos, info)
 	}
 	return []Push{push("Avatar", "on_query_rank_list", fmt.Sprintf("%d&%d", kind, subID), infos)}, nil
+}
+
+const rankSyncPvp = 4
+
+// 客户端 RANK_ID_SYNC_PVP=4。cal_pvp_rank_info 读取 score[0]，
+// 只返回已有真实积分的角色，不补空名次。
+func (s *Service) syncPvpRankList(ctx context.Context, c *Connection, subID int) ([]Push, error) {
+	av := c.SelectedAvatarUnsafe()
+	if c.phase != Playing || len(av.OID) != 12 {
+		return nil, errors.New("同步竞技排行需要登录角色")
+	}
+	store, ok := s.Accounts.(interface {
+		SyncPvpRankings(context.Context, int, ...int) ([]SyncPvpRankEntry, error)
+	})
+	if !ok {
+		return nil, errors.New("存储未提供同步竞技排行")
+	}
+	rows, err := store.SyncPvpRankings(ctx, 100, av.Hostnum)
+	if err != nil {
+		return nil, err
+	}
+	infos := []any{}
+	for _, entry := range rows {
+		profile := SocialProfile{EID: hexOf(entry.OID), UID: entry.UID, Hostnum: entry.Hostnum, Nickname: entry.Nickname, Level: entry.Level, Score: entry.Score, HeadID: entry.HeadID, HeadBoxID: entry.HeadBoxID, CustomHead: entry.CustomHead}
+		info := s.socialInfo(profile)
+		info["score"] = []int64{int64(entry.Score)}
+		infos = append(infos, info)
+	}
+	return []Push{push("Avatar", "on_query_rank_list", fmt.Sprintf("%d&%d", rankSyncPvp, subID), infos)}, nil
 }
 
 var _ ActivityRankAccounts = (*FixtureAccounts)(nil)

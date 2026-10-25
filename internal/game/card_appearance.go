@@ -30,11 +30,24 @@ func ownsCardID(p Progress, cardID int) bool {
 
 func cardAwakened(p Progress, cardID int) bool {
 	for _, card := range p.Cards {
-		if card.CardID == cardID && card.Awakened > 0 {
+		if card.CardID == cardID && effectiveCardAwakened(card) > 0 {
 			return true
 		}
 	}
 	return false
+}
+
+// 原表 cards.awaken_grade 是升格解锁门槛；旧存档达到门槛但遗漏 awakened
+// 时按已保存的真实品阶投影，不提高品阶、不授予付费装帧。
+func effectiveCardAwakened(card Card) int {
+	if card.Awakened > 0 {
+		return card.Awakened
+	}
+	rule, exists := androidCardAppearances[card.CardID]
+	if exists && rule.AwakenGrade > 0 && card.Grade >= rule.AwakenGrade {
+		return 1
+	}
+	return 0
 }
 
 // 默认外观、觉醒解锁外观和已存外观归属分开处理，不自动解锁付费外观。
@@ -101,7 +114,8 @@ func cardCommonMgrPropertiesWithProgress(p Progress) map[string]any {
 	for _, value := range mgr {
 		common := value.(map[string]any)
 		id := common["card_id"].(int)
-		common["card_vo"] = p.CardVoices[id]
+		common["card_vo"] = effectiveCardVoice(p, id)
+		common["is_favorite"] = p.CardFavorites[id]
 		common["captain_dress"] = captainDress(p, id)
 		common["house_dress_id"] = collectionDress(p, id)
 		common["owned_dresses"] = ownedCardDresses(p, id)

@@ -85,7 +85,9 @@ func TestPostgresHumanCrossProcessDurableDeliveryAndConcurrentBarrier(t *testing
 	for i, c := range cs {
 		pgSocialCall(t, services[i], c, "start_sync_pvp_match", 3)
 	}
-	now = now.Add(2 * time.Second)
+	// 跨实例在线租约使用五秒只读缓存，避免每个玩家Tick都执行全表
+	// DELETE+SELECT；下一缓存窗口必须仍能建立共同房间并完整投递。
+	now = now.Add(6 * time.Second)
 	selection := []game.Push{}
 	for i, c := range cs {
 		selection = append(selection, pgHumanTick(t, services[i], c)...)
@@ -114,17 +116,19 @@ func TestPostgresHumanCrossProcessDurableDeliveryAndConcurrentBarrier(t *testing
 		tickBoth()
 	}
 	for i, c := range cs {
-		pgSocialCall(t, services[i], c, "pvp_load_complete")
+		pgSocialCall(t, services[i], c, "load_entity_finish")
 		tickBoth()
 	}
 	r = pgHumanRead(t, store, avatars[0].OID).Progress.Social.HumanRoom
 	for i, c := range cs {
-		layout := r.Players[ids[i]].Layout
-		pgSocialCall(t, services[i], c, "battle_fighting", map[string]any{"fighting_cards": layout.Fighting, "support_cards": layout.Support})
+		pgHumanEvent(t, services[i], c, r.UUID, 1, "ready", map[string]any{"version": 1})
 		tickBoth()
 	}
+	r = pgHumanRead(t, store, avatars[0].OID).Progress.Social.HumanRoom
+	if r.Status != "fighting" || !r.Players[ids[0]].Started || !r.Players[ids[1]].Started {
+		t.Fatal("跨服务实际实体加载与桥握手没有共同开战", r.Status)
+	}
 	for i, c := range cs {
-		pgHumanEvent(t, services[i], c, r.UUID, 1, "ready", map[string]any{"version": 1})
 		pgHumanEvent(t, services[i], c, r.UUID, 2, "started", map[string]any{"units": pgHumanUnits(r)})
 	}
 	frame := map[string]any{"action": 1, "eid": "1", "master": r.IDs[0], "units": pgHumanUnits(r), "command_index": 0}

@@ -100,6 +100,11 @@ func prepareRemainingDungeon(p *Progress, b *BattleSession, now time.Time) error
 	if b.Extra == nil {
 		b.Extra = map[string]any{}
 	}
+	// 忽略客户端同名extra；倍率只来自已提交的服务端选择及实际扣费。
+	delete(b.Extra, "server_dungeon_bonus_double")
+	if p.DungeonBonusDouble[b.DungeonID] && b.PaidMaterials[29] > 0 {
+		b.Extra["server_dungeon_bonus_double"] = 2
+	}
 	delete(b.Extra, "server_free_stage_id")
 	delete(b.Extra, "server_free_stage_node")
 	delete(b.Extra, "server_task_tower")
@@ -163,6 +168,9 @@ func remainingDungeonPowerMultiple(p *Progress, id int) int {
 	return 1
 }
 func remainingDungeonRewardAmount(b *BattleSession, win bool) int64 {
+	if win && remainingExtraInt(b.Extra, "server_dungeon_bonus_double") == 2 && b.PaidMaterials[29] > 0 {
+		return 2
+	}
 	if !win || dungeonCatalog[b.DungeonID].Type != 2 {
 		return 1
 	}
@@ -173,14 +181,17 @@ func remainingDungeonRewardAmount(b *BattleSession, win bool) int64 {
 	return 1
 }
 func remainingDungeonCompletionPushes(p Progress, b *BattleSession) []Push {
+	// 普通战斗观察消息跳过通用属性差异钩子，结算必须同步已提交的日常进度。
+	// 不等待重登或下一次其他RPC才更新任务列表及红点。
+	out := basicRewardPushes(p)
 	if b == nil || b.Outcome != "win" || dungeonCatalog[b.DungeonID].Type != 2 {
-		return nil
+		return out
 	}
 	node, id := remainingExtraInt(b.Extra, "server_free_stage_node"), remainingExtraInt(b.Extra, "server_free_stage_id")
 	if p.RemainingGameplay == nil || p.RemainingGameplay.Stages[id] == nil || node <= 0 {
-		return nil
+		return out
 	}
-	out := []Push{push("Avatar", "on_finish_stage_site", node)}
+	out = append(out, push("Avatar", "on_finish_stage_site", node))
 	if p.RemainingGameplay.Stages[id].State == 3 {
 		out = append(out, push("Avatar", "on_finish_free_stage", id))
 	}

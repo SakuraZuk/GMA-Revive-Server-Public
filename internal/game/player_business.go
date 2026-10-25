@@ -19,7 +19,7 @@ import (
 
 // newCard 服务端建卡（card_mgr.new_card 的权威侧）：品阶按 cards_max_level 映射。
 func newCard(cardID, level int, now time.Time) Card {
-	return Card{
+	card := Card{
 		UUID:              newCardUUID(),
 		CardID:            cardID,
 		Level:             level,
@@ -28,6 +28,8 @@ func newCard(cardID, level int, now time.Time) Card {
 		SupportSkillLevel: 1,
 		Dress:             androidCardAppearances[cardID].DefaultDress,
 	}
+	card.Awakened = effectiveCardAwakened(card)
+	return card
 }
 
 // gradeByLevel 复刻 creator.compute_grade_by_level 默认 breakthroughed=0：
@@ -70,7 +72,7 @@ func cardMgrProperties(cards []Card) map[string]any {
 			"level":               card.Level,
 			"exp":                 card.Exp,
 			"grade":               card.Grade,
-			"awakened":            card.Awakened,
+			"awakened":            effectiveCardAwakened(card),
 			"dress":               effectiveCardDress(card),
 			"lock":                card.Lock,
 			"time":                card.Time,
@@ -83,6 +85,9 @@ func cardMgrProperties(cards []Card) map[string]any {
 			"is_update_level_one": card.IsUpdateLevelOne,
 			"skill_mgr":           nativeCardSkills(card),
 			"talent_tree":         nativeCardTalentTree(card),
+		}
+		if card.Habit != nil {
+			mgr[card.UUID].(map[string]any)["habit_mgr"] = map[string]any{"support_habit": card.Habit.Support, "battle_habit": card.Habit.Battle}
 		}
 	}
 	return mgr
@@ -132,7 +137,7 @@ func cardCommonMgrProperties(cards []Card) map[string]any {
 			"count":    counts[card.CardID],
 			"level":    card.Level,
 			"grade":    card.Grade,
-			"awakened": card.Awakened,
+			"awakened": effectiveCardAwakened(card),
 			"card_vo":  0,
 		}
 	}

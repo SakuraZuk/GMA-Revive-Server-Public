@@ -29,7 +29,9 @@ gworld = module('gworld')
 scene = [None]
 gworld.get_battle = lambda: scene[0]
 gworld.get_player = lambda: None
-module('common_const').SYNC_PVP_BATTLE = 8
+constants = module('common_const')
+constants.SYNC_PVP_BATTLE = 8
+constants.INFO_TYPE_MAGIC_FIELD = 4
 module('battle_logic')
 client = module('battle_logic.client_battle')
 module('battle_logic.controlers')
@@ -53,7 +55,7 @@ source_path = os.path.join(root, 'internal', 'game', 'native_authority_bridge_sc
 source = open(source_path, 'rb').read()
 compile(source, source_path, 'exec')
 class Ordinary(object):
-    _revival_bridge_version = 15
+    _revival_bridge_version = 16
     _revival_human_bridge = 2
     _revival_bridge_originals = {}
     def __init__(self): self.extra_info = {}
@@ -114,7 +116,7 @@ assert original_meta == (meta.rpctype, meta.argtypes, meta.pub)
 ordinary = Component()
 registered(ordinary, 1, 101, 'ordinary', {})
 assert type(ordinary.battle) is Ordinary
-assert ordinary.battle._revival_bridge_version == 15
+assert ordinary.battle._revival_bridge_version == 16
 scene[0] = ordinary.battle
 assert Mode().press_auto() == 'ordinary'
 assert not hasattr(ordinary.battle, '_revival_user_auto_change')
@@ -126,6 +128,7 @@ registered(authority, 8, 21, 'authority', {'server_authoritative_pvp': True})
 assert type(authority.battle) is factory._revival_authority_shadow
 assert authority.battle._revival_bridge_version == 31
 assert authority.battle._revival_server_authority
+assert authority.battle._revival_local_field_observation_revision == 1
 assert client.shadow_battle is Ordinary
 scene[0] = authority.battle
 assert Mode().press_auto() == 'ordinary'
@@ -141,6 +144,47 @@ scope['_hs_installer']()
 assert meta.func is factory, 'repeated install wrapped the factory again'
 assert dict(Ordinary.__dict__) == base_dict
 
+# 模拟上版已装工厂的闭包，升级必须恢复原生工厂而非再次选择旧子类。
+def old_install(original_factory):
+    def old_factory(self, battle_type, dungeon_id, battle_uuid, extra_info):
+        raise AssertionError('升级仍调用旧版竞技工厂')
+        return original_factory(self, battle_type, dungeon_id, battle_uuid, extra_info)
+    old_factory._revival_authority_factory = True
+    return old_factory
+meta.func = old_install(native_factory)
+scope['_hs_installer']()
+factory = meta.func
+assert factory._revival_authority_original is native_factory
+assert factory._revival_authority_factory_revision == 3
+upgraded = Component()
+registered(upgraded, 8, 21, 'upgraded', {'server_authoritative_pvp': True})
+assert type(upgraded.battle) is factory._revival_authority_shadow
+assert upgraded.battle._revival_authority_start_order_revision == 1
+scope['_hs_installer']()
+assert meta.func is factory
+
+# 场地原生执行保持；自主空转仅产生snapshot，不冒充权威命令并保持事件连续。
+events = []
+class Proxy(object):
+    def do_command(self, name, args): events.append(args[0])
+class Player(object): server_proxy = Proxy()
+gworld.get_player = lambda: Player()
+upgraded.battle.entity_infos = {}
+class Field(object):
+    type = 4
+    eid = 'field'
+    command = ['magic_field_idle', [None]]
+class Fighter(object):
+    type = 1
+    eid = 'fighter'
+    command = ['idle', []]
+assert upgraded.battle.log_command(Field()) == 'ordinary'
+assert events[-1]['kind'] == 'snapshot' and events[-1]['sequence'] == 1
+assert upgraded.battle.log_command(Fighter()) == 'ordinary'
+assert events[-1]['kind'] == 'command' and events[-1]['sequence'] == 2
+assert len(events) == 2
+gworld.get_player = lambda: None
+
 # 缺少原桥时应正确排重试，不因globals/locals分离抛NameError。
 client.shadow_battle = type('NotReady', (object,), {})
 retry_scope = {}
@@ -151,7 +195,7 @@ delays.pop()[1]()
 assert meta.func is factory
 
 print(json.dumps({'python2_compile': True, 'native_rpc_metadata_preserved': True,
-                  'ordinary_revision15_preserved': True, 'explicit_pvp_subclass': True,
+                  'ordinary_revision16_preserved': True, 'explicit_pvp_subclass': True,
                   'factory_fault_restores_global': True, 'repeat_install_idempotent': True,
                   'recovery_generation_in_envelope': True,
                   'scope': 'contract fixture; not Android acceptance'}))

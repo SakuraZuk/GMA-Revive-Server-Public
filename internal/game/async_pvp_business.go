@@ -84,10 +84,10 @@ func ensureAsync(v *AsyncPvpState) {
 }
 func ensureAsyncCalendar(v *AsyncPvpState, now time.Time) {
 	day, week := pvpAwardCutoffs(now)
-	if v.RewardDay == "" {
+	if v.RewardDay == "" || (v.Score == 0 && v.RewardDay < day) {
 		v.RewardDay = day
 	}
-	if v.RewardWeek == "" {
+	if v.RewardWeek == "" || (v.Score == 0 && v.RewardWeek < week) {
 		v.RewardWeek = week
 	}
 }
@@ -144,17 +144,15 @@ func (s *Service) asyncPvpRPC(ctx context.Context, c *Connection, method string,
 		if len(args) != 0 {
 			return nil, errors.New("异步竞技列表不带参数")
 		}
-		rows, err := store.SocialAvatars(ctx, SocialSearch{Limit: 1000})
-		if err != nil {
-			return nil, err
-		}
+		var rows []Avatar
+		needCandidates := errors.New("需要读取异步竞技候选")
 		var candidates map[string]AsyncPvpCandidate
-		err = s.updateProgress(ctx, c, func(p *Progress) error {
+		prepare := func(p *Progress) error {
 			if !asyncUnlocked(*p) {
 				return errors.New("异步竞技系统尚未解锁")
 			}
-			ensureAsync(&p.AsyncPvp)
 			ensureAsyncCalendar(&p.AsyncPvp, s.Now())
+			ensureAsync(&p.AsyncPvp)
 			v := &p.AsyncPvp
 			if s.Now().Unix() < v.RefreshAt {
 				return errors.New("异步竞技刷新时钟回拨")
@@ -165,6 +163,11 @@ func (s *Service) asyncPvpRPC(ctx context.Context, c *Connection, method string,
 			if method == "enter_asyn_pvp" && len(v.Candidates) > 0 {
 				candidates = v.Candidates
 				return nil
+			}
+			// 先在当前玩家行锁内判断已有候选和刷新门槛；只有确需新候选时
+			// 才在锁外读取对手，随后重新校验，不能按连接旧快照替换已保存列表。
+			if rows == nil {
+				return needCandidates
 			}
 			v.Candidates = map[string]AsyncPvpCandidate{}
 			for _, av := range rows {
@@ -232,7 +235,18 @@ func (s *Service) asyncPvpRPC(ctx context.Context, c *Connection, method string,
 			v.RefreshAt = s.Now().Unix()
 			candidates = v.Candidates
 			return nil
-		})
+		}
+		err := s.updateProgress(ctx, c, prepare)
+		if errors.Is(err, needCandidates) {
+			rows, err = store.SocialAvatars(ctx, SocialSearch{Limit: 1000})
+			if err != nil {
+				return nil, err
+			}
+			if rows == nil {
+				rows = []Avatar{}
+			}
+			err = s.updateProgress(ctx, c, prepare)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -264,10 +278,15 @@ func (s *Service) asyncPvpRPC(ctx context.Context, c *Connection, method string,
 	}
 	switch method {
 	case "set_defence_cards":
-		var team []string
-		if len(args) != 2 || json.Unmarshal(args[1], &team) != nil || len(team) == 0 || len(team) > 4 {
+		if len(args) != 2 {
 			return nil, errors.New("异步防守阵容参数无效")
 		}
+		layoutRaw, _ := json.Marshal(map[string]json.RawMessage{"fighting_cards": args[1]})
+		layout, parseErr := parseBattleLayout(layoutRaw)
+		if parseErr != nil || len(layout.team()) == 0 {
+			return []Push{Callback(cb, []any{socialCatalog.Errors["RET_FAILED"]})}, nil
+		}
+		team := layout.Fighting
 		if err := s.updateProgress(ctx, c, func(p *Progress) error {
 			if !asyncUnlocked(*p) {
 				return errors.New("异步竞技尚未解锁")
@@ -275,6 +294,7 @@ func (s *Service) asyncPvpRPC(ctx context.Context, c *Connection, method string,
 			if err := validateBattleLayout(*p, BattleLayout{Fighting: team}); err != nil {
 				return err
 			}
+			ensureAsyncCalendar(&p.AsyncPvp, s.Now())
 			ensureAsync(&p.AsyncPvp)
 			p.AsyncPvp.Defence = append([]string{}, team...)
 			return nil
@@ -337,8 +357,8 @@ func (s *Service) enterAsyncPvp(ctx context.Context, c *Connection, args []json.
 		if !asyncUnlocked(*p) {
 			return errors.New("异步竞技尚未解锁")
 		}
-		ensureAsync(&p.AsyncPvp)
 		ensureAsyncCalendar(&p.AsyncPvp, s.Now())
+		ensureAsync(&p.AsyncPvp)
 		candidate, exists := p.AsyncPvp.Candidates[extra.EID]
 		if !exists {
 			return errors.New("该对手不在已授权候选中")
@@ -366,7 +386,8 @@ func (s *Service) enterAsyncPvp(ctx context.Context, c *Connection, args []json.
 		return nil
 	})
 	if err != nil {
-		return []Push{Callback(cb, []any{false, err.Error()})}, nil
+		// msgpack raw在客户端解码为unicode，失败文本必须走bin类型得到str。
+		return []Push{Callback(cb, []any{false, []byte(err.Error())})}, nil
 	}
 	return append([]Push{materialManagerPush(c), Callback(cb, []any{0})}, s.asyncPvpLoadPushes(c, match)...), nil
 }
@@ -434,6 +455,7 @@ func (s *Service) absorbAsyncPvpResult(ctx context.Context, c *Connection, envel
 	rows, err := store.UpdateSocial(ctx, ids, func(avatars map[string]*Avatar) error {
 		av := avatars[selfID]
 		p := &av.Progress
+		ensureAsyncCalendar(&p.AsyncPvp, s.Now())
 		ensureAsync(&p.AsyncPvp)
 		m := p.AsyncPvp.Match
 		b := p.Battle
@@ -525,6 +547,7 @@ func (s *Service) absorbAsyncPvpResult(ctx context.Context, c *Connection, envel
 			if enemy == nil {
 				return errors.New("异步防守方不存在")
 			}
+			ensureAsyncCalendar(&enemy.Progress.AsyncPvp, s.Now())
 			ensureAsync(&enemy.Progress.AsyncPvp)
 			enemyRule, e := asyncScoreFor(enemy.Progress.AsyncPvp.Score)
 			if e != nil {

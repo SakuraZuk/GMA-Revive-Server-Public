@@ -9,6 +9,41 @@ import (
 	"time"
 )
 
+func TestMikuMapEntranceStoryBeforeFirstMapRPC(t *testing.T) {
+	ctx := context.Background()
+	a := NewFixtureAccounts(nil)
+	s := New(a, nil)
+	now := time.Date(2026, 10, 13, 8, 0, 0, 0, time.UTC)
+	s.Now = func() time.Time { return now }
+	activitySchedulesForTest(t, now)
+	c, _ := newBattleConnection(t, ctx, a, s)
+	if err := s.updateProgress(ctx, c, func(p *Progress) error {
+		p.GuideTasks = map[int]GuideTask{}
+		p.ClearedDungeons = append(p.ClearedDungeons, 601)
+		p.Power.Value = 100
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	// 原版地图入口先直接enter_dungeon，不能要求先调用enter_miku_map。
+	out, err := s.Handle(ctx, c, "enter_dungeon", rawArgs(71, 20831002, map[string]any{}))
+	if err != nil || c.SelectedAvatarUnsafe().Progress.Activities.Miku == nil || c.SelectedAvatarUnsafe().Progress.Activities.Miku.Maps[1] == nil {
+		t.Fatal("首次地图入场剧情被循环前置阻断", err, out)
+	}
+	// 非入场剧情不自动创建其他地图；第二地图仍核验原章节前置。
+	p := CloneProgress(c.SelectedAvatarUnsafe().Progress)
+	before := CloneProgress(p)
+	if err := prepareMikuDungeon(&p, &ActivityBattleContext{DungeonID: 20832002}, 21, 60, now); err == nil {
+		t.Fatal("普通剧情被错误放行")
+	}
+	if !reflect.DeepEqual(before, p) {
+		t.Fatal("普通剧情失败创建地图")
+	}
+	if err := prepareMikuDungeon(&p, &ActivityBattleContext{DungeonID: 20832001}, 21, 60, now); err == nil || p.Activities.Miku.Maps[2] != nil {
+		t.Fatal("第二地图入场绕过章节前置")
+	}
+}
+
 func TestActivityMikuActualRPCBattleReceiptAndLeave(t *testing.T) {
 	ctx := context.Background()
 	a := NewFixtureAccounts(nil)

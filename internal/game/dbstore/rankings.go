@@ -23,10 +23,14 @@ func (s *Store) SyncPvpRankings(ctx context.Context, limit int, hosts ...int) ([
 	}
 	rows, err := s.pool.Query(ctx, `
 		SELECT a.avatar_oid, a.uid, a.hostnum, a.nickname, a.level,
-		       COALESCE((ap.state->>'sync_pvp_score')::int, 0) AS score
+		       COALESCE(r.sync_pvp_score, 0) AS score,
+		       COALESCE(NULLIF(r.selected_head_id,0),a.head_id),
+		       COALESCE(NULLIF(r.selected_head_box_id,0),a.head_box_id),
+		       CASE WHEN COALESCE(r.custom_head_cleared,false) THEN '' ELSE a.custom_head_image_url END
 		FROM avatars a
 		JOIN avatar_progress ap ON ap.avatar_oid = a.avatar_oid
-		WHERE COALESCE((ap.state->>'sync_pvp_score')::int, 0) > 0 AND ($2=0 OR a.hostnum=$2)
+		CROSS JOIN LATERAL jsonb_to_record(ap.state) AS r(sync_pvp_score int,selected_head_id int,selected_head_box_id int,custom_head_cleared boolean)
+		WHERE COALESCE(r.sync_pvp_score, 0) > 0 AND ($2=0 OR a.hostnum=$2)
 		ORDER BY score DESC, a.avatar_oid
 		LIMIT $1`, limit, hostnum)
 	if err != nil {
@@ -36,7 +40,7 @@ func (s *Store) SyncPvpRankings(ctx context.Context, limit int, hosts ...int) ([
 	out := make([]game.SyncPvpRankEntry, 0, limit)
 	for rows.Next() {
 		var entry game.SyncPvpRankEntry
-		if err := rows.Scan(&entry.OID, &entry.UID, &entry.Hostnum, &entry.Nickname, &entry.Level, &entry.Score); err != nil {
+		if err := rows.Scan(&entry.OID, &entry.UID, &entry.Hostnum, &entry.Nickname, &entry.Level, &entry.Score, &entry.HeadID, &entry.HeadBoxID, &entry.CustomHead); err != nil {
 			return nil, err
 		}
 		if entry.Score <= 0 {

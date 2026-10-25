@@ -70,7 +70,8 @@ for line in Path('/opt/hs-server/data/database.env').read_text().splitlines():
 (root/'started.json').write_text(json.dumps({'pid':os.getpid(),'time':time.time(),'sha256':actual}))
 try:
  with (root/'test.log').open('wb') as log:
-   result=subprocess.run([str(binary),'-test.v','-test.timeout=180s'],cwd=root/'workspace/internal/game/dbstore',env=env,stdout=log,stderr=subprocess.STDOUT,timeout=190)
+   # 全套原生/冷登录测试共用主机；整套预算不替代各用例自己的超时断言。
+   result=subprocess.run([str(binary),'-test.v','-test.timeout=360s'],cwd=root/'workspace/internal/game/dbstore',env=env,stdout=log,stderr=subprocess.STDOUT,timeout=370)
  code=result.returncode
 except subprocess.TimeoutExpired:code=124
 (root/'exit.json').write_text(json.dumps({'code':code,'sha256':actual,'hotfix_sha256':catalog_actual,'policy_sha256':policy_actual,'time':time.time()}))

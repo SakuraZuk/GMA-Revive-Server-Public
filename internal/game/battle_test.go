@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -100,12 +101,12 @@ func TestGuideDungeonSessionAndRequestOrder(t *testing.T) {
 		t.Fatal("重复请求重建战斗或种子")
 	}
 	args[1] = json.RawMessage(`10002`)
-	if _, err = service.Handle(ctx, c, "enter_dungeon", args); err == nil {
-		t.Fatal("越级进入副本")
+	if denied, denyErr := service.Handle(ctx, c, "enter_dungeon", args); denyErr != nil || len(denied) != 1 || !reflect.DeepEqual(denied[0].Args, []any{9, []any{androidShop.Errors["RET_DUNGEON_LOCKED"]}}) {
+		t.Fatal("越级入口未返回原版锁定错误", denied, denyErr)
 	}
 	args[1] = json.RawMessage(`999999`)
-	if _, err = service.Handle(ctx, c, "enter_dungeon", args); err == nil {
-		t.Fatal("未知副本获准")
+	if denied, denyErr := service.Handle(ctx, c, "enter_dungeon", args); denyErr != nil || len(denied) != 1 || !reflect.DeepEqual(denied[0].Args, []any{9, []any{androidShop.Errors["RET_DUNGEON_DATA_ERROR"]}}) {
+		t.Fatal("未知入口未返回原版数据错误", denied, denyErr)
 	}
 	startArgs := []json.RawMessage{json.RawMessage(`{"fighting_cards":[0],"support_cards":[],"storyline_cards":[]}`)}
 	if deferred, err := service.Handle(ctx, c, "battle_fighting", startArgs); err != nil || len(deferred) != 0 {
@@ -140,7 +141,14 @@ func TestGuideDungeonSessionAndRequestOrder(t *testing.T) {
 		t.Fatal("客户端权威下 Tick 不得推进战斗", boot, err)
 	}
 	startArgs[0] = json.RawMessage(`{"fighting_cards":[777]}`)
-	if _, err = service.Handle(ctx, c, "battle_fighting", startArgs); err == nil {
-		t.Fatal("伪造阵容获准")
+	before := CloneProgress(c.SelectedAvatarUnsafe().Progress)
+	if pushes, err := service.Handle(ctx, c, "battle_fighting", startArgs); err != nil || len(pushes) != 0 ||
+		!reflect.DeepEqual(before, c.SelectedAvatarUnsafe().Progress) {
+		t.Fatal("已开战后的重复伪造阵容未被无状态幂等忽略", pushes, err)
+	}
+	startArgs[0] = json.RawMessage(`{"fighting_cards":null}`)
+	if pushes, err := service.Handle(ctx, c, "battle_fighting", startArgs); err != nil || len(pushes) != 0 ||
+		!reflect.DeepEqual(before, c.SelectedAvatarUnsafe().Progress) {
+		t.Fatal("已开战后的旧客户端空阵容重试未被幂等忽略", pushes, err)
 	}
 }

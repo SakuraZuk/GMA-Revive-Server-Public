@@ -256,8 +256,14 @@ func (s *Service) socialRPC(ctx context.Context, c *Connection, method string, a
 		if len(args) != 5 || json.Unmarshal(args[1], &target) != nil || json.Unmarshal(args[2], &message) != nil {
 			return nil, errors.New("好友申请签名为回调、角色、留言、服务器、来源")
 		}
-		var host, src int
-		if json.Unmarshal(args[3], &host) != nil || host <= 0 || json.Unmarshal(args[4], &src) != nil {
+		var host, legacySource int
+		var source string
+		// 原生默认hostnum=0、apply_src=''；来源是界面埋点，不是整数授权字段。
+		validSource := json.Unmarshal(args[4], &source) == nil && utf8.RuneCountInString(source) <= 100
+		if !validSource {
+			validSource = json.Unmarshal(args[4], &legacySource) == nil
+		}
+		if json.Unmarshal(args[3], &host) != nil || host < 0 || !validSource {
 			return nil, errors.New("好友申请来源参数无效")
 		}
 		if !utf8.ValidString(message) || utf8.RuneCountInString(message) > 100 {
@@ -267,7 +273,7 @@ func (s *Service) socialRPC(ctx context.Context, c *Connection, method string, a
 		if e != nil {
 			return nil, e
 		}
-		if len(peers) != 1 || peers[0].Hostnum != host {
+		if len(peers) != 1 || (host != 0 && peers[0].Hostnum != host) {
 			return fail(socialFailure("RET_FRIEND_NOT_EXIST", "申请目标与服务器不一致"))
 		}
 	case "agree_apply_friend", "refuse_apply_friend", "delete_friend", "delete_black_list":
@@ -467,7 +473,8 @@ func (s *Service) socialQuery(ctx context.Context, c *Connection, store SocialAc
 		var uid int64
 		var name string
 		var valid bool
-		if len(args) != 5 || json.Unmarshal(args[1], &host) != nil || host < 0 || json.Unmarshal(args[2], &uid) != nil || uid < 0 || json.Unmarshal(args[3], &name) != nil || json.Unmarshal(args[4], &valid) != nil || !valid || utf8.RuneCountInString(name) > 100 {
+		// CB7E0654.check_callback闭包：昵称、UID、服务器、敏感词检查结果。
+		if len(args) != 5 || json.Unmarshal(args[1], &name) != nil || json.Unmarshal(args[2], &uid) != nil || uid < 0 || json.Unmarshal(args[3], &host) != nil || host < 0 || json.Unmarshal(args[4], &valid) != nil || !valid || utf8.RuneCountInString(name) > 100 {
 			return nil, errors.New("好友搜索签名或文本无效")
 		}
 		if uid == 0 && strings.TrimSpace(name) == "" {
@@ -480,7 +487,10 @@ func (s *Service) socialQuery(ctx context.Context, c *Connection, store SocialAc
 		list := []any{}
 		for _, av := range rows {
 			if string(av.OID) != string(own.OID) {
-				list = append(list, s.socialInfo(socialProfile(av)))
+				info := s.socialInfo(socialProfile(av))
+				// 原生搜索回调用info['_id']构造friend，不使用通用资料eid。
+				info["_id"] = ObjectID(hexOf(av.OID))
+				list = append(list, info)
 			}
 		}
 		ret := RetSuccess
@@ -493,7 +503,7 @@ func (s *Service) socialQuery(ctx context.Context, c *Connection, store SocialAc
 		if len(args) != 2 || json.Unmarshal(args[1], &force) != nil {
 			return nil, errors.New("好友推荐签名无效")
 		}
-		rows, err := store.SocialAvatars(ctx, SocialSearch{Hostnum: c.hostnum, Limit: 1000})
+		rows, err := store.SocialAvatars(ctx, SocialSearch{Hostnum: c.hostnum, Limit: 1000, FriendSummaryOnly: true})
 		if err != nil {
 			return nil, err
 		}

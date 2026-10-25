@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 )
 
 // ObjectID 使用原生 ObjectId 扩展编号 42 与十二字节值。
@@ -24,6 +25,62 @@ type Pair struct {
 // Map 是保序 msgpack map；用于需要非字符串键的容器
 // （如客户端按 ObjectId 索引的 last_fighting_cards）。
 type Map []Pair
+
+// TupleKey 按原版 custom_types.base_types.Tuple 与 Python2 str(tuple) 的
+// 结果生成复合字典键。原版 CustomDict.client_dump 会先把 Tuple 键转成
+// 字符串（例如 "(1, 2)"），客户端收到后再由 Tuple.load 用 eval 还原；
+// 直接把数组作为 msgpack map 键会在客户端解包成不可哈希的 list。
+func TupleKey(parts ...any) string {
+	var b strings.Builder
+	b.WriteByte('(')
+	for i, part := range parts {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(tupleScalarString(part))
+	}
+	if len(parts) == 1 {
+		b.WriteByte(',')
+	}
+	b.WriteByte(')')
+	return b.String()
+}
+
+func tupleScalarString(v any) string {
+	switch x := v.(type) {
+	case int:
+		return strconv.Itoa(x)
+	case int8:
+		return strconv.FormatInt(int64(x), 10)
+	case int16:
+		return strconv.FormatInt(int64(x), 10)
+	case int32:
+		return strconv.FormatInt(int64(x), 10)
+	case int64:
+		return strconv.FormatInt(x, 10)
+	case uint:
+		return strconv.FormatUint(uint64(x), 10)
+	case uint8:
+		return strconv.FormatUint(uint64(x), 10)
+	case uint16:
+		return strconv.FormatUint(uint64(x), 10)
+	case uint32:
+		return strconv.FormatUint(uint64(x), 10)
+	case uint64:
+		return strconv.FormatUint(x, 10)
+	case bool:
+		if x {
+			return "True"
+		}
+		return "False"
+	case string:
+		// 当前原生 Tuple 键只包含整数；对其他调用方保留可被 Python
+		// eval 还原的单引号表示，避免生成不可解析的裸文本。
+		return "'" + strings.ReplaceAll(strings.ReplaceAll(x, "\\", "\\\\"), "'", "\\'") + "'"
+	default:
+		return fmt.Sprint(x)
+	}
+}
 
 // EncodeMsgpackValue 编码单值；EncodeMsgpackArgs 编码参数列表（数组）。
 func EncodeMsgpackValue(dst []byte, v any) []byte {
@@ -83,7 +140,13 @@ func EncodeMsgpackValue(dst []byte, v any) []byte {
 		//（客户端 last_fighting_cards 等容器以 ObjectId 为键，字符串键查不到）。
 		dst = appendMsgMapHeader(dst, len(x))
 		for _, pair := range x {
-			dst = EncodeMsgpackValue(dst, pair.Key)
+			key := pair.Key
+			// Tuple2*Dict 的复合键必须是 Python tuple 的字符串形式，
+			// 不能把 []any 直接作为 msgpack map 键发送。
+			if parts, ok := key.([]any); ok {
+				key = TupleKey(parts...)
+			}
+			dst = EncodeMsgpackValue(dst, key)
 			dst = EncodeMsgpackValue(dst, pair.Value)
 		}
 		return dst

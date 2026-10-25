@@ -779,7 +779,9 @@ func (s *Service) houseFrageRPC(ctx context.Context, c *Connection, method strin
 				}
 			}
 			site.Opened = append(site.Opened, id)
-			reply = []any{true, id, []int{mid}, count}
+			// F544E824.on_choice_ghost逐一访问三个幽灵位置，还以所选index
+			// 读取奖励。全列表仅用于揭晓动画，实际只发放上面的所选材料。
+			reply = []any{true, id, append([]int{}, site.Game...), count}
 			return nil
 		case "house_frage_use_prop":
 			r := activityData("materials", id)

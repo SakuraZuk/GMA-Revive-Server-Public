@@ -1,23 +1,11 @@
 # -*- coding: utf-8 -*-
-"""gen_npkfilelist_md5.py — 生成客户端热更所需的真实 per-file md5 表。
+"""按清单整包哈希选择资源，生成完整逐文件MD5表；任何解析失败都中止。
 
-背景（2026-10-06 实机 KeyError 384809306 定位）：
-  客户端 patch_logic/patcher.py npk_patcher._check_file 对"需要下载"的每个文件条目
-  执行 self.npkfilelist_md5info[fileid]，该字典来自 patch_mgr._get_npkmd5_file 下载的
-  <patchpath>/npk_filelist_md5.txt（JSON: {npk名: [fileid, md5, fileid, md5, ...]}，
-  set_npkfilelist_md5_info 按偶数索引取 fileid、奇数索引取 md5）。
-  空 {} 在"存在本地 npk 且需逐文件 diff"时会 KeyError；全量下载路径不查表。
-
-NPK 文件结构（NXPK v2，实测）:
-  头部 24 字节: 'NXPK' + uint32 count@4 + 8 字节保留 + uint32 ???@16 + uint32 index_offset@20
-  数据区: [24, index_offset)
-  索引:   [index_offset, index_offset + count*28)，条目 = struct '<IIIIIII'
-          (fileid, offset, compress_size, uncompress_size, compress_hash, uncompress_hash, reserved)
-  条目块 md5 = md5(文件[offset : offset+compress_size])（= 客户端下载并校验的字节）
-
-数据源优先级：files/.../Documents/<name>.npk（官方/服务端同源），否则 APK assets。
-产物: deploy/data/npk_filelist_md5.txt（供 deploy/gen_patchlist.py 使用与上传）。
+NXPK索引为28字节；末字段>=62时，实际偏移须按已有原生资源审计规则还原。
+只生成元数据，不修改NPK，不上传；客户端差量偏移兼容与发布另行验证。
+必须显式指定输出，避免把未验证候选直接写进正式分发目录。
 """
+import argparse
 import hashlib
 import json
 import struct
@@ -25,78 +13,95 @@ import sys
 import zipfile
 from pathlib import Path
 
-ROOT = Path(r'.')
+ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / 'files/netease/h62/Documents'
 APK = ROOT / 'out/repack/hs-direct-agree.apk'
 CACHE = ROOT / 'out/repack/_apk_extract'
-OUT = ROOT / 'deploy/data/npk_filelist_md5.txt'
-
-NPKS = ['char1', 'char2', 'char3', 'char4', 'char6', 'effect', 'res', 'scene',
-        'scenewd1', 'scenewd2', 'ui', 'uiicon', 'wwise', 'wwisech', 'wwisejp', 'script']
-
-# script 用官方 1.0.128 补丁包（与服务器 /patch_pub.../script.npk 一致）
-FORCE_DOCS = {'script'}
 
 
-def npk_path(name):
-    p = DOCS / (name + '.npk')
-    if name in FORCE_DOCS or p.exists():
-        return p
-    cached = CACHE / (name + '.npk')
-    if not cached.exists():
-        with zipfile.ZipFile(APK) as z:
-            data = z.read('assets/%s.npk' % name)
-        CACHE.mkdir(parents=True, exist_ok=True)
-        cached.write_bytes(data)
-    return cached
+def matching_source(name, size, expected):
+    if not name or not all(c.isalnum() or c in '_-' for c in name):
+        raise ValueError('资源名称无效')
+    for path in (DOCS / (name + '.npk'), CACHE / (name + '.npk')):
+        if path.is_file() and path.stat().st_size == size:
+            data = path.read_bytes()
+            if hashlib.md5(data).hexdigest() == expected:
+                return data, str(path.relative_to(ROOT))
+    if APK.is_file():
+        with zipfile.ZipFile(APK) as archive:
+            entry = 'assets/' + name + '.npk'
+            if entry in archive.namelist() and archive.getinfo(entry).file_size == size:
+                data = archive.read(entry)
+                if hashlib.md5(data).hexdigest() == expected:
+                    return data, 'APK/assets/' + name + '.npk'
+    raise ValueError('没有与清单大小及MD5一致的资源：' + name)
 
 
-def parse_npk(path):
-    data = path.read_bytes()
-    if data[:4] != b'NXPK':
-        raise ValueError('%s 非 NXPK 格式' % path)
-    count = struct.unpack('<I', data[4:8])[0]
-    index_offset = struct.unpack('<I', data[20:24])[0]
-    if index_offset + count * 28 > len(data):
-        raise ValueError('%s 索引越界' % path)
-    entries = []
+def block_md5s(data):
+    if len(data) < 24 or data[:4] != b'NXPK':
+        raise ValueError('不是完整NXPK')
+    count = struct.unpack_from('<I', data, 4)[0]
+    index = struct.unpack_from('<I', data, 20)[0]
+    index_end = index + count * 28
+    if index < 24 or index_end > len(data):
+        raise ValueError('索引越界')
+    seen, spans, pairs = set(), [], []
+    encoded, empty = 0, 0
     for i in range(count):
-        e = struct.unpack('<IIIIIII', data[index_offset + i * 28:index_offset + (i + 1) * 28])
-        entries.append(e)
-    return data, entries
+        fid, offset, size, decoded, h1, h2, codec = struct.unpack_from('<IIIIIII', data, index + i * 28)
+        if fid in seen:
+            raise ValueError('重复文件编号')
+        seen.add(fid)
+        if codec >= 62:
+            offset ^= ((-100 - decoded) & 0xffffffff) ^ 0x7a090d89
+            codec -= 62
+            encoded += 1
+        if codec not in (0, 1, 2):
+            raise ValueError('未知编码类型')
+        if not size:
+            empty += 1
+            continue
+        end = offset + size
+        if offset < 24 or end > len(data) or (offset < index_end and end > index):
+            raise ValueError('存储块越界或与索引重叠')
+        spans.append((offset, end))
+        pairs.extend((fid, hashlib.md5(memoryview(data)[offset:end]).hexdigest()))
+    spans.sort()
+    if any(a[1] > b[0] for a, b in zip(spans, spans[1:])):
+        raise ValueError('存储块互相重叠')
+    return pairs, {'条目数': count, '校验条目数': len(pairs) // 2, '编码偏移条目': encoded, '空条目': empty}
 
 
 def main():
-    sys.stdout.reconfigure(encoding='utf-8')
-    table = {}
-    for name in NPKS:
-        path = npk_path(name)
-        data, entries = parse_npk(path)
-        pairs = []
-        skipped = 0
-        bad = 0
-        for fid, offset, csize, usize, chash, uhash, resv in entries:
-            if csize == 0:
-                skipped += 1
-                continue
-            if offset < 24 or offset + csize > len(data):
-                bad += 1
-                continue
-            pairs.append(fid)
-            pairs.append(hashlib.md5(data[offset:offset + csize]).hexdigest())
-        if bad:
-            # 索引条目布局与本解析不符（大 npk 索引为引擎专用布局）。
-            # 这些 npk 与本地逐字节相同，客户端比对全部命中、不会触发下载，
-            # 也就不会查 md5 表；仅当未来真的出现逐文件 diff 时才需要再逆向。
-            print('%-9s SKIP  bad=%d/%d entries (与本地同源,不会触发下载)' % (name, bad, len(entries)))
-            continue
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--manifest', type=Path, default=ROOT / 'deploy/data/patch_list_pub_android.txt')
+    parser.add_argument('--output', type=Path, required=True)
+    args = parser.parse_args()
+    manifest = json.loads(args.manifest.read_text(encoding='utf-8'))['android']['npk']
+    table, checks = {}, []
+    if not manifest:
+        raise ValueError('资源清单为空')
+    for name, value in manifest.items():
+        words = value.split()
+        size, expected = int(words[0]), words[1]
+        data, source = matching_source(name, size, expected)
+        pairs, check = block_md5s(data)
         table[name] = pairs
-        print('%-9s %-60s entries=%-6d pairs=%-6d skip0=%d' % (
-            name, path.name, len(entries), len(pairs) // 2, skipped))
+        check.update({'资源': name, '源': source, '整包MD5': expected, '大小': size})
+        checks.append(check)
+        print(json.dumps(check, ensure_ascii=False), flush=True)
     body = json.dumps(table, separators=(',', ':')).encode('utf-8')
-    OUT.write_bytes(body)
-    print('written %s (%d bytes, md5=%s)' % (OUT, len(body), hashlib.md5(body).hexdigest()))
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    temporary = args.output.with_name(args.output.name + '.tmp')
+    temporary.write_bytes(body)
+    temporary.replace(args.output)
+    report = {'资源数': len(table), '总校验条目': sum(len(v)//2 for v in table.values()),
+              '字节': len(body), 'MD5': hashlib.md5(body).hexdigest(), '资源核验': checks,
+              '边界': '全部资源匹配输入清单；仅生成候选，未发布，未证明Android差量下载兼容'}
+    args.output.with_suffix('.report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+    print(json.dumps({k:v for k,v in report.items() if k != '资源核验'}, ensure_ascii=False))
 
 
 if __name__ == '__main__':
+    sys.stdout.reconfigure(encoding='utf-8')
     main()

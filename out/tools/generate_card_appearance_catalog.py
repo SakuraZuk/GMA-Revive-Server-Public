@@ -20,7 +20,7 @@ cards = source("tables/cards.json", "数据")
 dresses = source("tables/cards_dress.json", "数据")
 constants = source("configs/common_const.json", "直接常量")
 lines = ["package game", "", "// 由 generate_card_appearance_catalog.py 从 Android 1.0.128 表生成，禁止手工修改。",
-         "type cardAppearanceRule struct { DefaultDress, AwakenedDress int; Dresses, Forbid, Voices []int }",
+         "type cardAppearanceRule struct { DefaultDress, AwakenedDress, AwakenGrade int; Dresses, Forbid, Voices []int }",
          "var androidShowCardSlots = %d" % constants["MAX_SHOW_CARD_COUNT"],
          "var androidMikuActivityType = %d" % constants["ACTIVITY_TYPE_MIKU"],
          "var androidCaptainForbidden = %d" % constants["CARD_FORBID_CAPTAIN"],
@@ -43,8 +43,8 @@ for key, row in sorted(cards.items(), key=lambda pair: int(pair[0])):
         if str(dress) not in dresses:
             raise ValueError("外观记录缺失: " + str(dress))
     voices = [entry[0] for entry in dresses.get(str(default), {}).get("cv_info", [])]
-    lines.append("%s: {DefaultDress:%d, AwakenedDress:%d, Dresses:%s, Forbid:%s, Voices:%s}," %
-                 (key, default, int(row.get("awakened_dress_id") or 0), ints(allowed), ints(row.get("card_forbid_list")), ints(voices)))
+    lines.append("%s: {DefaultDress:%d, AwakenedDress:%d, AwakenGrade:%d, Dresses:%s, Forbid:%s, Voices:%s}," %
+                 (key, default, int(row.get("awakened_dress_id") or 0), int(row.get("awaken_grade") or 0), ints(allowed), ints(row.get("card_forbid_list")), ints(voices)))
 lines.extend(["}", "var androidDressNeedsAwakened = map[int]bool{"])
 for key, row in sorted(dresses.items(), key=lambda pair: int(pair[0])):
     lines.append("%s: %s," % (key, "true" if row.get("need_awakened") else "false"))

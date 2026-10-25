@@ -1,10 +1,37 @@
 package game
 
 import (
+	_ "embed"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 )
+
+//go:embed battle_story_slots.json
+var battleStorySlotsRaw []byte
+
+// 来自原生battle_info.my_avatar_list，不能把剧情固定槽当作玩家第五张幻书。
+var battleStorySlots = func() map[int][]int {
+	var data struct {
+		Slots map[int][]int `json:"fixed_slots"`
+	}
+	if json.Unmarshal(battleStorySlotsRaw, &data) != nil || len(data.Slots) != 9 {
+		panic("剧情固定出战槽目录无效")
+	}
+	return data.Slots
+}()
+
+// BF29F0ED.generate_slots读取formation_data；原包含6人和4援护阵型。
+// 容量由已冻结副本的battle_id查表，通用预设/PVP仍使用原有4/2校验。
+var battleFormationLimits = func() map[int][]int {
+	var data struct {
+		Limits map[int][]int `json:"formation_limits"`
+	}
+	if json.Unmarshal(battleStorySlotsRaw, &data) != nil || len(data.Limits) == 0 {
+		panic("原生特殊阵型容量目录无效")
+	}
+	return data.Limits
+}()
 
 // BattleLayout 保留三个原生列表的顺序和空槽；内部空字符串在wire中转换为0。
 // 剧情卡是客户端剧情上下文，不能因上传就写入玩家卡牌资产。
@@ -15,6 +42,20 @@ type BattleLayout struct {
 }
 
 func parseBattleLayout(raw json.RawMessage) (BattleLayout, error) {
+	return parseBattleLayoutForDungeon(raw, 0)
+}
+
+func parseBattleLayoutForDungeon(raw json.RawMessage, dungeonID int) (BattleLayout, error) {
+	fixed := battleStorySlots[dungeonCatalog[dungeonID].BattleID]
+	limit := androidFightingSlots
+	supportLimit := androidSupportSlots
+	if sizes := battleFormationLimits[dungeonCatalog[dungeonID].BattleID]; len(sizes) == 2 {
+		limit = max(limit, sizes[0])
+		supportLimit = max(supportLimit, sizes[1])
+	}
+	if len(fixed) > limit {
+		limit = len(fixed)
+	}
 	var object map[string]json.RawMessage
 	if json.Unmarshal(raw, &object) != nil || object == nil {
 		return BattleLayout{}, errors.New("布阵必须为原生battle_cards字典")
@@ -50,10 +91,15 @@ func parseBattleLayout(raw json.RawMessage) (BattleLayout, error) {
 	}
 	var layout BattleLayout
 	var err error
-	if layout.Fighting, err = parse("fighting_cards", androidFightingSlots); err != nil {
+	if layout.Fighting, err = parse("fighting_cards", limit); err != nil {
 		return layout, err
 	}
-	if layout.Support, err = parse("support_cards", androidSupportSlots); err != nil {
+	for index := androidFightingSlots; len(fixed) > 0 && index < len(layout.Fighting); index++ {
+		if index >= len(fixed) || fixed[index] <= 0 || layout.Fighting[index] != "" {
+			return layout, errors.New("额外剧情出战槽只能保留原生固定角色空槽")
+		}
+	}
+	if layout.Support, err = parse("support_cards", supportLimit); err != nil {
 		return layout, err
 	}
 	// 原生未声明剧情列表数量上限，不把出战容量套到剧情上下文。

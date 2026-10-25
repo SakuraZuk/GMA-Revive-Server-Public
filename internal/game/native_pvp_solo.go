@@ -229,7 +229,11 @@ func (s *Service) absorbNativeSoloEvent(ctx context.Context, c *Connection, enve
 			nativeRecordBattleEvent(b, envelope)
 			return nil
 		})
-		return true, nil, err
+		if err != nil {
+			return true, nil, err
+		}
+		pushes, err := s.advancePvpLoadBarrier(ctx, c)
+		return true, pushes, err
 	}
 	if envelope.Kind == "result" && snapshot.AsyncPvp.Match != nil && snapshot.AsyncPvp.Match.UUID == envelope.BattleUUID {
 		handled, pushes, err := s.absorbAsyncPvpResult(ctx, c, envelope)
@@ -301,7 +305,12 @@ func (s *Service) absorbNativeSoloEvent(ctx context.Context, c *Connection, enve
 	}
 	if receipt != nil {
 		s.closeNativeAuthority(envelope.BattleUUID)
+		log.Printf("PVP客户端权威末态已核验，机器人结算事务完成")
 		return true, syncPvpResultPushes(c, *receipt), nil
+	}
+	if envelope.Kind == "ready" {
+		pushes, err := s.advancePvpLoadBarrier(ctx, c)
+		return true, append(pushes, flushNativeSolo(c)...), err
 	}
 	return true, flushNativeSolo(c), nil
 }
@@ -390,7 +399,28 @@ func (s *Service) resumeNativeSolo(ctx context.Context, c *Connection) (bool, []
 	}
 	c.battleStartSent = false
 	if m := p.AsyncPvp.Match; m != nil && m.UUID == b.UUID {
-		return true, s.asyncPvpLoadPushes(c, m), nil
+		return true, nativeRecoveryLoadPushes(s.asyncPvpLoadPushes(c, m), b.UUID), nil
 	}
-	return true, s.syncPVPLoadPushes(c, p.SyncPvpMatch, 0, false), nil
+	return true, nativeRecoveryLoadPushes(s.syncPVPLoadPushes(c, p.SyncPvpMatch, 0, false), b.UUID), nil
+}
+
+// 原生恢复保留UUID但重建播放世代；必须授权释放旧客户端对象再执行prepare。
+func nativeRecoveryLoadPushes(out []Push, uuid string) []Push {
+	for i := range out {
+		if out[i].Method != "start_server_battle_ok" || len(out[i].Args) != 4 {
+			continue
+		}
+		original, ok := out[i].Args[3].(map[string]any)
+		if !ok {
+			continue
+		}
+		extra := make(map[string]any, len(original)+2)
+		for key, value := range original {
+			extra[key] = value
+		}
+		extra["hs_recover_previous_uuid"] = uuid
+		extra["hs_recover_rebuild"] = true
+		out[i].Args[3] = extra
+	}
+	return out
 }

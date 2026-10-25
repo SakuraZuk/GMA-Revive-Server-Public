@@ -49,7 +49,7 @@ func TestNamingContract(t *testing.T) {
 	voiceArgs := []json.RawMessage{json.RawMessage(`8`), json.RawMessage(`1`)}
 	for _, method := range []string{"set_global_vo", "set_story_vo"} {
 		result, err := s.Handle(context.Background(), c, method, voiceArgs)
-		if err != nil || len(result) != 2 || result[1].Args[1].([]any)[0] != true {
+		if err != nil || len(result) < 2 || result[len(result)-1].Args[1].([]any)[0] != true {
 			t.Fatal("语音设置契约错误", result, err)
 		}
 	}

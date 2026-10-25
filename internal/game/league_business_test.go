@@ -64,6 +64,9 @@ func TestLeagueActualCreateApplyApprovalAtomicMembershipAndAchievement(t *testin
 	if _, err := s.Handle(ctx, cs[1], "query_total_league_info", socialArgs(p.LeagueID, 1)); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := s.Handle(ctx, cs[1], "query_total_league_info", socialArgs(p.LeagueID, 999)); err != nil {
+		t.Fatal("旧客户端逻辑服编号不应阻断已存在的公开学会查询", err)
+	}
 	if _, err := s.Handle(ctx, cs[1], "leave_league", nil); err != nil {
 		t.Fatal(err)
 	}

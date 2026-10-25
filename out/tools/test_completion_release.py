@@ -2,7 +2,41 @@
 import hashlib,io,json,shlex,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
-from deploy_completion_release import apply_batches, ReleaseFailure,validate_database,validate_local,validate_rune_pools,Batch,ROOT
+from deploy_completion_release import apply_batches, ReleaseFailure,validate_database,validate_local,validate_regression_checks,validate_rune_pools,validate_distribution_addresses,Batch,ROOT
+
+class DistributionGateTests(unittest.TestCase):
+    def test_public_examples_cannot_be_deployed(self):
+        for address in ('192.0.2.10:9000', '192.0.2.20', '198.51.100.17', '203.0.113.8', '2001:db8::1'):
+            with self.assertRaises(ValueError):
+                validate_distribution_addresses(json.dumps({'startup_scripts': {'版本': 'GAME_IP='+address}}))
+    def test_non_example_address_is_preserved(self):
+        validate_distribution_addresses('{"server_list":"127.0.0.1:9000"}')
+
+class RegressionGateTests(unittest.TestCase):
+    def test_failed_formal_rules_stale_native_and_changed_log_block_release(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp); (root/'out').mkdir()
+            hashes={'internal/game/battle.go':'最终候选'}
+            checks=[]
+            for i,name in enumerate(('默认全仓','正式规则全仓','整仓vet')):
+                path=root/'out'/('check%d.log'%i); path.write_bytes(b'PASS\n')
+                checks.append({'名称':name,'退出码':0,'日志':str(path.relative_to(root)),
+                               '日志SHA256':hashlib.sha256(path.read_bytes()).hexdigest()})
+            local={'状态':'通过','源码核验期间一致':True,'源码SHA256':hashes,'项目检查':checks}
+            native={'状态':'通过','源码专项期间一致':True,'源码哈希':hashes,'SKIP数量':0}
+            def save():
+                (root/'out/remaining-local-verification.json').write_text(json.dumps(local),encoding='utf-8')
+                (root/'out/native-solo-linux-verification.json').write_text(json.dumps(native),encoding='utf-8')
+            with patch('deploy_completion_release.ROOT',root):
+                save(); validate_regression_checks({'源码哈希':hashes})
+                checks[1]['退出码']=1; save()
+                with self.assertRaises(ValueError): validate_regression_checks({'源码哈希':hashes})
+                checks[1]['退出码']=0; native['源码哈希']={}; save()
+                with self.assertRaises(ValueError): validate_regression_checks({'源码哈希':hashes})
+                native['源码哈希']=hashes; native['SKIP数量']=1; save()
+                with self.assertRaises(ValueError): validate_regression_checks({'源码哈希':hashes})
+                native['SKIP数量']=0; save(); (root/'out/check1.log').write_bytes(b'FAIL\n')
+                with self.assertRaises(ValueError): validate_regression_checks({'源码哈希':hashes})
 
 class FakeBatch:
     def __init__(self,unit,events,fail=None): self.unit,self.events,self.fail=unit,events,fail
@@ -171,21 +205,25 @@ class CompletionReleaseTests(unittest.TestCase):
                 'deploy/data/gameplay-rules.env':"HS_RUNE_FALLBACK_POOLS='"+json.dumps(pools)+"'\n",
                 'deploy/hs-game-gameplay.conf':'# HS_GAMEPLAY_POLICY\n[Service]\nEnvironmentFile=/opt/hs-server/data/gameplay-rules.env\n',
                 'deploy/hs-game-native-pvp.conf':'# HS_NATIVE_PVP_AUTHORITY\n[Service]\nEnvironment=HS_NATIVE_PVP_PYTHON=/opt/hs-server/native-pvp/current/python2/run-python2\nEnvironment=HS_NATIVE_PVP_WORKER=/opt/hs-server/native-pvp/current/workspace/internal/nativepvp/battle_native_worker.py\nEnvironment=HS_NATIVE_PVP_DIRECTORY=/opt/hs-server/native-pvp/current/workspace/internal/nativepvp/runtime/native_engine\nEnvironment=HS_NATIVE_PVP_RESOURCE_SHA256=bed95c22e6e6adf4ccf01cabb5156b4888ccc5744f0e192d24501e6df3c19ef3\n',
-                'out/bin/linux-amd64/gameserver':'正式游戏产物'}
+                'out/bin/linux-amd64/gameserver':'正式游戏产物',
+                'out/bin/linux-amd64/hotfixserver':'正式热更产物'}
             for key,value in inputs.items():
                 target=root/key; target.parent.mkdir(parents=True,exist_ok=True); target.write_text(value,encoding='utf-8')
             hashes={key:hashlib.sha256((root/key).read_bytes()).hexdigest() for key in inputs if not key.startswith('out/')}
             game_hash=hashlib.sha256((root/'out/bin/linux-amd64/gameserver').read_bytes()).hexdigest()
-            (root/'out/completion-build.json').write_text(json.dumps({'退出码':0,'源码哈希':hashes,'产物哈希':{'out/bin/linux-amd64/gameserver':game_hash}}),encoding='utf-8')
+            hotfix_hash=hashlib.sha256((root/'out/bin/linux-amd64/hotfixserver').read_bytes()).hexdigest()
+            (root/'out/completion-build.json').write_text(json.dumps({'退出码':0,'源码哈希':hashes,'产物哈希':{
+                'out/bin/linux-amd64/gameserver':game_hash,'out/bin/linux-amd64/hotfixserver':hotfix_hash}}),encoding='utf-8')
             approval=root/'out/gameplay-policy-approval.json'
             approval.write_text(json.dumps({'状态':'等待批准','正式文件SHA256':hashes['deploy/data/gameplay-rules.env']}),encoding='utf-8')
-            with patch('deploy_completion_release.ROOT',root),patch('deploy_completion_release.source_hashes',return_value=hashes),patch('deploy_completion_release.validate_database'),patch('deploy_completion_release.subprocess.run') as verifier:
+            with patch('deploy_completion_release.ROOT',root),patch('deploy_completion_release.source_hashes',return_value=hashes),patch('deploy_completion_release.validate_database'),patch('deploy_completion_release.validate_regression_checks'),patch('deploy_completion_release.subprocess.run') as verifier:
                 with self.assertRaisesRegex(ValueError,'明确批准'): validate_local()
                 approval.write_text(json.dumps({'状态':'用户明确批准','正式文件SHA256':hashes['deploy/data/gameplay-rules.env']}),encoding='utf-8')
                 files,hotfix,expected=validate_local()
                 self.assertEqual(expected['/opt/hs-server/bin/gameserver'],game_hash)
                 self.assertEqual(expected['/opt/hs-hotfix/data/hotfix.json'],hashes['deploy/data/hotfix.json'])
-                self.assertEqual(len(files),6); self.assertEqual(len(hotfix),1)
+                self.assertEqual(expected['/opt/hs-hotfix/bin/hotfixserver'],hotfix_hash)
+                self.assertEqual(len(files),6); self.assertEqual(len(hotfix),2)
                 self.assertTrue(verifier.call_args.kwargs['check'])
                 self.assertIn('-E',verifier.call_args.args[0])
                 approval.write_text(json.dumps({'状态':'用户明确批准','正式文件SHA256':'旧配置'}),encoding='utf-8')

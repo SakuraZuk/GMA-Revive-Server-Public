@@ -57,7 +57,8 @@ func (s *Service) consumePowerMaterialRPC(ctx context.Context, c *Connection, ar
 	})
 	if err != nil {
 		log.Printf("灵感材料拒绝 uid=%d 原因=%v", c.SelectedAvatarUnsafe().UID, err)
-		return []Push{Callback(cb, []any{0, "灵感材料使用失败"})}, nil
+		// 0EC45730.server_callback在Python2失败分支执行PRINT_ITEM，中文须为UTF-8字节。
+		return []Push{Callback(cb, []any{0, []byte("灵感材料使用失败")})}, nil
 	}
 	return []Push{materialManagerPush(c), powerPush(c), Callback(cb, []any{added, ""})}, nil
 }
@@ -103,6 +104,12 @@ func (s *Service) exitBattleRPC(ctx context.Context, c *Connection, args []json.
 		return nil, errors.New("单端竞技退出须经原生权威弃权，不能按普通副本结算")
 	}
 	// 已收到显式末态但SQL提交延后时，不能用退出覆盖胜负。
+	if b != nil && !b.Finished && b.RewardPlanFrozen && b.RewardResult != nil {
+		copy := *b.RewardResult
+		copy.Data = cloneEventData(copy.Data)
+		c.pendingOrdinaryResult = &copy
+		c.nextOrdinaryResultRetry = 0
+	}
 	if c.pendingOrdinaryResult != nil {
 		out, err := s.retryOrdinaryResult(ctx, c)
 		if err != nil || c.pendingOrdinaryResult != nil {

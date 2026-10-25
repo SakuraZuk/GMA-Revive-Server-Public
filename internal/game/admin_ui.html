@@ -1,14 +1,85 @@
 <!doctype html>
-<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>幻书管理</title>
-<style>body{font:16px system-ui;background:#edf2f6;color:#183041;margin:0}main{max-width:1050px;margin:30px auto;padding:30px;background:white;border-radius:12px}label{display:block;margin:12px 0}input,textarea,select,button{font:inherit;box-sizing:border-box;padding:10px;border:1px solid #becbd5;border-radius:6px;width:100%}button{background:#174d6e;color:white;cursor:pointer}button:disabled{opacity:.5}pre{white-space:pre-wrap;overflow:auto;max-height:400px;background:#eef3f6;padding:15px}small{color:#566c7a}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}textarea{min-height:200px}.row{display:flex;gap:10px;align-items:center}.row>*{flex:1}section{border-top:1px solid #d5e0e8;margin-top:25px;padding-top:15px}canvas{width:100%;background:#f6f9fb;border:1px solid #d5e0e8}#players button{background:#eef3f6;color:#183041;text-align:left;margin:4px 0}[hidden]{display:none!important}@media(max-width:700px){.grid{grid-template-columns:1fr}main{margin:0;padding:18px}}</style>
-<main><h1>幻书管理</h1><p>查询玩家存档，修改资料或发放资产。每次修改填写收据、操作员和原因。</p>
-<div class="row"><label>管理令牌<input id="token" type="password" autocomplete="off"></label><button id="lock">清除令牌</button></div><small>令牌只保留在当前页面内存。</small>
-<section><h2>玩家</h2><div class="row"><input id="search" placeholder="昵称、馆主编号或角色编号"><button id="find">查询玩家</button></div><div id="players"></div><div class="row"><label>角色编号<input id="oid" maxlength="24" placeholder="24位角色编号"></label><button id="detail">读取存档与审计</button></div></section>
-<section><h2>修改与发放</h2><div class="grid"><div><label>操作<select id="action"><option value="profile">修改昵称、等级或性别</option><option value="material_add">增加材料</option><option value="material_set">设置材料余额</option><option value="card_grant">发放幻书</option><option value="recommendation_issue">发行推荐礼包报价</option><option value="rune">发放契印</option><option value="mail">发送邮件</option></select></label><label>收据<input id="receipt" maxlength="100" placeholder="每次操作使用独立收据"></label><label>操作员<input id="operator" maxlength="64"></label><label>原因<input id="reason" maxlength="512"></label></div><div>
-<div id="profile-fields"><label>昵称<input id="nickname" placeholder="留空保持原值"></label><label>馆主等级<input id="level" type="number" min="0" value="0"></label><label>性别<select id="gender"><option value="0">保持原值</option><option value="1">男</option><option value="2">女</option></select></label></div>
-<div id="material-fields" hidden><label>材料编号<input id="material" type="number" min="1"></label><label>数量<input id="amount" inputmode="numeric" value="1"></label></div>
-<div id="card-fields" hidden><label>幻书编号<input id="card" type="number" min="1"></label><label>数量<input id="count" type="number" min="1" max="50" value="1"></label></div>
-<div id="offer-fields" hidden><label>推荐编号<input id="offer-id" type="number" min="1"></label><label>商品编号<input id="offer-commodity" type="number" min="1" value="8010001"></label><label>单价<input id="offer-price" type="number" min="1" value="648"></label><label>展示期限（分钟）<input id="offer-duration" type="number" min="1" max="1440" value="120"></label><label>未展示报价失效时间<input id="offer-expired" type="datetime-local"></label></div>
-<div id="payload-fields" hidden><label>邮件或契印内容<textarea id="payload" spellcheck="false"></textarea></label></div><p id="help"></p></div></div><button id="submit">保存并记录审计</button><pre id="result" role="status">尚未执行</pre></section>
-<section><h2>战斗观察记录</h2><small>展示当前会话保留的观察事件，最多128条。记录可能截断，不代表完整录像；不改变战斗结果。</small><div class="row"><button id="play">播放</button><input id="timeline" type="range" min="0" max="0" value="0"><span id="event-label">请先读取玩家存档</span></div><canvas id="battle" width="950" height="420"></canvas><pre id="event"></pre></section>
-</main><script src="/admin/ui.js"></script></html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>阿克夏馆务台</title>
+<style>
+:root{--ink:#2b2140;--muted:#7b6d92;--paper:#fffaf6;--line:#eadfef;--rose:#e85d8c;--rose-deep:#c43b6e;--violet:#6d5bd0;--gold:#f0b429;--mint:#3aa88a;--sky:#4c8dff}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font:15px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:radial-gradient(circle at 8% 0,#ffe4f1,transparent 32%),radial-gradient(circle at 100% 8%,#e7e2ff,transparent 28%),linear-gradient(160deg,#f7f1ff,#fff7fb 48%,#f3f7ff)}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}[hidden]{display:none!important}
+.login{min-height:100vh;display:grid;place-items:center;padding:24px}.card{width:min(460px,100%);background:rgba(255,250,246,.92);border:1px solid #fff;border-radius:28px;padding:34px;box-shadow:0 24px 70px rgba(109,91,208,.16)}
+.mark{width:74px;height:74px;border-radius:24px;display:grid;place-items:center;background:linear-gradient(145deg,#ff8fb8,#7a6bff);color:white;font-weight:800;letter-spacing:1px;box-shadow:0 12px 30px rgba(232,93,140,.35)}
+h1{margin:16px 0 6px;font-size:30px}h2{margin:0;font-size:22px}.sub{color:var(--muted);line-height:1.6}
+label{display:block;margin:14px 0 6px;color:#5d5274;font-size:13px}input,select,textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;outline:none}textarea{min-height:110px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:#c8b7ff;box-shadow:0 0 0 4px rgba(109,91,208,.12)}
+.primary{width:100%;margin-top:18px;border:0;border-radius:16px;padding:13px;color:white;background:linear-gradient(90deg,var(--rose),var(--violet));box-shadow:0 10px 24px rgba(196,59,110,.25)}.ghost{border:1px solid var(--line);background:white;border-radius:14px;padding:10px 14px}
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}.side{padding:22px 16px;background:rgba(43,33,64,.94);color:#f7efff}.brand{display:flex;gap:12px;align-items:center;padding:6px 8px 18px}.brand b{display:block}.brand span{color:#c8bddc;font-size:12px}
+nav{display:grid;gap:6px}nav button{text-align:left;border:0;border-radius:14px;padding:12px 14px;background:transparent;color:#efe7ff}nav button.active,nav button:hover{background:linear-gradient(90deg,rgba(232,93,140,.9),rgba(109,91,208,.9));color:white}
+.who{margin-top:24px;padding:14px;border-radius:16px;background:rgba(255,255,255,.06);color:#ddd2ee;font-size:13px}.main{padding:26px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}.stat{background:var(--paper);border-radius:18px;padding:16px;border:1px solid rgba(255,255,255,.8);box-shadow:0 10px 30px rgba(80,60,120,.06)}.stat b{display:block;font-size:28px;margin-top:4px}.stat span{color:var(--muted);font-size:13px}
+.panel{background:rgba(255,250,246,.88);border:1px solid rgba(255,255,255,.9);border-radius:24px;padding:18px;box-shadow:0 16px 40px rgba(80,60,120,.07)}.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.row>*{flex:1;min-width:140px}.row button{flex:0 0 auto}
+table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px 8px;border-bottom:1px solid #f0e7f4;text-align:left;vertical-align:top;font-size:13px}th{color:#8a7aa3;font-weight:600}tr.click{cursor:pointer}tr.click:hover{background:#fff3f8}
+.tag{display:inline-block;border-radius:999px;padding:3px 8px;background:#f4eaff;color:#6d4db5;font-size:12px}.tag.on{background:#e5f8f2;color:#1d8a6c}.tag.off{background:#fff0f3;color:#c43b6e}.tag.wait{background:#fff6df;color:#9a6b00}
+.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}.help{color:var(--muted);font-size:13px;line-height:1.6}pre{white-space:pre-wrap;background:#2b2140;color:#f7efff;border-radius:16px;padding:14px;max-height:280px;overflow:auto}#toast{position:fixed;right:18px;bottom:18px;background:#2b2140;color:white;border-radius:16px;padding:12px 16px;box-shadow:0 12px 30px rgba(0,0,0,.2)}
+@media(max-width:900px){.app{grid-template-columns:1fr}.side{position:sticky;top:0;z-index:2}.stats,.grid{grid-template-columns:1fr}nav{grid-template-columns:repeat(3,1fr)}}
+</style>
+<div id="login" class="login">
+  <form class="card" id="login-form">
+    <div class="mark">HS</div>
+    <h1>阿克夏馆务台</h1>
+    <p class="sub">幻书启世录运营后台。管理在线馆主、活动、公告、邮件与卡池排期。</p>
+    <label>管理员账号<input id="user" autocomplete="username" value="admin"></label>
+    <label>密码<input id="password" type="password" autocomplete="current-password"></label>
+    <button class="primary" type="submit">进入馆务台</button>
+    <p class="help" id="login-error"></p>
+  </form>
+</div>
+<div id="app" class="app" hidden>
+  <aside class="side">
+    <div class="brand"><div class="mark">HS</div><div><b>阿克夏馆务台</b><span>幻书启世录 · 运营</span></div></div>
+    <nav>
+      <button data-tab="home" class="active">总览</button>
+      <button data-tab="online">在线人数</button>
+      <button data-tab="activity">活动管理</button>
+      <button data-tab="users">用户管理</button>
+      <button data-tab="notice">公告</button>
+      <button data-tab="mail">邮件</button>
+      <button data-tab="gacha">卡池排期</button>
+    </nav>
+    <div class="who"><div id="who">管理员</div><button id="logout" class="ghost" style="margin-top:10px;color:#2b2140">退出登录</button></div>
+  </aside>
+  <main class="main">
+    <section id="home" class="view">
+      <div class="top"><div><h2>今日馆务</h2><div class="sub">当前进程的在线与运营配置。</div></div></div>
+      <div class="stats" id="stats"></div>
+      <div class="panel"><p class="help">在线人数按本机游戏连接实时统计。公告、全服邮件和卡池排期会写入运营配置；活动开放时间仍以已加载的活动日程为准。</p></div>
+    </section>
+    <section id="online" class="view" hidden>
+      <div class="top"><div><h2>在线人数</h2><div class="sub" id="online-count">正在读取</div></div><button id="refresh-online" class="ghost">刷新</button></div>
+      <div class="panel"><table><thead><tr><th>馆主</th><th>编号</th><th>服务器</th><th>等级</th><th>阶段</th><th>战斗</th><th>设备</th></tr></thead><tbody id="online-rows"></tbody></table></div>
+    </section>
+    <section id="activity" class="view" hidden>
+      <div class="top"><div><h2>活动管理</h2><div class="sub">读取当前已加载的活动日程，不在页面里改客户端活动表。</div></div><input id="activity-q" placeholder="搜索活动名或编号"></div>
+      <div class="panel"><table><thead><tr><th>编号</th><th>活动</th><th>状态</th><th>开始</th><th>结束</th><th>体力</th></tr></thead><tbody id="activity-rows"></tbody></table></div>
+    </section>
+    <section id="users" class="view" hidden>
+      <div class="top"><div><h2>用户管理</h2><div class="sub">查询馆主，发放材料、幻书、契印或单人邮件。</div></div></div>
+      <div class="panel"><div class="row"><input id="search" placeholder="昵称、馆主编号或角色编号"><button id="find" class="primary" style="width:auto">查询</button></div><div id="players"></div></div>
+      <div class="grid" style="margin-top:16px"><div class="panel"><h3>发放</h3><label>角色编号<input id="oid" maxlength="24"></label><div class="row"><label>操作<select id="action"><option value="profile">资料</option><option value="material_add">增加材料</option><option value="card_grant">发放幻书</option><option value="rune">契印</option><option value="mail">单人邮件</option></select></label><label>收据<input id="receipt" placeholder="每次独立收据"></label></div><label>原因<input id="reason" value="馆务台操作"></label><div id="profile-fields"><div class="row"><label>昵称<input id="nickname"></label><label>等级<input id="level" type="number" min="0" value="0"></label></div></div><div id="asset-fields" hidden><div class="row"><label>材料或幻书编号<input id="asset-id" type="number" min="1"></label><label>数量<input id="asset-count" type="number" min="1" value="1"></label></div></div><div id="payload-fields" hidden><label>JSON<textarea id="payload" spellcheck="false"></textarea></label></div><button id="submit" class="primary">保存并审计</button></div><div class="panel"><h3>结果</h3><pre id="result">尚未执行</pre></div></div>
+    </section>
+    <section id="notice" class="view" hidden>
+      <div class="top"><div><h2>公告</h2><div class="sub">馆务公告保存在运营配置，可置顶、定时、下架。</div></div></div>
+      <div class="grid"><form class="panel" id="notice-form"><label>标题<input name="title" maxlength="80" required></label><label>类型<select name="kind"><option>维护</option><option>活动</option><option>补偿</option><option>系统</option></select></label><label>正文<textarea name="body" maxlength="4000" required></textarea></label><label><input name="pinned" type="checkbox" style="width:auto"> 置顶</label><label><input name="enabled" type="checkbox" checked style="width:auto"> 立即展示</label><button class="primary">发布公告</button></form><div class="panel"><table><thead><tr><th>公告</th><th>状态</th><th></th></tr></thead><tbody id="notice-rows"></tbody></table></div></div>
+    </section>
+    <section id="mail" class="view" hidden>
+      <div class="top"><div><h2>邮件</h2><div class="sub">全服邮件写入每个馆主邮箱；同一收据不会重复发送。</div></div></div>
+      <div class="grid"><form class="panel" id="mail-form"><label>标题<input name="title" maxlength="80" required></label><label>正文<textarea name="content" maxlength="4000" required></textarea></label><div class="row"><label>发件人<input name="sender" value="阿克夏馆务处"></label><label>收据<input name="receipt" required placeholder="全服邮件唯一收据"></label></div><div class="row"><label>附件材料编号<input name="material_id" type="number" min="0" value="0"></label><label>数量<input name="amount" type="number" min="0" value="0"></label></div><label>原因<input name="reason" value="运营发放" required></label><button class="primary">发送全服邮件</button></form><div class="panel"><table><thead><tr><th>已发送</th><th>人数</th><th>时间</th></tr></thead><tbody id="mail-rows"></tbody></table></div></div>
+    </section>
+    <section id="gacha" class="view" hidden>
+      <div class="top"><div><h2>卡池排期</h2><div class="sub">35 个原生卡池。排期用于运营查看，抽卡仍按原生活动条件。</div></div></div>
+      <div class="grid"><form class="panel" id="gacha-form"><label>卡池编号<input name="pool_id" type="number" min="1" required></label><label>开始<input name="begin" type="datetime-local" required></label><label>结束<input name="end" type="datetime-local" required></label><label>备注<input name="note" maxlength="200"></label><label><input name="enabled" type="checkbox" checked style="width:auto"> 本时段开放</label><button class="primary">保存排期</button></form><div class="panel"><table><thead><tr><th>卡池</th><th>消耗</th><th>保底</th><th>状态</th><th>排期</th></tr></thead><tbody id="gacha-rows"></tbody></table></div></div>
+    </section>
+  </main>
+</div>
+<div id="toast" hidden></div>
+<script src="/admin/ui.js"></script>
+</html>

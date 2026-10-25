@@ -60,7 +60,7 @@ def fixture(human_first, revision):
         assert shared.notify_battle_finish() == '真人专用结果'
         assert len(calls) == 1
 
-for revision in (12, 13, 14, 15):
+for revision in (12, 13, 14, 15, 16):
     fixture(False, revision)
     fixture(True, revision)
 print('活动原生统计扩展：原桥、真人闭包、重复安装、单次结果全部通过')

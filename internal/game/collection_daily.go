@@ -117,6 +117,7 @@ func (s *Service) collectionDailyRPC(ctx context.Context, c *Connection, args []
 	if c.phase != Playing || len(args) != 0 {
 		return nil, errors.New("每日收藏室领奖不接受参数")
 	}
+	before := CloneProgress(c.SelectedAvatarUnsafe().Progress)
 	e := s.updateProgress(ctx, c, func(p *Progress) error {
 		if e := ensureCollection(p, s.Now()); e != nil {
 			return e
@@ -174,6 +175,6 @@ func (s *Service) collectionDailyRPC(ctx context.Context, c *Connection, args []
 	}
 	p := c.SelectedAvatarUnsafe().Progress
 	out := []Push{materialManagerPush(c), knowledgePush(c)}
-	out = append(out, collectionPushes(p, s.Now(), false)...)
+	out = append(out, collectionRewardPushes(before, p, s.Now())...)
 	return append(out, push("Avatar", "on_get_house_reward", []int{RetSuccess})), nil
 }

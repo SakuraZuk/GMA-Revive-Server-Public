@@ -192,7 +192,7 @@ func (s *Service) leagueProtectStartRPC(ctx context.Context, c *Connection, args
 	now := s.Now()
 	selfID := hexOf(selectedOID(c))
 	did := leagueData("league_protect", id).integer("dungeon_id")
-	rows, err := store.UpdateAllSocial(ctx, func(avatars map[string]*Avatar) error {
+	rows, err := updateLeagueSocial(ctx, store, LeagueTransaction{SelfID: selfID}, func(avatars map[string]*Avatar) error {
 		self := avatars[selfID]
 		if self == nil {
 			return errors.New("雅努斯当前玩家不存在")

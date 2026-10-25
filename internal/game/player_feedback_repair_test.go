@@ -10,11 +10,70 @@ import (
 
 type observedWriteStore struct {
 	*FixtureAccounts
-	Writes        int
-	FailNext      bool
-	FailCalendar  bool
-	CalendarCalls int
-	FailSnapshot  bool
+	Writes         int
+	SocialReads    int
+	FailNext       bool
+	FailCalendar   bool
+	CalendarCalls  int
+	FailSnapshot   bool
+	FailSocialRead bool
+}
+
+func (a *observedWriteStore) SocialAvatars(ctx context.Context, search SocialSearch) ([]Avatar, error) {
+	a.SocialReads++
+	if a.FailSocialRead {
+		return nil, context.DeadlineExceeded
+	}
+	return a.FixtureAccounts.SocialAvatars(ctx, search)
+}
+
+func TestAsyncPvpSavedCandidatesAvoidGlobalRead(t *testing.T) {
+	s, cs, base := socialTestWorld(t)
+	ctx := context.Background()
+	store := &observedWriteStore{FixtureAccounts: base}
+	s.Accounts = store
+	if _, err := s.asyncPvpRPC(ctx, cs[0], "enter_asyn_pvp", nil); err != nil {
+		t.Fatal(err)
+	}
+	if store.SocialReads != 1 {
+		t.Fatal("首次生成必须读取真实对手", store.SocialReads)
+	}
+	before, _ := json.Marshal(socialSaved(t, base, cs[0]).Progress.AsyncPvp.Candidates)
+	store.FailSocialRead = true
+	store.SocialReads = 0
+	if _, err := s.asyncPvpRPC(ctx, cs[0], "enter_asyn_pvp", nil); err != nil {
+		t.Fatal("已有对手仍依赖全服读取", err)
+	}
+	if store.SocialReads != 0 {
+		t.Fatal("重进异步竞技扫描了全服")
+	}
+	if _, err := s.asyncPvpRPC(ctx, cs[0], "refresh_asyn_pvp", nil); err == nil {
+		t.Fatal("未到刷新时间被放行")
+	}
+	if store.SocialReads != 0 {
+		t.Fatal("刷新门槛拒绝前扫描了全服")
+	}
+	after, _ := json.Marshal(socialSaved(t, base, cs[0]).Progress.AsyncPvp.Candidates)
+	if string(before) != string(after) {
+		t.Fatal("重进或未到期刷新改变了候选")
+	}
+	// 连接仍有旧候选，但存档已清空；必须以锁内存档为准重新获取，读取失败不补机器人。
+	if _, err := base.UpdateProgress(ctx, selectedOID(cs[0]), func(p *Progress) error { p.AsyncPvp.Candidates = nil; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.asyncPvpRPC(ctx, cs[0], "enter_asyn_pvp", nil); err == nil {
+		t.Fatal("候选查询失败仍返回了旧列表")
+	}
+	if store.SocialReads != 1 || len(socialSaved(t, base, cs[0]).Progress.AsyncPvp.Candidates) != 0 {
+		t.Fatal("失败读取改变了空候选状态")
+	}
+	store.FailSocialRead = false
+	if _, err := s.asyncPvpRPC(ctx, cs[0], "enter_asyn_pvp", nil); err != nil {
+		t.Fatal(err)
+	}
+	if store.SocialReads != 2 || len(socialSaved(t, base, cs[0]).Progress.AsyncPvp.Candidates) == 0 {
+		t.Fatal("恢复读取后未生成新候选")
+	}
 }
 
 func (a *observedWriteStore) HumanAvatarSnapshot(ctx context.Context, oid []byte, since int64) (Avatar, int64, bool, error) {

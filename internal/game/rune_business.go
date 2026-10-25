@@ -189,9 +189,11 @@ func (s *Service) runeRPC(ctx context.Context, c *Connection, method string, arg
 		}
 		if method == "decompose_runes" {
 			var ids []string
-			if err := json.Unmarshal(args[1], &ids); err != nil || len(ids) == 0 {
+			if err := json.Unmarshal(args[1], &ids); err != nil {
 				return runeReject("RET_DECOMPOSE_RUNE_EMPTY", "分解契印列表无效")
 			}
+			// 原生批量筛选会在没有可分解项时提交空列表。空操作幂等成功并
+			// 返回空box，避免客户端自动筛选每次刷新都产生错误回调与日志风暴。
 			seen := map[string]bool{}
 			for _, id := range ids {
 				if !validObjectID(id) {

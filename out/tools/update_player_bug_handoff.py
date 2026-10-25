@@ -75,7 +75,7 @@ if '--final' in sys.argv:
                         + text[right:])
                 text = text.replace(old_player, '## 历史玩家故障批次与0904候选阻断证据（2026-10-09）')
             marker = '- 在线快照：'
-            tip_note = ('- 引导失败回包：09:36:14 UID1120收到[False,msg]后在原生guide_task_mgr.server_callback→tips.show_tips→set_string触发std::string类型错误。'
+            tip_note = ('- 引导失败回包：历史样本角色收到[False,msg]后在原生guide_task_mgr.server_callback→tips.show_tips→set_string触发std::string类型错误。'
                         '仅将失败msg改为UTF-8字节，使网关原样保留并编码为msgpack bin，避免encoding=utf-8将文本转换为unicode；布尔失败、中文内容和任务校验规则保留。'
                         '失败日志补UID/OID/task_id及原因，不伪造激活或完成。Go专项验证拒绝不改进度与实际网关bin编码；Python2执行本版原生失败回调，'
                         'C++文本入口由严格str类型夹具验证，不冒充Android画面验收。\n')

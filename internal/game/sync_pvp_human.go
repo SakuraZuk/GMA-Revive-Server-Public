@@ -252,6 +252,14 @@ func (s *Service) humanChallengeRPC(ctx context.Context, c *Connection, method s
 	if c.phase != Playing || !ok || len(args) != need || json.Unmarshal(args[1], &peerID) != nil {
 		return nil, errors.New("真人好友邀请参数无效")
 	}
+	// 原生_on_set_challenge_dict在忙碌时发送(None, CHALLENGE_BUSY)，语义是拒绝当前邀请列表。
+	if method == "refuse_challenge" && string(args[1]) == "null" {
+		var reason int
+		if json.Unmarshal(args[2], &reason) != nil || reason != 1 {
+			return nil, errors.New("批量拒绝只接受原生忙碌原因")
+		}
+		return s.refusePendingChallenges(ctx, c, cb, reason)
+	}
 	store, ok := s.Accounts.(SocialAccounts)
 	if !ok {
 		return nil, errors.New("账号存储不支持真人邀请")
@@ -358,7 +366,7 @@ func humanLoadingPushes(r *HumanPvpRoom, id string) []Push {
 		extra["server_authoritative_pvp"] = true
 		extra["server_authority_generation"] = r.Native.Clients[id].Generation
 	}
-	return []Push{push("Avatar", "on_query_hotfix_success", clientExtensionsScript(), bridgeHotfixIndex), push("Avatar", "start_server_battle_ok", typ, r.Dungeon, ObjectID(r.UUID), extra), push("Avatar", "pvp_battle_start_load", teams), battleSync("set_last_fighting_cards", lastFightingWire(ObjectID(id), own.Layout.Fighting, own.Layout.Support)), battleSync("prepare", players, r.BattleID, r.Seed, r.Dungeon), battleSync("revival_set_battle_preferences", 1, false)}
+	return []Push{push("Avatar", "on_query_hotfix_success", clientExtensionsScript(), bridgeHotfixIndex), push("Avatar", "start_server_battle_ok", typ, r.Dungeon, ObjectID(r.UUID), extra), battleSync("revival_restore_pvp_enemy", humanSelection(r).Args[0]), push("Avatar", "pvp_battle_start_load", teams), battleSync("set_last_fighting_cards", lastFightingWire(ObjectID(id), own.Layout.Fighting, own.Layout.Support)), battleSync("prepare", players, r.BattleID, r.Seed, r.Dungeon), battleSync("revival_set_battle_preferences", 1, false)}
 }
 func humanStartPushes(r *HumanPvpRoom) []Push {
 	result := []Push{}
@@ -636,7 +644,9 @@ func (s *Service) humanDoCommand(ctx context.Context, c *Connection, command str
 	return true, nil, nil
 }
 
-// 双方加载且阵容与冻结预设逐槽相等后才共同开始；恢复端沿原日志重放。
+// 双方加载后使用选卡阶段已经校验并冻结的服务端阵容共同开始；恢复端沿原日志重放。
+// 旧客户端会在就绪通知后把 battle_cards 自定义对象重复编码为 null 或旧字典形状，
+// 这里不能再依赖第二份客户端阵容，否则真人局仍会停在加载界面。
 func (s *Service) humanBattleFighting(ctx context.Context, c *Connection, args []json.RawMessage) (bool, []Push, error) {
 	if !humanRoomActive(c.SelectedAvatarUnsafe().Progress.Social.HumanRoom) {
 		return false, nil, nil
@@ -644,18 +654,14 @@ func (s *Service) humanBattleFighting(ctx context.Context, c *Connection, args [
 	if c.phase != Playing || len(args) != 1 {
 		return true, nil, errors.New("真人开战需要已鉴权玩家及阵容")
 	}
-	layout, err := parseBattleLayout(args[0])
-	if err != nil {
-		return true, nil, err
-	}
 	start := []string{}
 	r, err := s.humanTransaction(ctx, c, func(r *HumanPvpRoom, v map[string]*Avatar, id string) error {
 		player := r.Players[id]
 		if !player.Selected || !player.Loaded || v[id].Progress.Battle == nil {
 			return errors.New("真人阵容或实体尚未加载")
 		}
-		if !sameBattleSlots(layout.Fighting, player.Layout.Fighting) || !sameBattleSlots(layout.Support, player.Layout.Support) {
-			return errors.New("真人开战阵容与冻结快照不符")
+		if len(player.Layout.Fighting) == 0 {
+			return errors.New("真人冻结出战阵容为空")
 		}
 		if player.Started {
 			return nil
@@ -692,7 +698,7 @@ func (s *Service) humanBattleFighting(ctx context.Context, c *Connection, args [
 		return true, nil, err
 	}
 	_ = r
-	c.battleStartSent = true
+	c.battleStartSent = c.SelectedAvatarUnsafe().Progress.Social.HumanRoom.Players[hexOf(selectedOID(c))].Started
 	return true, nil, nil
 }
 func humanReplayPush(r *HumanPvpRoom) Push {
@@ -914,6 +920,10 @@ func (s *Service) absorbHumanBattleEvent(ctx context.Context, c *Connection, env
 	_ = aborted
 	_ = settled
 	_ = r
+	if envelope.Kind == "ready" {
+		pushes, err := s.advancePvpLoadBarrier(ctx, c)
+		return true, pushes, err
+	}
 	return true, nil, nil
 }
 func humanCommandIndex(data map[string]any) (int, error) {
@@ -1104,7 +1114,7 @@ func (s *Service) humanResume(ctx context.Context, c *Connection) (bool, []Push,
 	case "aborted":
 		return true, humanAbortPushes(), nil
 	}
-	return true, humanLoadingPushes(r, id), nil
+	return true, nativeRecoveryLoadPushes(humanLoadingPushes(r, id), r.UUID), nil
 }
 
 // 邀请仅保留原生CHALLENGE_WAIT_TIME窗口；时钟回退不延长邀请。
@@ -1117,12 +1127,14 @@ func (s *Service) tickHumanPvp(ctx context.Context, c *Connection) []Push {
 	}
 	if _, persistent := s.Accounts.(HumanAvatarSnapshotAccounts); persistent {
 		p := c.SelectedAvatarUnsafe().Progress
-		if p.Social.HumanRoom == nil && (p.SyncPvpMatch == nil || p.SyncPvpMatch.Status != syncPvpMatchWaiting) {
-			if s.Now().UnixMilli() < c.nextBackgroundSnapshot {
-				return nil
-			}
-			c.nextBackgroundSnapshot = s.Now().UnixMilli() + 1000
+		// 已结算房间仍保存在存档中，不能因此永久按100毫秒读取整份JSONB。
+		// 活跃真人局保持低延迟；排队与普通在线只需有界轮询，同进程变更另有
+		// publishPlayerRefresh即时通知。这样数据库短暂抖动后也不会由所有连接
+		// 同时重试并占满连接池，阻塞登录收尾。
+		if s.Now().UnixMilli() < c.nextBackgroundSnapshot {
+			return nil
 		}
+		c.nextBackgroundSnapshot = s.Now().UnixMilli() + humanSnapshotPollDelay(p, c.humanPresenceID)
 	}
 	beforeVisible := mustJSON(SocialProperties(c.SelectedAvatarUnsafe().Progress.Social))
 	if err := s.refreshHumanConnection(ctx, c); err != nil {
@@ -1161,6 +1173,16 @@ func (s *Service) tickHumanPvp(ctx context.Context, c *Connection) []Push {
 	}
 	s.tickNativePvp(ctx, c)
 	return visible
+}
+
+func humanSnapshotPollInterval(p Progress) int64 {
+	if room := p.Social.HumanRoom; room != nil && room.Status != "settled" && room.Status != "aborted" {
+		return 250
+	}
+	if p.SyncPvpMatch != nil && p.SyncPvpMatch.Status == syncPvpMatchWaiting {
+		return 500
+	}
+	return 5000
 }
 
 // 真人优先匹配实际在线、已排队玩家。窗口使用Android下限/扩大量/上限，排序为等候时长与OID。

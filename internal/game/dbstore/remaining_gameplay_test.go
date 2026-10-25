@@ -128,8 +128,13 @@ func TestPostgresRemainingConsignTaskTowerAndExplorationAtomicReload(t *testing.
 	}
 	now = time.Unix(task.FinishTime, 0)
 	out := pgRemainingRPC(t, s, c, "commit_consign_task", id)
-	if pgRemainingPush(out, "commit_consign_task_success") == nil {
+	commitReply := pgRemainingPush(out, "commit_consign_task_success")
+	if commitReply == nil {
 		t.Fatal("真实库委托完整奖励失败", out)
+	}
+	returned, ok := commitReply.Args[1].([]any)
+	if !ok || len(returned) != 1 || returned[0] != game.ObjectID(p.Cards[0].UUID) {
+		t.Fatal("真实库委托完成未返回原生卡牌UUID", commitReply.Args[1])
 	}
 	p = pgHumanRead(t, New(store.pool), oid).Progress
 	if p.RemainingGameplay.Consign.Tasks[id] != nil || p.Achievements[205001].Time == 0 || len(p.RemainingGameplay.Consign.PhaseRecv) == 0 {
@@ -181,7 +186,17 @@ func TestPostgresRemainingConsignTaskTowerAndExplorationAtomicReload(t *testing.
 	if node <= 0 {
 		t.Fatal("真实库探索未生成原生起点")
 	}
-	pgRemainingRPC(t, s, c, "enter_stage_site", node, 0)
+	entry := pgRemainingRPC(t, s, c, "enter_stage_site", node, 0)
+	if load := pgRemainingPush(entry, "start_server_battle_ok"); load == nil || load.Args[0] != 1 {
+		t.Fatal("真实库探索进入被下发同步PVP模式", entry)
+	}
+	p = pgHumanRead(t, New(store.pool), oid).Progress
+	paidPower, powerBeforeRestart := p.Battle.PaidPower, p.Power.Value
+	c = pgActivityLogin(t, s, info)
+	restoredBattle := pgHumanRead(t, New(store.pool), oid).Progress
+	if restoredBattle.Battle == nil || restoredBattle.Battle.PaidPower != paidPower || restoredBattle.Power.Value != powerBeforeRestart || restoredBattle.RemainingGameplay.PendingSite != node {
+		t.Fatal("真实探索冷登录改变原扣费或节点授权")
+	}
 	pgRemainingFinish(t, s, c, oid, []int{})
 	p = pgHumanRead(t, New(store.pool), oid).Progress
 	if p.RemainingGameplay.Stages[10101].Sites[node].State != 3 || p.RemainingGameplay.PendingDungeon != 0 {

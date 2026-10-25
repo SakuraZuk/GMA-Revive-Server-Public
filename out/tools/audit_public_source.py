@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""审核Git当前版本中的隐私，仅输出文件和问题类型，不输出匹配的秘密。"""
+"""审核已跟踪和待提交源码中的隐私，仅输出文件和问题类型。"""
+import ipaddress
 import json
 import re
 import subprocess
@@ -11,7 +12,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
-    names = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).decode("utf-8").split("\0")
+    names = subprocess.check_output(
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+        cwd=ROOT).decode("utf-8").split("\0")
     private_values = []
     try:
         from local_ops_credentials import load_target
@@ -22,7 +25,7 @@ def main():
         pass  # 新电脑无需拥有发布者授权；仍执行固定秘密及路径扫描。
     failures = []
     count = size = 0
-    for name in filter(None, names):
+    for name in sorted(set(filter(None, names))):
         path = ROOT / name
         if not path.is_file():
             failures.append({"文件": name, "问题": "索引文件不存在"})
@@ -46,13 +49,24 @@ def main():
             reasons.append("机器绝对路径")
         if re.search(r"(?:Users[/\\]+[^/\\\s]+|@(?:qq|163)\.com)", body):
             reasons.append("个人目录或邮箱")
+        # 示例网段、回环及常见公共DNS不属于发布者地址；其余公网IPv4需去掉硬编码。
+        for address in set(re.findall(r"(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.])", body)):
+            try:
+                parsed = ipaddress.ip_address(address)
+            except ValueError:
+                continue
+            if parsed.is_global and address not in {"8.8.8.8", "8.8.4.4", "1.1.1.1", "1.0.0.1"}:
+                reasons.append("未经审核的公网地址")
+                break
+        if path.suffix.lower() == ".md" and re.search(r"(?i)\buid\s*[=:]?\s*\d{4,}", body):
+            reasons.append("文档包含实际玩家编号")
         if any(part in path.relative_to(ROOT).parts for part in ("runtime", "evidence", "files", "work", "keys", "__pycache__")):
             reasons.append("本机资源或数据目录")
         for reason in reasons:
             failures.append({"文件": name, "问题": reason})
     report = {"状态": "通过" if not failures else "失败", "文件数量": count,
               "字节数": size, "问题": failures,
-              "范围": "当前Git文件；不证明旧提交、分支、标签或GitHub缓存已清理"}
+              "范围": "已跟踪及未被忽略的待提交文件；不证明旧提交、分支、标签或GitHub缓存已清理"}
     (ROOT / "out/github-public-source-audit.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))

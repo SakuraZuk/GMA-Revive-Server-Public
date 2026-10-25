@@ -140,12 +140,13 @@ func (s *Service) cardGrowthRPC(ctx context.Context, c *Connection, method strin
 				p.Materials[id] = material
 			}
 			card.Grade++
+			card.Awakened = effectiveCardAwakened(*card)
 			return nil
 		})
 		if err != nil {
 			return growthCallbackError(callbackID, err)
 		}
-		return []Push{cardMgrPush(c), materialManagerPush(c), Callback(callbackID, []any{0})}, nil
+		return []Push{cardMgrPush(c), materialManagerPush(c), push("Avatar", "client_prop_changed", []any{"card_common_mgr", cardCommonMgrPropertiesWithProgress(c.SelectedAvatarUnsafe().Progress)}), Callback(callbackID, []any{0})}, nil
 	case "card_enhance":
 		if len(args) != 3 {
 			return nil, errors.New("卡牌补完参数无效")

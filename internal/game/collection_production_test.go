@@ -69,6 +69,21 @@ func TestCollectionGatherUsesNativeAssetsAndNoRepeatedReward(t *testing.T) {
 	if e != nil || pushes[len(pushes)-1].Method != "on_gather_produce_material" || pushes[len(pushes)-1].Args[0] != 0 || c.SelectedAvatarUnsafe().Progress.Materials[19].Count != old+1 || math.Abs(c.SelectedAvatarUnsafe().Progress.Collection.Facilities[2].Keep-.75) > 1e-9 {
 		t.Fatal("设施收获资产、下行或小数错误", e)
 	}
+	facilityUpdates := 0
+	for _, item := range pushes {
+		if item.Method == "client_prop_changed" {
+			field := item.Args[0].([]any)[0].(string)
+			if field == "facility_info" {
+				facilityUpdates++
+			}
+			if field == "restroom_info" || field == "restroom_grid_info" || field == "restroom_wallpapers" || field == "furniture_info" {
+				t.Fatal("领取材料重复刷新未变化的收藏房间或家具", field)
+			}
+		}
+	}
+	if facilityUpdates != 1 {
+		t.Fatal("收获没有精确同步生产设施库存")
+	}
 	pushes, e = s.collectionProductionRPC(ctx, c, []json.RawMessage{json.RawMessage(`2`)})
 	if e != nil || pushes[len(pushes)-1].Args[0] == 0 || c.SelectedAvatarUnsafe().Progress.Materials[19].Count != old+1 {
 		t.Fatal("重复收获仍发奖励", e)

@@ -62,11 +62,21 @@ func (s *Service) handleGachaContract(ctx context.Context, c *Connection, args [
 			return runeReject("RET_MATERIAL_NOT_ENOUGH", "抽卡材料不足")
 		}
 		first := poolID == 1 && record.RandomCount == 0 && count == 1
+		if poolID == 3 {
+			prepareBeginnerPromises(p, record.RandomCount)
+		}
 		for i := 0; i < count; i++ {
 			force := 0
 			minimumRarity := 0
 			if first {
 				force = androidFirstDrawCardID
+			}
+			if poolID == 3 {
+				var err error
+				force, err = chooseBeginnerPromise(p, cfg, record.RandomCount+i)
+				if err != nil {
+					return err
+				}
 			}
 			if count == 10 && i == count-1 {
 				found := false
@@ -83,6 +93,9 @@ func (s *Service) handleGachaContract(ctx context.Context, c *Connection, args [
 			cid, err := chooseGachaCardWithRarity(cfg, record.RandomCount+i, force, minimumRarity)
 			if err != nil {
 				return err
+			}
+			if poolID == 3 {
+				refreshBeginnerPromises(p, cid)
 			}
 			card := newCard(cid, 1, s.Now())
 			cards = append(cards, card)
@@ -138,7 +151,25 @@ func (s *Service) handleGachaContract(ctx context.Context, c *Connection, args [
 	}
 	// 回调不经过card_mgr属性转换，必须携带原生card_list标记才能得到card对象。
 	cardValues = append(cardValues, "card.card_list", "__custom_type")
-	return []Push{push("Avatar", "client_prop_changed", []any{"material_mgr", materialProperties(c.identity.Avatars, c.hostnum)}), cardMgrPush(c), Callback(callbackID, []any{0, cardValues, firstIDs, false, bonus})}, nil
+	// 原版幻书详情、送礼和收藏选人读取card_common_mgr；首次抽到新模板后
+	// 必须先补齐共享状态，再触发card_mgr的界面刷新，不能等重登才出现。
+	return []Push{push("Avatar", "client_prop_changed", []any{"material_mgr", materialProperties(c.identity.Avatars, c.hostnum)}),
+		push("Avatar", "client_prop_changed", []any{"card_common_mgr", cardCommonMgrPropertiesWithProgress(c.SelectedAvatarUnsafe().Progress)}), cardMgrPush(c),
+		push("Avatar", "client_prop_changed", []any{"random_cards_record", randomCardsRecordProperties(c.SelectedAvatarUnsafe().Progress)}),
+		push("Avatar", "client_prop_changed", []any{"promise_cards_record", c.SelectedAvatarUnsafe().Progress.PromiseCardsRecord}),
+		Callback(callbackID, []any{0, cardValues, firstIDs, false, bonus})}, nil
+}
+
+// 内部旧档保留pool_id；原生random_card_record持久字段是random_id。
+func randomCardsRecordProperties(p Progress) map[int]any {
+	values := map[int]any{}
+	for id, record := range p.RandomCardsRecord {
+		if _, ok := androidGachaPools[id]; !ok {
+			continue
+		}
+		values[id] = map[string]any{"random_id": id, "random_count": record.RandomCount}
+	}
+	return values
 }
 
 func drawFailureCallback(callbackID, code int) []Push {
@@ -296,6 +327,21 @@ func (s *Service) setAssistCard(ctx context.Context, c *Connection, args []json.
 	return []Push{push("Avatar", "client_prop_changed", []any{"assist_card_uuid", uuid}), push("Avatar", "call_client_callback", 0, []any{0})}, nil
 }
 
+// dungeon_mgr.is_skip_edit 用活动类型键乘 const.BATTLE_RECORD_PRESET_ID_RATE
+// 再加副本键，到 dungeon_skip_edit_data 里取值。两个键都缺时客户端直接不跳过，
+// 服务端不保存这种选择。
+const battleRecordPresetIDRate = 100000000
+
+func dungeonSkipEditKey(dungeonID int) (int, bool) {
+	dungeon := activityData("dungeons", dungeonID)
+	dungeonKey := dungeon.integer("skip_edit_key")
+	activityKey := activityData("activity_type", dungeon.integer("dungeon_type")).integer("skip_edit_key")
+	if dungeonKey == 0 && activityKey == 0 {
+		return 0, false
+	}
+	return activityKey*battleRecordPresetIDRate + dungeonKey, true
+}
+
 func (s *Service) setDungeonSkipEditState(ctx context.Context, c *Connection, args []json.RawMessage) ([]Push, error) {
 	if c.phase != Playing || len(args) != 3 {
 		return nil, errors.New("副本跳过编辑参数无效")
@@ -308,18 +354,46 @@ func (s *Service) setDungeonSkipEditState(ctx context.Context, c *Connection, ar
 	if json.Unmarshal(args[1], &dungeonID) != nil || !nativeBinarySwitch(args[2], &locked) || dungeonID <= 0 {
 		return []Push{Callback(callbackID, []any{false})}, nil
 	}
-	if _, known := dungeonCatalog[dungeonID]; !known {
+	key, supported := dungeonSkipEditKey(dungeonID)
+	if _, known := dungeonCatalog[dungeonID]; !known || !supported {
 		return []Push{Callback(callbackID, []any{false})}, nil
 	}
 	err := s.updateProgress(ctx, c, func(p *Progress) error {
 		if p.DungeonSkipEditState == nil {
 			p.DungeonSkipEditState = map[int]bool{}
 		}
-		p.DungeonSkipEditState[dungeonID] = locked
+		p.DungeonSkipEditState[key] = locked
 		return nil
 	})
 	if err != nil {
 		return []Push{Callback(callbackID, []any{false})}, nil
 	}
-	return []Push{Callback(callbackID, []any{true})}, nil
+	return []Push{push("Avatar", "client_prop_changed", []any{"dungeon_skip_edit_data", c.SelectedAvatarUnsafe().Progress.DungeonSkipEditState}), Callback(callbackID, []any{true})}, nil
+}
+
+// change_explore_skip_edit_state 以活动类型为键写入 activity_explore_skip_edit。
+// 客户端只在该类型的自动探索开启时读取它。
+func (s *Service) setExploreSkipEditState(ctx context.Context, c *Connection, args []json.RawMessage) ([]Push, error) {
+	if c.phase != Playing || len(args) != 3 {
+		return nil, errors.New("探索跳过编辑参数无效")
+	}
+	var callbackID, activityType int
+	var locked bool
+	if json.Unmarshal(args[0], &callbackID) != nil || callbackID <= 0 {
+		return nil, errors.New("探索跳过编辑回调编号无效")
+	}
+	if json.Unmarshal(args[1], &activityType) != nil || !nativeBinarySwitch(args[2], &locked) || len(activityData("activity_type", activityType)) == 0 {
+		return []Push{Callback(callbackID, []any{false})}, nil
+	}
+	err := s.updateProgress(ctx, c, func(p *Progress) error {
+		if p.ExploreSkipEdit == nil {
+			p.ExploreSkipEdit = map[int]bool{}
+		}
+		p.ExploreSkipEdit[activityType] = locked
+		return nil
+	})
+	if err != nil {
+		return []Push{Callback(callbackID, []any{false})}, nil
+	}
+	return []Push{push("Avatar", "client_prop_changed", []any{"activity_explore_skip_edit", c.SelectedAvatarUnsafe().Progress.ExploreSkipEdit}), Callback(callbackID, []any{true})}, nil
 }

@@ -118,6 +118,9 @@ func recordNianBattleDamage(p *Progress, bc *ActivityBattleContext, now time.Tim
 	// 已批准本服参赛规则：有实际result的0伤害是参赛；旧无收据的0字段不是。
 	firstResult := remainingPolicyEnabled() && (!d.Ranked || d.RankAt <= 0)
 	if validDay && (firstResult || damage > d.RankDamage) {
+		if err := prepareFirstNianRanking(p, now); err != nil {
+			return err
+		}
 		if remainingPolicyEnabled() {
 			recordNianScoreHour(p, bc.DungeonID, d)
 		}

@@ -61,6 +61,29 @@ func TestRuneRPCEmbedLockUnembedAndDecompose(t *testing.T) {
 	}
 }
 
+func TestRuneDecomposeEmptyNativeSelectionIsIdempotent(t *testing.T) {
+	ctx := context.Background()
+	accounts := NewFixtureAccounts(nil)
+	service := New(accounts, nil)
+	c, av := newBattleConnection(t, ctx, accounts, service)
+	before, err := accounts.UpdateProgress(ctx, av.OID, func(p *Progress) error { return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	pushes, err := service.Handle(ctx, c, "decompose_runes", runeTestArgs(1, []string{}))
+	if err != nil || len(pushes) != 4 {
+		t.Fatalf("原生空筛选没有幂等成功：%v %#v", err, pushes)
+	}
+	box := pushes[3].Args[1].([]any)[0].(map[string]any)
+	if len(box["materials"].(map[string]any)) != 0 {
+		t.Fatal("空分解不应产生材料", box)
+	}
+	after, err := accounts.UpdateProgress(ctx, av.OID, func(p *Progress) error { return nil })
+	if err != nil || !reflect.DeepEqual(before, after) {
+		t.Fatal("空分解修改了玩家存档", err)
+	}
+}
+
 func runeTestArgs(values ...any) []json.RawMessage {
 	args := make([]json.RawMessage, len(values))
 	for i, value := range values {

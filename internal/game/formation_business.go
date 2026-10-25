@@ -62,7 +62,7 @@ func (s *Service) setLayoutCards(ctx context.Context, c *Connection, args []json
 	if _, exists := dungeonCatalog[dungeon]; !exists {
 		return nil, errors.New("未知布阵副本")
 	}
-	layout, err := parseBattleLayout(args[1])
+	layout, err := parseBattleLayoutForDungeon(args[1], dungeon)
 	if err != nil {
 		return nil, err
 	}

@@ -32,6 +32,9 @@ var summonTimerScript string
 //go:embed ui_callback_repair_script.py
 var uiCallbackRepairScript string
 
+//go:embed model_lifecycle_script.py
+var modelLifecycleScript string
+
 // clientExtensionsScript 与冷启动热更采用相同组合。活动日程只读取服务器配置，
 // 保留 rev12 原文；共享真人桥在普通副本中按 human_shared 开关保持原生行为。
 func clientExtensionsBody() string {
@@ -61,6 +64,7 @@ func clientExtensionsBody() string {
 	out += "\n\n# HS_CLIENT_DIAGNOSTIC_BEGIN\n" + strings.ReplaceAll(clientDiagnosticScript, "\r\n", "\n") + "\n# HS_CLIENT_DIAGNOSTIC_END\n"
 	out += "\n\n# HS_SUMMON_TIMER_BEGIN\n" + strings.ReplaceAll(summonTimerScript, "\r\n", "\n") + "\n# HS_SUMMON_TIMER_END\n"
 	out += "\n\n# HS_UI_CALLBACK_REPAIR_BEGIN\n" + strings.ReplaceAll(uiCallbackRepairScript, "\r\n", "\n") + "\n# HS_UI_CALLBACK_REPAIR_END\n"
+	out += "\n\n# HS_MODEL_LIFECYCLE_BEGIN\n" + strings.ReplaceAll(modelLifecycleScript, "\r\n", "\n") + "\n# HS_MODEL_LIFECYCLE_END\n"
 	out += "\n\n# HS_HUMAN_BRIDGE_BEGIN\n" + strings.ReplaceAll(humanBattleBridgeScript, "\r\n", "\n") + "\n# HS_HUMAN_BRIDGE_END\n"
 	out += "\n\n# HS_NATIVE_RECORD_BEGIN\n" + strings.ReplaceAll(nativeRecordBridgeScript, "\r\n", "\n") + "\n# HS_NATIVE_RECORD_END\n"
 	return out + "\n\n# HS_NATIVE_PVP_AUTHORITY_BEGIN\n" + strings.ReplaceAll(nativeAuthorityBridgeScript, "\r\n", "\n") + "\n# HS_NATIVE_PVP_AUTHORITY_END\n"

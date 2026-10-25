@@ -9,6 +9,53 @@ import (
 	"time"
 )
 
+func TestCollectionRoomsFollowNativeSystemUnlocks(t *testing.T) {
+	now := time.Unix(1800000000, 0)
+	p := Progress{UnlockSystems: map[string]int{"house_dormitory1": 1, "house_dormitory2": 2, "house_dormitory3": 0}}
+	if err := ensureCollection(&p, now); err != nil {
+		t.Fatal(err)
+	}
+	if len(p.Collection.Rooms) != 0 {
+		t.Fatal("登录初始化提前扩展房间所有权，会令客户端在UID出现前卡死")
+	}
+	ensureCollectionSystemRooms(&p, now)
+	for _, id := range []int{1, 2} {
+		if _, ok := p.Collection.Rooms[id]; !ok {
+			t.Fatalf("原生系统已开放的房间%d仍被服务端锁定", id)
+		}
+	}
+	if _, ok := p.Collection.Rooms[3]; ok {
+		t.Fatal("零版本系统被错误解锁")
+	}
+	if err := grantCollectionFurniture(&p, 11001, 2, now); err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []int{1, 2} {
+		args := []json.RawMessage{json.RawMessage("1"), json.RawMessage("0"), json.RawMessage("11001"), json.RawMessage("0"), json.RawMessage("[10,10]")}
+		args[0], _ = json.Marshal(id)
+		if err := collectionLayoutRPC(&p, "setup_furniture", args); err != nil {
+			t.Fatal("已开放房间仍不能摆放", id, err)
+		}
+	}
+	before, err := json.Marshal(p.Collection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := ensureCollection(&p, now); err != nil {
+		t.Fatal(err)
+	}
+	after, err := json.Marshal(p.Collection)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(before) != string(after) {
+		t.Fatal("重复迁移重置了房间或家具")
+	}
+	if err := validateCollectionLayout(p, []CollectionPlacement{{3, 0, 1, 10, 10, 11001, 0}}, nil); err == nil {
+		t.Fatal("未开放第三房间仍可摆放")
+	}
+}
+
 func TestCollectionNativeUnlockDeploymentAndPersistence(t *testing.T) {
 	ctx := context.Background()
 	a := NewFixtureAccounts(nil)

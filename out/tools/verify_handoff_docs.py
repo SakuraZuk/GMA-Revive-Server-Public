@@ -17,7 +17,11 @@ def load_report(name):
 
 
 def main():
-    docs = sorted(ROOT.rglob("*.md"))
+    # 临时代理工作树有自己的相对资料根，不能当作当前主工作区文档重复校验。
+    docs = sorted(
+        doc for doc in ROOT.rglob("*.md")
+        if ".claude" not in doc.relative_to(ROOT).parts and ".git" not in doc.relative_to(ROOT).parts
+    )
     failures = []
     existing_reference_links = []
     inventory = []

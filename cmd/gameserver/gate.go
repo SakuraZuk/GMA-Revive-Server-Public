@@ -233,6 +233,12 @@ func (g *gate) handleEntityMessage(svc *game.Service, conn *game.Connection, pay
 			}
 			g.logf("业务定位 method=%s 参数=%s", method, raw)
 		}
+		// 原生入场/剧情上报均等待单个IntRet。事务失败也必须回调，不能只记日志让界面永久等待。
+		if conn.Phase() == game.Playing {
+			if failure := nativeEntryFailureCallback(method, args); len(failure) > 0 {
+				return g.encodePushes(failure)
+			}
+		}
 		return nil
 	}
 	// 单角色自动进游戏：账号鉴权完成即创建 Avatar 并成为玩家（login-flow-spec 登录收尾序列）。
@@ -257,6 +263,18 @@ func (g *gate) handleEntityMessage(svc *game.Service, conn *game.Connection, pay
 		}
 	}
 	return g.encodePushes(pushes)
+}
+
+func nativeEntryFailureCallback(method string, args []json.RawMessage) []game.Push {
+	if method != "enter_dungeon" && method != "finished_storyline" {
+		return nil
+	}
+	var callback int
+	if len(args) == 0 || json.Unmarshal(args[0], &callback) != nil || callback <= 0 {
+		return nil
+	}
+	// 875C5BCF.RET_UNKNOWN_ERROR=13；不伪造成功，不在回包泄露数据库内部错误。
+	return []game.Push{game.Callback(callback, []any{13})}
 }
 
 // encodePushes 把业务推送编为 S→C entity_message 帧；

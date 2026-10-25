@@ -12,7 +12,9 @@ def _install_revival_authority_shadow_bridge():
     local = client_battle.local_battle
     mode = battle_mode.battle_mode
     button_type = battle_skill.skill_button
-    if getattr(shadow, '_revival_bridge_version', 0) == 31:
+    if (getattr(shadow, '_revival_bridge_version', 0) == 31
+            and getattr(shadow, '_revival_authority_start_order_revision', 0) == 1
+            and getattr(shadow, '_revival_local_field_observation_revision', 0) == 1):
         return
 
     def skill_target_hooks(process_command, skill_result, report):
@@ -255,6 +257,10 @@ def _install_revival_authority_shadow_bridge():
                 include_state = True
             payload = state(battle) if include_state else {}
             payload.update(data or {})
+            pending = getattr(battle, '_revival_start_events', None)
+            if pending is not None and kind != 'started':
+                pending.append((kind, payload))
+                return True
             emit(battle, kind, payload)
             return True
         except Exception as error:
@@ -515,10 +521,19 @@ def _install_revival_authority_shadow_bridge():
         return old_ui_command(self, command, *args, **kwargs)
 
     def fighting(self, *args, **kwargs):
-        result = old_fighting(self, *args, **kwargs)
-        if not self._revival_started:
-            self._revival_started = True
-            report(self, 'started', include_state=True)
+        if getattr(self, '_revival_started', False):
+            return old_fighting(self, *args, **kwargs)
+        pending = []
+        self._revival_start_events = pending
+        try:
+            result = old_fighting(self, *args, **kwargs)
+        finally:
+            self._revival_start_events = None
+        # 原生开战同步产生的回合事件必须晚于started，异常不伪造开战成功。
+        self._revival_started = report(self, 'started', include_state=True)
+        if self._revival_started:
+            for kind, payload in pending:
+                report(self, kind, payload)
         return result
 
     def after_pre_play(self, user, preplay_duration, play_delay):
@@ -706,6 +721,12 @@ def _install_revival_authority_shadow_bridge():
         if _revival_is_sync_pvp(self):
             self._revival_input_grant = None
         result = old_log_command(self, user)
+        # 场地按原生驱动自主执行，服务端MapPlayback不为其创建FIFO命令。
+        # 保留原生执行及单位观察，不能把magic_field_idle冒充权威播放确认。
+        if (_revival_is_sync_pvp(self)
+                and getattr(user, 'type', None) == common_const.INFO_TYPE_MAGIC_FIELD):
+            report(self, 'snapshot', include_state=True)
+            return result
         context = getattr(self, '_revival_skill_cast', None)
         report(self, 'command', {'eid': str(user.eid), 'command': user.command,
                                 'cast_id': context['cast_id'] if context else None})
@@ -1186,6 +1207,8 @@ def _install_revival_authority_shadow_bridge():
     shadow._revival_bridge_originals['on_add_entity'] = old_on_add_entity
     shadow._revival_bridge_originals['do_command'] = old_ui_command
     shadow._revival_bridge_version = 31
+    shadow._revival_authority_start_order_revision = 1
+    shadow._revival_local_field_observation_revision = 1
 
 # -*- coding: utf-8 -*-
 # 包装源用于导出Android Python2热更；不在Python3服务端导入。
@@ -1197,12 +1220,12 @@ def _install_revival_authority_bridge():
     from guis.battle import battle_mode, battle_skill
 
     base = client_battle.shadow_battle
-    if getattr(base, '_revival_bridge_version', 0) not in (12, 13, 14, 15):
-        raise RuntimeError('PVP权威需要兼容普通战斗桥版本12至15')
+    if getattr(base, '_revival_bridge_version', 0) not in (12, 13, 14, 15, 16):
+        raise RuntimeError('PVP权威需要兼容普通战斗桥版本12至16')
     rpc_method = getattr(battle_component.battle.start_server_battle_ok, 'rpcmethod', None)
     if rpc_method is None or not callable(getattr(rpc_method, 'func', None)):
         raise RuntimeError('PVP native factory RPC metadata missing')
-    if getattr(rpc_method.func, '_revival_authority_factory', False):
+    if getattr(rpc_method.func, '_revival_authority_factory_revision', 0) == 3:
         return
 
     def function(method):
@@ -1257,6 +1280,19 @@ def _install_revival_authority_bridge():
                  for (owner, name), previous in previous_gui.items()]
 
     original_factory = rpc_method.func
+    if getattr(original_factory, '_revival_authority_factory', False):
+        # 旧版闭包会重新选择旧子类；升级时必须取回原生工厂，不能层层包裹。
+        previous = original_factory
+        original_factory = getattr(previous, '_revival_authority_original', None)
+        if original_factory is None:
+            code = getattr(previous, 'func_code', None)
+            cells = getattr(previous, 'func_closure', None)
+            for name, cell in zip(code.co_freevars, cells or ()):
+                if name == 'original_factory':
+                    original_factory = cell.cell_contents
+                    break
+        if not callable(original_factory):
+            raise RuntimeError('无法恢复原生竞技工厂')
     @functools.wraps(original_factory)
     def factory(self, battle_type, dungeon_id, battle_uuid, extra_info):
         if not isinstance(extra_info, dict) or extra_info.get('server_authoritative_pvp') is not True:
@@ -1269,6 +1305,8 @@ def _install_revival_authority_bridge():
         finally:
             client_battle.shadow_battle = previous
     factory._revival_authority_factory = True
+    factory._revival_authority_factory_revision = 3
+    factory._revival_authority_original = original_factory
     factory._revival_authority_shadow = authority_shadow
     for owner, name, method in gui_hooks:
         setattr(owner, name, method)

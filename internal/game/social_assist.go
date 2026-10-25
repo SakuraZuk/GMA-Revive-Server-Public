@@ -69,14 +69,24 @@ func friendAssistProperties(v FriendAssistState) map[string]any {
 	}
 	return map[string]any{"all_friend_assist_cards": cards, "all_stranger_assist": strangers, "current_assist": current, "assist_active_use_times": active, "assist_passive_use_times": v.Passive, "assist_reward_times": v.RewardTimes}
 }
-func snapshotFriendAssist(provider Avatar, uuid string) (FriendAssist, error) {
+
+// 候选资格检查只读取指定卡；深拷贝整份进度留给真正入选的快照。
+func availableAssistCard(provider Avatar, uuid string) (*Card, error) {
 	_, card := findCard(&provider.Progress, uuid)
 	if card == nil {
-		return FriendAssist{}, errors.New("好友助战卡不存在")
+		return nil, errors.New("好友助战卡不存在")
 	}
 	rule, ok := androidCardAppearances[card.CardID]
 	if !ok || containsInt(rule.Forbid, androidBattleForbidden) {
-		return FriendAssist{}, errors.New("好友助战卡禁止战斗")
+		return nil, errors.New("好友助战卡禁止战斗")
+	}
+	return card, nil
+}
+
+func snapshotFriendAssist(provider Avatar, uuid string) (FriendAssist, error) {
+	card, err := availableAssistCard(provider, uuid)
+	if err != nil {
+		return FriendAssist{}, err
 	}
 	p := CloneProgress(provider.Progress)
 	result := FriendAssist{Profile: socialProfile(provider), Card: *card, Runes: map[string]Rune{}}
@@ -231,7 +241,15 @@ func (s *Service) friendAssistRPC(ctx context.Context, c *Connection, method str
 		for id := range own[0].Progress.Social.Friends {
 			ids = append(ids, id)
 		}
-		candidates, err := store.SocialAvatars(ctx, SocialSearch{Hostnum: own[0].Hostnum, Limit: 1000})
+		var candidates []Avatar
+		var err error
+		if candidateStore, supported := store.(interface {
+			AssistCandidates(context.Context, int, int) ([]Avatar, error)
+		}); supported {
+			candidates, err = candidateStore.AssistCandidates(ctx, own[0].Hostnum, 1000)
+		} else {
+			candidates, err = store.SocialAvatars(ctx, SocialSearch{Hostnum: own[0].Hostnum, Limit: 1000, AssistOnly: true, AssistSummaryOnly: true})
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -256,7 +274,7 @@ func (s *Service) friendAssistRPC(ctx context.Context, c *Connection, method str
 	} else if provider != "" {
 		ids = append(ids, provider)
 	}
-	rows, err := store.UpdateSocial(ctx, ids, func(avatars map[string]*Avatar) error {
+	applyAssist := func(avatars map[string]*Avatar) error {
 		self := avatars[selfID]
 		p := &self.Progress
 		if e := ensureFriendAssistDay(p, s.Now()); e != nil {
@@ -343,7 +361,16 @@ func (s *Service) friendAssistRPC(ctx context.Context, c *Connection, method str
 		}
 		p.Social.Revision++
 		return nil
-	})
+	}
+	var rows []Avatar
+	var err error
+	if refreshStore, supported := store.(interface {
+		UpdateAssistRefresh(context.Context, string, []string, func(map[string]*Avatar) error) ([]Avatar, error)
+	}); supported && method == "refresh_assist_use_times" {
+		rows, err = refreshStore.UpdateAssistRefresh(ctx, selfID, ids, applyAssist)
+	} else {
+		rows, err = store.UpdateSocial(ctx, ids, applyAssist)
+	}
 	if err != nil {
 		if cb >= 0 {
 			return []Push{Callback(cb, []any{socialCatalog.Errors["RET_FAILED"]})}, nil
